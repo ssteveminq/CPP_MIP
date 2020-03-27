@@ -1,0 +1,6 @@
+.vscode/
+*.pyc
+__pycache__/
+gurobi.log
+.idea/
+tags
