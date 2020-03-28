@@ -1,6 +1,6 @@
 #  Coverage Path Planning with Mixed Integer Programming
 
-This is the code re-written from https://github.com/Idate96/MIP-for-path-planning 
+This repos are re-written from https://github.com/Idate96/MIP-for-path-planning 
 
 ## Prerequisites
  - Gurobi
