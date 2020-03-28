@@ -1,4 +1,4 @@
-# TRAJECTORY OPTIMIZATION For Coverage Path Planning
+#  Coverage Path Planning with Mixed Integer Programming
 
 This is the code re-written from https://github.com/Idate96/MIP-for-path-planning 
 
