@@ -12,13 +12,7 @@ Run the main file with the number of the experiment number from 0 to 1. For exam
 ```python
 python src/test.py 0
 ```
-
 This will save the result figures and data(csv format) in the result folder
-
-## Contributing
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
-
-Please make sure to update tests as appropriate.
 
 ## References
 [1] Forsmo, Erik J., et al. "Optimal search mission with unmanned aerial vehicles using mixed integer linear programming." 2013 International conference on unmanned aircraft systems (ICUAS). IEEE, 2013.
