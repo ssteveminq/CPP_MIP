@@ -127,5 +127,7 @@ class Vehicle:
 
             #for single agent
             # self.Tf = self.model.addVar(lb=0, vtype=GRB.INTEGER, name="tf")
+        # z=list(wp_times.keys())[-1]           #printing the final time
+     
 
 

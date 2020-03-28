@@ -10,8 +10,6 @@ Obstacle	src/obstacle.py	/^class Obstacle:$/;"	c
 T	src/test.py	/^        T = 100         # maximum time of travel$/;"	v
 T	src/test.py	/^        T = 200             # maximum time of travel$/;"	v
 TestStringMethods	tests/test_vehicle.py	/^class TestStringMethods(unittest.TestCase):$/;"	c
-V_coords	src/test.py	/^            V_coords = []$/;"	v
-V_coords	src/test.py	/^        V_coords = []$/;"	v
 Vehicle	src/vehicle.py	/^class Vehicle:$/;"	c
 Z	src/test.py	/^                Z = str(vehicles[i].kset[k][j])$/;"	v
 __init__	src/obstacle.py	/^    def __init__(self,x_min,x_max,y_min,y_max):$/;"	m	class:Obstacle
@@ -31,32 +29,38 @@ constrain_waypoints	src/vehicle.py	/^    def constrain_waypoints(self):$/;"	m	cl
 coords	src/test.py	/^        coords = np.zeros([z,2])$/;"	v
 d_obs	src/test.py	/^        d_obs = 0.1         # minimum distance required from obstacle$/;"	v
 d_obs	src/test.py	/^        d_obs = 0.1     # minimum distance required from obstacle$/;"	v
+data	src/test.py	/^        data= np.append(coords,v_data,1)$/;"	v
+data	src/test.py	/^        data= np.append(data,f_data,1)$/;"	v
+datafolder	src/test.py	/^        datafolder = 'results\/data\/'       # folder name$/;"	v
 draw	src/obstacle.py	/^    def draw(self):$/;"	m	class:Obstacle
-dt	src/test.py	/^        dt = 2          # time step size$/;"	v
 dt	src/test.py	/^        dt = 4.             # time step size$/;"	v
+dt	src/test.py	/^        dt = 5          # time step size$/;"	v
 epsilon	src/test.py	/^    epsilon = 0.001                          # effect of the force on the objective function$/;"	v
 extra	src/test.py	/^        extra = ''$/;"	v
 extra	src/test.py	/^        extra = 'acc_'$/;"	v
-f_coords	src/test.py	/^            f_coords = []$/;"	v
 f_coords	src/test.py	/^        f_coords = []$/;"	v
-f_coords_x	src/test.py	/^            f_coords_x = []$/;"	v
 f_coords_x	src/test.py	/^        f_coords_x = []$/;"	v
-f_coords_y	src/test.py	/^            f_coords_y = []$/;"	v
 f_coords_y	src/test.py	/^        f_coords_y = []$/;"	v
+f_data	src/test.py	/^        f_data=np.zeros([z,2])$/;"	v
 f_max	src/test.py	/^        f_max = [0.15]      # maximum force experienced by a vehicle$/;"	v
 f_max	src/test.py	/^        f_max = [0.3]    # maximum force experienced by a vehicle$/;"	v
 fig	src/test.py	/^        fig = plt.subplot(2,1,1)$/;"	v
 fig2	src/test.py	/^        fig2 = plt.subplot(2, 1, 2)$/;"	v
+filename_data	src/test.py	/^        filename_data= 'robot_'$/;"	v
+filename_data	src/test.py	/^    filename_data= datafolder+filename_data+timestamp+'.csv'$/;"	v
+filename_waypoint	src/test.py	/^        filename_waypoint = 'waypoints_'$/;"	v
+filename_waypoint	src/test.py	/^    filename_waypoint =datafolder+filename_waypoint+timestamp+'.csv'$/;"	v
 folder	src/test.py	/^        folder = 'results\/waypoints\/'       # folder name$/;"	v
 folder	src/test.py	/^        folder = 'results\/waypoints_obs\/'        # folder name$/;"	v
 labels	src/test.py	/^            labels = ['Turn rate 15 $\\degree$\/s', 'Turn rate 12 $\\degree$\/s']$/;"	v
 line_styles	src/test.py	/^        line_styles = ["--", ":", "-.", '-', '-']$/;"	v
 m	src/test.py	/^    m = Model("ppl")$/;"	v
 marker_styles	src/test.py	/^        marker_styles = ['None', 'None', 'None', 'x', 'None']$/;"	v
-n_steps	src/test.py	/^            n_steps = len(V_coords)$/;"	v
+n_steps	src/test.py	/^            n_steps = len(v_coords)$/;"	v
 n_way_points	src/test.py	/^    n_way_points = len(wp_coords[0])$/;"	v
-name	src/test.py	/^        name = 'waypoints.png'              # name of the figure to be saved$/;"	v
+name	src/test.py	/^        name = 'waypoints'              # name of the figure to be saved$/;"	v
 name	src/test.py	/^        name = 'waypoints_obs.png'        # name of the figure to be saved$/;"	v
+name	src/test.py	/^    name=name+timestamp +".png"$/;"	v
 num_vehicles	src/test.py	/^    num_vehicles = len(veh_coords)$/;"	v
 obj_acceleration	src/test.py	/^    obj_acceleration = True    # when True the acceleration is taken into consideration in the objective function$/;"	v
 obs_coords	src/test.py	/^        obs_coords = [[0, 1.7, 0, 9]]     # array containing all obstacles in [x_min,x_max,y_min,y_max] format$/;"	v
@@ -66,14 +70,16 @@ parser	src/test.py	/^    parser = argparse.ArgumentParser(description="Usage: ma
 performance_graphs	src/test.py	/^    performance_graphs = True  # include the velocity and acceleration performance of the vehicles$/;"	v
 shape	src/test.py	/^            shape = ['o', '^']$/;"	v
 steps	src/test.py	/^    steps = int(T \/ dt)                             # number of steps$/;"	v
+t	src/test.py	/^    t = time.localtime()$/;"	v
 test_1	tests/test_vehicle.py	/^    def test_1(self):$/;"	m	class:TestStringMethods
+timestamp	src/test.py	/^    timestamp =time.strftime('%m%d%H%M_', t)$/;"	v
 tmp	src/test.py	/^        tmp = Obstacle(ob[0], ob[1], ob[2], ob[3])  # local obstacle variable$/;"	v
 total	src/test.py	/^                total = vehicles[veh].Tf  # Objective function without acceleration$/;"	v
 total	src/test.py	/^    total = 0                                # total number of time steps between all the vehicles (minimize)$/;"	v
-v_coords_x	src/test.py	/^            v_coords_x = []$/;"	v
+v_coords	src/test.py	/^        v_coords = []$/;"	v
 v_coords_x	src/test.py	/^        v_coords_x = []$/;"	v
-v_coords_y	src/test.py	/^            v_coords_y = []$/;"	v
 v_coords_y	src/test.py	/^        v_coords_y = []$/;"	v
+v_data	src/test.py	/^        v_data=np.zeros([z,2])$/;"	v
 v_max	src/test.py	/^    v_max = 0.4              # maximum velocity of the vehicle$/;"	v
 veh_coords	src/test.py	/^        veh_coords = [[5, 5, 0, -2]]     # array containing all vehicles in [x_0,y_0,x_fin,y_fin] format$/;"	v
 veh_coords	src/test.py	/^        veh_coords = [[5, 5]]    # array containing all vehicles in [x_0,y_0] format$/;"	v
@@ -85,8 +91,8 @@ vy_init	src/test.py	/^        vy_init = [-0.1]    # initial y-component velocity
 vy_init	src/test.py	/^        vy_init = [0]   # initial y-component velocity$/;"	v
 wp	src/test.py	/^        wp = True           # switch for use of waypoints. True: waypoints can be used. False: function deactivated$/;"	v
 wp	src/test.py	/^        wp = True       # switch for use of waypoints. True: waypoints can be used. False: function deactivated$/;"	v
+wp_coords	src/test.py	/^        wp_coords = [[[-0.7, 6], [3,3],[1,5],[-5, 4]]]  # array containing all waypoint in [x_wp,y_wp] format$/;"	v
 wp_coords	src/test.py	/^        wp_coords = [[[0, -2], [-5, 4]]]  # array containing all waypoint in [x_wp,y_wp] format$/;"	v
-wp_coords	src/test.py	/^        wp_coords = [[[1, 3], [3,3],[-2,3], [1, 1], [3,1],[-2,1], [3,-1],[-2,-1],[1, -1], [1,-3],[3,-3], [-2, -3]]]  # array containing all waypoint in [x_wp,y_wp] format$/;"	v
 wp_times	src/test.py	/^        wp_times= dict(sorted(wp_times.items()))$/;"	v
 wp_times	src/test.py	/^        wp_times={}$/;"	v
 z	src/test.py	/^        z = 0$/;"	v
