@@ -23,14 +23,14 @@ if __name__ == '__main__':
         # f_max = [0.2]    # maximum force experienced by a vehicle
         f_max = [0.3]    # maximum force experienced by a vehicle
         T = 100         # maximum time of travel
-        dt = 5          # time step size
+        dt = 2          # time step size
         d_obs = 0.1     # minimum distance required from obstacle
         M = 75          # number of constraints in order to approximate the force and velocity magnitudes
         
         obs_coords = []                  # array containing all obstacles in [x_min,x_max,y_min,y_max] format
-        veh_coords = [[5, 5, 0, -2]]     # array containing all vehicles in [x_0,y_0,x_fin,y_fin] format
-        wp_coords = [[[-0.7, 6], [3,3],[1,5],[-5, 4]]]  # array containing all waypoint in [x_wp,y_wp] format
-        # wp_coords = [[[1, 3], [3,3],[-2,3], [1, 1], [3,1],[-2,1], [3,-1],[-2,-1],[1, -1], [1,-3],[3,-3], [-2, -3]]]  # array containing all waypoint in [x_wp,y_wp] format
+        veh_coords = [[3, 3, 0, -2]]     # array containing all vehicles in [x_0,y_0,x_fin,y_fin] format
+        # wp_coords = [[[-0.7, 6], [3,3],[1,5],[-5, 4]]]  # array containing all waypoint in [x_wp,y_wp] format
+        wp_coords = [[[1, 3], [3,3],[-2,3], [1, 1], [3,1],[-2,1], [3,-1],[-2,-1],[1, -1], [1,-3],[3,-3], [-2, -3]]]  # array containing all waypoint in [x_wp,y_wp] format
         name = 'waypoints'              # name of the figure to be saved
         filename_data= 'robot_'
         filename_waypoint = 'waypoints_'
@@ -192,6 +192,7 @@ if __name__ == '__main__':
                 Z = str(vehicles[i].kset[k][j])
                 if Z[-5] == "1":
                     wp_times[j]=k
+                    # wp_times[j]=wp_coords[k]
         wp_times= dict(sorted(wp_times.items()))
         z=list(wp_times.keys())[-1]           #printing the final time
         print("final_time:", z)
@@ -238,12 +239,15 @@ if __name__ == '__main__':
         v_coords_x = []
         v_coords_y = []
         v_coords = []
+
+        # gathering velocity and force data 
         v_data=np.zeros([z,2])
         f_data=np.zeros([z,2])
         for j in range(z):                    # obtaining the coordinates to plot
             v_data[j, :] = [vehicles[i].vx[j].x,vehicles[i].vy[j].x]
             f_data[j, :] = [vehicles[i].fx[j].x,vehicles[i].fy[j].x]
     
+        # for multiple vehicles : v_coords_x, v_coords_y are temporary variables
         for j in range(len(vehicles)):                  # extract the velocity of each vehicle
             for i in range(len(vehicles[0].vx)):
                 v_coords_x.append(vehicles[j].vx[i].x)  # velocity in the x-direction
@@ -252,9 +256,9 @@ if __name__ == '__main__':
             n_steps = len(v_coords)
             fig.plot(range(len(v_coords)), v_coords, color = 'black', label= "Vehicle " + str(j+1), linestyle = line_styles[j], marker = marker_styles[j])
             #need to comment in for multiple vehicles#############
-            # v_coords_x = []
-            # v_coords_y = []
-            # v_coords = []
+            v_coords_x = []
+            v_coords_y = []
+            v_coords = []
             #################################################################
 
         # Plot the maximum velocity
@@ -278,9 +282,9 @@ if __name__ == '__main__':
 
             plt.plot(range(n_steps), f_coords, color='black', label= "Vehicle " + str(j+1), linestyle = line_styles[j], marker = marker_styles[j])
             #need to comment in for multiple vehicles#############
-            # f_coords_x = []
-            # f_coords_y = []
-            # f_coords = []
+            f_coords_x = []
+            f_coords_y = []
+            f_coords = []
             #################################################################
 
         # Plot the maximum force
@@ -294,7 +298,13 @@ if __name__ == '__main__':
         data= np.append(coords,v_data,1)
         data= np.append(data,f_data,1)
         pd.DataFrame(data, columns=["x" , "y", "vx" , "vy", "fx" , "fy"]).to_csv(filename_data,header=True)
-        (pd.DataFrame.from_dict(data=wp_times, orient='index').to_csv(filename_waypoint, header=False))
+
+        wpdata=[]
+        iters=0
+        for key in wp_times.keys():
+            wpdata.append([key, wp_coords[0][iters]])
+            iters+=1
+        (pd.DataFrame(data=wpdata, columns=["time", "(x,y)"]).to_csv(filename_waypoint, header=True))
 
 
 
