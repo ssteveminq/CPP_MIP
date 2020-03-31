@@ -18,6 +18,7 @@ if __name__ == '__main__':
     datafolder = 'results/data/'       # folder name
     filename_data= 'robot_'
     filename_waypoint = 'waypoints_'
+    filename_obstacle= 'obstacles_'
 
     if args.obs == None or args.obs==0:
         area_size = 10  # window size
@@ -25,23 +26,24 @@ if __name__ == '__main__':
         vx_init = [0]   # initial x-component velocity
         vy_init = [0]   # initial y-component velocity
         # f_max = [0.2]    # maximum force experienced by a vehicle
-        f_max = [0.3]    # maximum force experienced by a vehicle
+        f_max = [0.35]    # maximum force experienced by a vehicle
         T = 100         # maximum time of travel
         dt = 4          # time step size
-        d_obs = 0.1     # minimum distance required from obstacle
+        d_obs = 0.25     # minimum distance required from obstacle
         M = 75          # number of constraints in order to approximate the force and velocity magnitudes
         
         obs_coords = [[-0.5, 0.5, 0, 5], [-3.5, -2, -1, 2]]     # array containing all obstacles in [x_min,x_max,y_min,y_max] format
         # obs_coords = []                  # array containing all obstacles in [x_min,x_max,y_min,y_max] format
-        veh_coords = [[3, 3, 0, -2]]     # array containing all vehicles in [x_0,y_0,x_fin,y_fin] format
-        wp_coords = [[[-0.7, 6], [3,3],[1,5],[-5, 4]]]  # array containing all waypoint in [x_wp,y_wp] format
-        # wp_coords = [[[1, 3], [3,3],[-3,3],[0,-2], [3,1], [3,-1],[1,-3],[3,-3], [-3, -3]]]  # array containing all waypoint in [x_wp,y_wp] format
+        veh_coords = [[3, 4, 0, -2]]     # array containing all vehicles in [x_0,y_0,x_fin,y_fin] format
+        # wp_coords = [[[-0.7, 6], [3,3],[1,5],[-5, 4]]]  # array containing all waypoint in [x_wp,y_wp] format
+        # wp_coords = [[[1, 3],[-4,0.5], [3,3],[-3,3],[0,-2], [3,1], [3,-1],[-1.5,0.5],[3,-3], [-3, -3]]]  # array containing all waypoint in [x_wp,y_wp] format
+        wp_coords = [[[1, 3], [3,3],[-2,3], [1,1], [3,1], [-2,1],[1,-2],[3,-2], [-2, -2]]]  # array containing all waypoint in [x_wp,y_wp] format
         name = 'waypoints'              # name of the figure to be saved
         folder = 'results/waypoints/'       # folder name
 
         constrain_multiple_vehicles = False   # True: add contraints related to multiple vehicle, False: do not add
         constrain_waypoints = True            # True: add contraints related to waypoints, False: do not add
-        constrain_obstacles = False           # True: add contraints related to avoiding obstacles, False: do not add
+        constrain_obstacles = False            # True: add contraints related to avoiding obstacles, False: do not add
 
     if args.obs == 1:
         area_size = 10      # window size
@@ -104,7 +106,7 @@ if __name__ == '__main__':
     ###### Inputs to the generation of the vehicles ######
     vehicle_mass = 5           # mass of the vehicles
     # v_max = 0.225              # maximum velocity of the vehicle
-    v_max = 0.4              # maximum velocity of the vehicle
+    v_max = 0.45              # maximum velocity of the vehicle
     performance_graphs = True  # include the velocity and acceleration performance of the vehicles
     obj_acceleration = True    # when True the acceleration is taken into consideration in the objective function
 
@@ -169,6 +171,7 @@ if __name__ == '__main__':
     name=name+timestamp +".png"
     filename_data= datafolder+filename_data+timestamp+'.csv'
     filename_waypoint =datafolder+filename_waypoint+timestamp+'.csv'
+    filename_obstacle =datafolder+filename_obstacle+timestamp+'.csv'
 
     # Plotting the results
     for i in range(num_vehicles):
@@ -197,15 +200,12 @@ if __name__ == '__main__':
                 if Z[-5] == "1":
                     wp_times[j]=k
                     # wp_times[j]=wp_coords[k]
-        print(wp_times)
-        print('------')
         wp_times= dict(sorted(wp_times.items()))
-        print(wp_times)
-        input()
         z=list(wp_times.keys())[-1]           #printing the final time
         print("final_time:", z)
 
      
+        z=z+1
         coords = np.zeros([z,2])
         for j in range(z):                    # obtaining the coordinates to plot
             coords[j, :] = [vehicles[i].x[j].x,vehicles[i].y[j].x]
@@ -311,9 +311,18 @@ if __name__ == '__main__':
         iters=0
         for key,value in wp_times.items():
             # wpdata.append([key, wp_coords[0][iters]])
-            print(value)
             wpdata.append([key, wp_coords[0][int(value)]])
+
         (pd.DataFrame(data=wpdata, columns=["time", "(x,y)"]).to_csv(filename_waypoint, header=True))
+
+        obs_column=[]
+        for obs in obstacles:
+            obs_str = '['+str(obs.x_min)+','+str(obs.x_max)+','+str(obs.y_min)+','+str(obs.y_max)+']'
+            obs_column.append(obs_str)     # array containing all obstacles in [x_min,x_max,y_min,y_max] format
+
+        (pd.DataFrame(data=obs_column, columns=["obstacle"]).to_csv(filename_obstacle, header=True))
+
+
 
 
 
