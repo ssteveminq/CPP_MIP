@@ -14,7 +14,7 @@ import re
 f_max=0.35
 v_max=0.45
 
-timeindex = "03310315"
+timeindex = "03311039"
 # Open the desired file for reading
 dir_path = os.path.dirname(os.path.realpath(__file__))
 dir_path=dir_path[:-4]
@@ -69,7 +69,7 @@ obstacle_coords = np.asarray(obsdf['obstacle'][0:])
 for i in range(len(obstacle_coords)):
     nums = [float(k) for k in floatregex.findall(obstacle_coords[i])] #find integer value in string format '[ int, int ]'
     tmp = Obstacle(nums[0], nums[1], nums[2], nums[3])
-    tmp.draw()
+    # tmp.draw()
     obstacles.append(tmp)                                   # attach obstacle to obstacle list
 
 
