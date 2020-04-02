@@ -85,6 +85,9 @@ force_y = np.asarray(df['fy'][1:])             #robot pos_y
 force_x = force_x.astype(np.float)
 force_y = force_y.astype(np.float)
 
+
+trajectories = [pos_x, pos_y, vel_x, vel_y, ]
+
 #waypoint
 way_x=[]
 way_y=[]

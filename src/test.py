@@ -2,12 +2,35 @@ from gurobipy import *
 from vehicle import Vehicle
 from obstacle import Obstacle
 import matplotlib.pyplot as plt
+from matplotlib.patches import Polygon, Rectangle, Circle
+from grid_map import GridMap
+from grid_based_sweep_coverage_path_planner import planning
+from tools import define_polygon, polygon_contains_point
 import numpy as np
 from math import *
 import time
 import csv
 import argparse
 import pandas as pd
+
+
+def define_flight_area(initial_pose):
+    plt.grid()
+    while True:
+        try:
+            num_pts = int( input('Enter number of polygonal vertixes: ') )
+            break
+        except:
+            print('\nPlease, enter an integer number.')
+    while True:
+        flight_area_vertices = define_polygon(num_pts)
+        if polygon_contains_point(initial_pose, flight_area_vertices):
+            break
+        plt.clf()
+        plt.grid()
+        print('The robot is not inside the flight area. Define again.')
+    return flight_area_vertices
+
 
 if __name__ == '__main__':
 
@@ -18,6 +41,43 @@ if __name__ == '__main__':
     datafolder = 'results/data/'       # folder name
     filename_data= 'robot_'
     filename_waypoint = 'waypoints_'
+    gridobstacles = [
+            # np.array([[0.7, -0.9], [1.3, -0.9], [1.3, -0.8], [0.7, -0.8]]) + np.array([-1.0, 0.5]),
+            # np.array([[0.7, -0.9], [1.3, -0.9], [1.3, -0.8], [0.7, -0.8]]) + np.array([-1.0, 1.0]),
+            # np.array([[0.7, -0.9], [0.8, -0.9], [0.8, -0.3], [0.7, -0.3]]) + np.array([-1.5, 1.0]),        
+
+            # np.array([[-0.3, -0.4], [0.3, -0.4], [0.3, 0.1], [-0.3, 0.1]]) * 0.5
+            ]
+
+
+    veh_coords = [[1, 1, 0, -2]]     # array containing all vehicles in [x_0,y_0,x_fin,y_fin] format
+    initial_pose=[]
+    initial_pose.append(veh_coords[0][0])
+    initial_pose.append(veh_coords[0][1])
+    # Define Search Region
+    flight_area_vertices = define_flight_area(initial_pose)
+    gridmap = GridMap(flight_area_vertices, initial_pose)
+    # gridmap.add_obstacles_to_grid_map(obstacles)
+    ox = flight_area_vertices[:,0].tolist() + [flight_area_vertices[0,0]]
+    oy = flight_area_vertices[:,1].tolist() + [flight_area_vertices[0,1]]
+    reso = 2.0
+    goal_x, goal_y, gmap, covmap = planning(ox, oy, reso)
+    # gridmap.draw_map(gridobstacles)
+    # plt.plot(goal_x,goal_y,'o', color='b')
+    
+    wp_coords=[[]]
+    print("length of waypoints:",len(goal_x))
+    plt.figure()
+    for i in range(len(goal_x)):
+        # plt.plot(goal_x[i],goal_y[i],'o', color='b')
+        wp_coords[0].append([goal_x[i],goal_y[i]])
+    # plt.show()
+       
+    print("goal_x", goal_x)
+    print("length(goal_x)", len(goal_x))
+    print("goal_y", goal_y)
+    print("length(goal_y)", len(goal_y))
+	
 
     if args.obs == None or args.obs==0:
         area_size = 10  # window size
@@ -33,8 +93,8 @@ if __name__ == '__main__':
         
         obs_coords = [[-0.5, 0.5, 0, 5], [-3.5, -2, -1, 2]]     # array containing all obstacles in [x_min,x_max,y_min,y_max] format
         # obs_coords = []                  # array containing all obstacles in [x_min,x_max,y_min,y_max] format
-        veh_coords = [[3, 3, 0, -2]]     # array containing all vehicles in [x_0,y_0,x_fin,y_fin] format
-        wp_coords = [[[-0.7, 6], [3,3],[1,5],[-5, 4]]]  # array containing all waypoint in [x_wp,y_wp] format
+        # veh_coords = [[3, 3, 0, -2]]     # array containing all vehicles in [x_0,y_0,x_fin,y_fin] format
+        # wp_coords = [[[-0.7, 6], [3,3],[1,5],[-5, 4]]]  # array containing all waypoint in [x_wp,y_wp] format
         # wp_coords = [[[1, 3], [3,3],[-3,3],[0,-2], [3,1], [3,-1],[1,-3],[3,-3], [-3, -3]]]  # array containing all waypoint in [x_wp,y_wp] format
         name = 'waypoints'              # name of the figure to be saved
         folder = 'results/waypoints/'       # folder name
@@ -73,6 +133,7 @@ if __name__ == '__main__':
         tmp = Obstacle(ob[0], ob[1], ob[2], ob[3])  # local obstacle variable
         tmp.draw()                                  # draw local obstacle
         obstacles.append(tmp)                       # attach obstacle to obstacle list
+
 
 
     # Create initial and final positions
@@ -319,3 +380,4 @@ if __name__ == '__main__':
 
     # plt.show()
     exit()
+
