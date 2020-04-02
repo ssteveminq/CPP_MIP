@@ -4,23 +4,27 @@ from numpy import genfromtxt
 import numpy as np
 from math import *
 import argparse
+from obstacle import Obstacle
 import csv
 import matplotlib.pyplot as plt
 import pandas as pd
 import os
 import re
 #import numpy as np
-f_max=0.3
-v_max=0.4
+f_max=0.35
+v_max=0.45
 
+timeindex = "03311039"
 # Open the desired file for reading
 dir_path = os.path.dirname(os.path.realpath(__file__))
 dir_path=dir_path[:-4]
-file_name =dir_path + "/results/data/robot_03290755_.csv"
-wayfile_name =dir_path + "/results/data/waypoints_03290755_.csv"
+file_name =dir_path + "/results/data/robot_" +timeindex+"_.csv"
+wayfile_name =dir_path + "/results/data/waypoints_" +timeindex+"_.csv"
+obsfile_name =dir_path + "/results/data/obstacles_"+timeindex+"_.csv"
 
 df = pd.read_csv(file_name, delimiter=',', names = ['index', 'x', 'y', 'vx', 'vy', 'fx', 'fy'])
 waydf = pd.read_csv(wayfile_name, delimiter=',', names = ['index', 'time', 'coords'])
+obsdf = pd.read_csv(obsfile_name , delimiter=',', names = ['obstacle'])
 
 waytime= np.asarray(waydf['time'][1:])
 waytimes= waytime.astype(np.float)
@@ -50,24 +54,35 @@ force_y = force_y.astype(np.float)
 #waypoint
 way_x=[]
 way_y=[]
-regex = re.compile(r'[\+\-]?[0-9]+')                #set pattern in order to find integer in string
+regex = re.compile('[-+]?\d*\.\d+|[-+]?\d+')                #set pattern in order to find integer in string
 way_coords = np.asarray(waydf['coords'][1:])
 for i in range(len(way_coords)):
-    nums = [int(k) for k in regex.findall(way_coords[i])] #find integer value in string format '[ int, int ]'
+    nums = [float(k) for k in regex.findall(way_coords[i])] #find integer value in string format '[ int, int ]'
     way_x.append(nums[0])
     way_y.append(nums[1])
+
+
+#obstacles
+floatregex =re.compile('[-+]?\d*\.\d+|[-+]?\d+') 
+obstacles = []                                  # list which will contain all obstacles
+obstacle_coords = np.asarray(obsdf['obstacle'][0:])
+for i in range(len(obstacle_coords)):
+    nums = [float(k) for k in floatregex.findall(obstacle_coords[i])] #find integer value in string format '[ int, int ]'
+    tmp = Obstacle(nums[0], nums[1], nums[2], nums[3])
+    # tmp.draw()
+    obstacles.append(tmp)                                   # attach obstacle to obstacle list
+
 
 #plot figures 
 plt.scatter(pos_x[0], pos_y[0], facecolor='blue',edgecolor='blue')      #initial point
 plt.scatter(pos_x[-1], pos_y[-1], facecolor='red',edgecolor='red')      #final point
-plt.plot(pos_x, pos_y, 'o', markersize = 20, fillstyle='none',color='black')             #trajectory point
+plt.plot(pos_x, pos_y, 'o', markersize = 30, fillstyle='none',color='black')             #trajectory point
 plt.plot(way_x, way_y, '*', markersize= 10, fillstyle='none',color='green')             #trajectory point
-# for i in range(len(waytimes)):
-    # plt.text(way_x[i], way_y[i]-1,str(waytimes[i]), color='g')
+for i in range(len(waytimes)):
+    plt.text(way_x[i], way_y[i]-1,str(waytimes[i]), color='g')
 
 
-
-area_size=5
+area_size=7.5
 locs, labels = plt.xticks()
 locs, labels = plt.yticks()
 plt.xticks(np.arange(-area_size,area_size,1.0))
