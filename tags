@@ -5,14 +5,24 @@
 !_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
 !_TAG_PROGRAM_VERSION	5.9~svn20110310	//
 DOWN	src/grid_based_sweep_coverage_path_planner.py	/^        DOWN = -1$/;"	v	class:SweepSearcher.SweepDirection
+EXTEND_AREA	src/raycasting_grid_map.py	/^EXTEND_AREA = 15.0$/;"	v
 GridMap	src/grid_map.py	/^class GridMap:$/;"	c
 GridMap	src/grid_map_lib.py	/^class GridMap:$/;"	c
+Kp	src/animation.py	/^Kp = 1.0  # speed propotional gain$/;"	v
+Kp	src/backup_animation.py	/^Kp = 1.0  # speed propotional gain$/;"	v
+Kv	src/animation.py	/^Kv = 0.05  # speed propotional gain$/;"	v
+Kv	src/backup_animation.py	/^Kv = 0.05  # speed propotional gain$/;"	v
+L	src/animation.py	/^L = 1.0  # [m] wheel base of vehicle$/;"	v
+L	src/backup_animation.py	/^L = 1.0  # [m] wheel base of vehicle$/;"	v
 LEFT	src/grid_based_sweep_coverage_path_planner.py	/^        LEFT = -1$/;"	v	class:SweepSearcher.MovingDirection
+Lfc	src/animation.py	/^Lfc = 1.0  # look-ahead distance$/;"	v
+Lfc	src/backup_animation.py	/^Lfc = 1.0  # look-ahead distance$/;"	v
 M	src/test.py	/^        M = 75              # number of constraints in order to approximate the force and velocity magnitudes$/;"	v
 M	src/test.py	/^        M = 75          # number of constraints in order to approximate the force and velocity magnitudes$/;"	v
 MovingDirection	src/grid_based_sweep_coverage_path_planner.py	/^    class MovingDirection(IntEnum):$/;"	c	class:SweepSearcher
 Obstacle	src/obstacle.py	/^class Obstacle:$/;"	c
 Params	src/animation.py	/^class Params:$/;"	c
+Params	src/backup_animation.py	/^class Params:$/;"	c
 RIGHT	src/grid_based_sweep_coverage_path_planner.py	/^        RIGHT = 1$/;"	v	class:SweepSearcher.MovingDirection
 SweepDirection	src/grid_based_sweep_coverage_path_planner.py	/^    class SweepDirection(IntEnum):$/;"	c	class:SweepSearcher
 SweepSearcher	src/grid_based_sweep_coverage_path_planner.py	/^class SweepSearcher:$/;"	c
@@ -20,33 +30,45 @@ T	src/test.py	/^        T = 100             # maximum time of travel$/;"	v
 T	src/test.py	/^        T = 100         # maximum time of travel$/;"	v
 TestStringMethods	tests/test_vehicle.py	/^class TestStringMethods(unittest.TestCase):$/;"	c
 UP	src/grid_based_sweep_coverage_path_planner.py	/^        UP = 1$/;"	v	class:SweepSearcher.SweepDirection
+Update_a	src/animation.py	/^def Update_a(state, goal):$/;"	f
+Update_a	src/backup_animation.py	/^def Update_a(state, goal):$/;"	f
+Update_phi	src/animation.py	/^def Update_phi(state, goal):$/;"	f
+Update_phi	src/backup_animation.py	/^def Update_phi(state, goal):$/;"	f
 Vehicle	src/vehicle.py	/^class Vehicle:$/;"	c
 Z	src/test.py	/^                Z = str(vehicles[i].kset[k][j])$/;"	v
 __init__	src/animation.py	/^    def __init__(self):$/;"	m	class:Params
+__init__	src/animation.py	/^    def __init__(self):$/;"	m	class:map_params
+__init__	src/backup_animation.py	/^    def __init__(self):$/;"	m	class:Params
+__init__	src/backup_animation.py	/^    def __init__(self):$/;"	m	class:map_params
 __init__	src/grid_based_sweep_coverage_path_planner.py	/^    def __init__(self, mdirection, sdirection, xinds_goaly, goaly):$/;"	m	class:SweepSearcher
 __init__	src/grid_map.py	/^    def __init__(self, polygon_vertices, point_inside_polygon=[0,0]):$/;"	m	class:GridMap
 __init__	src/grid_map_lib.py	/^    def __init__(self, width, height, resolution,$/;"	m	class:GridMap
 __init__	src/obstacle.py	/^    def __init__(self,x_min,x_max,y_min,y_max):$/;"	m	class:Obstacle
+__init__	src/raycasting_grid_map.py	/^    def __init__(self):$/;"	m	class:precastDB
 __init__	src/vehicle.py	/^    def __init__(self, mass: float, dt: float, T: float, x0: float, y0: float, id: int, model, M, v_max, f_max, area_size, x_fin: float, y_fin: float, wp: bool, x_wp=None, y_wp=None):$/;"	m	class:Vehicle
+__str__	src/raycasting_grid_map.py	/^    def __str__(self):$/;"	m	class:precastDB	file:
 add_obstacles_to_grid_map	src/grid_map.py	/^    def add_obstacles_to_grid_map(self, obstacles):$/;"	m	class:GridMap
 area_size	src/animation.py	/^area_size=5$/;"	v
-area_size	src/dataplot.py	/^area_size=5$/;"	v
+area_size	src/backup_animation.py	/^area_size=5$/;"	v
+area_size	src/dataplot.py	/^area_size=7.5$/;"	v
 area_size	src/test.py	/^        area_size = 10      # window size$/;"	v
 area_size	src/test.py	/^        area_size = 10  # window size$/;"	v
 args	src/test.py	/^    args = parser.parse_args()$/;"	v
-ax	src/animation.py	/^ax = plt.axes()$/;"	v
+atan_zero_to_twopi	src/raycasting_grid_map.py	/^def atan_zero_to_twopi(y, x):$/;"	f
 ax	src/dataplot.py	/^ax = plt.axes()$/;"	v
 bresenham	src/grid_map.py	/^def bresenham(start, end):$/;"	f
 calc_grid_central_xy_position_from_index	src/grid_map_lib.py	/^    def calc_grid_central_xy_position_from_index(self, index, lower_pos):$/;"	m	class:GridMap
 calc_grid_central_xy_position_from_xy_index	src/grid_map_lib.py	/^    def calc_grid_central_xy_position_from_xy_index(self, x_ind, y_ind):$/;"	m	class:GridMap
 calc_grid_index_from_xy_index	src/grid_map_lib.py	/^    def calc_grid_index_from_xy_index(self, x_ind, y_ind):$/;"	m	class:GridMap
+calc_grid_map_config	src/raycasting_grid_map.py	/^def calc_grid_map_config(xyreso, agent_x,agent_y):$/;"	f
 calc_xy_index_from_position	src/grid_map_lib.py	/^    def calc_xy_index_from_position(self, pos, lower_pos, max_index):$/;"	m	class:GridMap
 check_inside_polygon	src/grid_map_lib.py	/^    def check_inside_polygon(iox, ioy, x, y):$/;"	m	class:GridMap
 check_occupied_from_xy_index	src/grid_map_lib.py	/^    def check_occupied_from_xy_index(self, xind, yind, occupied_val=1.0):$/;"	m	class:GridMap
+check_polygon_visible	src/raycasting_grid_map.py	/^def check_polygon_visible(min_angle,max_angle,fov_anglelist):$/;"	f
 constrain_dynamics	src/vehicle.py	/^    def constrain_dynamics(self, vx_init, vy_init):$/;"	m	class:Vehicle
 constrain_multiple_vehicles	src/test.py	/^        constrain_multiple_vehicles = False   # True: add contraints related to multiple vehicle, False: do not add$/;"	v
 constrain_multiple_vehicles	src/vehicle.py	/^    def constrain_multiple_vehicles(self, vehicles, d_veh):$/;"	m	class:Vehicle
-constrain_obstacles	src/test.py	/^        constrain_obstacles = False           # True: add contraints related to avoiding obstacles, False: do not add$/;"	v
+constrain_obstacles	src/test.py	/^        constrain_obstacles = False            # True: add contraints related to avoiding obstacles, False: do not add$/;"	v
 constrain_obstacles	src/test.py	/^        constrain_obstacles = True            # True: add contraints related to avoiding obstacles, False: do not add$/;"	v
 constrain_obstacles	src/vehicle.py	/^    def constrain_obstacles(self, obstacles, d_obs):$/;"	m	class:Vehicle
 constrain_positions	src/vehicle.py	/^    def constrain_positions(self):$/;"	m	class:Vehicle
@@ -57,22 +79,34 @@ convert_grid_coordinate	src/grid_based_sweep_coverage_path_planner.py	/^def conv
 coords	src/test.py	/^        coords = np.zeros([z,2])$/;"	v
 create_borders_grid_map	src/grid_map.py	/^    def create_borders_grid_map(self, polygon_center):$/;"	m	class:GridMap
 d_obs	src/test.py	/^        d_obs = 0.1         # minimum distance required from obstacle$/;"	v
-d_obs	src/test.py	/^        d_obs = 0.1     # minimum distance required from obstacle$/;"	v
+d_obs	src/test.py	/^        d_obs = 0.25     # minimum distance required from obstacle$/;"	v
 data	src/test.py	/^        data= np.append(coords,v_data,1)$/;"	v
 data	src/test.py	/^        data= np.append(data,f_data,1)$/;"	v
 datafolder	src/test.py	/^    datafolder = 'results\/data\/'       # folder name$/;"	v
 define_flight_area	src/test.py	/^def define_flight_area(initial_pose):$/;"	f
 define_polygon	src/tools.py	/^def define_polygon(num_pts=4, ax=None):$/;"	f
 df	src/animation.py	/^df = pd.read_csv(file_name, delimiter=',', names = ['index', 'x', 'y', 'vx', 'vy', 'fx', 'fy'])$/;"	v
+df	src/backup_animation.py	/^df = pd.read_csv(file_name, delimiter=',', names = ['index', 'x', 'y', 'vx', 'vy', 'fx', 'fy'])$/;"	v
 df	src/dataplot.py	/^df = pd.read_csv(file_name, delimiter=',', names = ['index', 'x', 'y', 'vx', 'vy', 'fx', 'fy'])$/;"	v
 dir_path	src/animation.py	/^dir_path = os.path.dirname(os.path.realpath(__file__))$/;"	v
 dir_path	src/animation.py	/^dir_path=dir_path[:-4]$/;"	v
+dir_path	src/backup_animation.py	/^dir_path = os.path.dirname(os.path.realpath(__file__))$/;"	v
+dir_path	src/backup_animation.py	/^dir_path=dir_path[:-4]$/;"	v
 dir_path	src/dataplot.py	/^dir_path = os.path.dirname(os.path.realpath(__file__))$/;"	v
 dir_path	src/dataplot.py	/^dir_path=dir_path[:-4]$/;"	v
-draw	src/obstacle.py	/^    def draw(self):$/;"	m	class:Obstacle
+draw	src/obstacle.py	/^    def draw(self,axes=None):$/;"	m	class:Obstacle
+draw_heatmap	src/raycasting_grid_map.py	/^def draw_heatmap(data, minx, maxx, miny, maxy, xyreso):$/;"	f
 draw_map	src/grid_map.py	/^    def draw_map(self, obstacles,ax=None):$/;"	m	class:GridMap
+draw_occmap	src/animation.py	/^def draw_occmap(data, minx, maxx, miny, maxy, xyreso,agent_x, agent_y, ax):$/;"	f
+draw_occmap	src/backup_animation.py	/^def draw_occmap(data, minx, maxx, miny, maxy, xyreso,agent_x, agent_y, ax):$/;"	f
+draw_occmap_global	src/animation.py	/^def draw_occmap_global(data, minx, maxx, miny, maxy, xyreso, ax):$/;"	f
+draw_occmap_global	src/backup_animation.py	/^def draw_occmap_global(data, minx, maxx, miny, maxy, xyreso, ax):$/;"	f
+dt	src/animation.py	/^dt = 0.2  # [s]$/;"	v
+dt	src/backup_animation.py	/^dt = 0.2  # [s]$/;"	v
 dt	src/test.py	/^        dt = 4          # time step size$/;"	v
 dt	src/test.py	/^        dt = 4.             # time step size$/;"	v
+dx	src/backup_animation.py	/^    dx = goal[0] - state[0]$/;"	v
+dy	src/backup_animation.py	/^    dy = goal[1] - state[1]$/;"	v
 epsilon	src/test.py	/^    epsilon = 0.001                          # effect of the force on the objective function$/;"	v
 expand_grid	src/grid_map_lib.py	/^    def expand_grid(self):$/;"	m	class:GridMap
 extra	src/test.py	/^        extra = ''$/;"	v
@@ -86,52 +120,90 @@ f_coords_y	src/test.py	/^        f_coords_y = []$/;"	v
 f_data	src/test.py	/^        f_data=np.zeros([z,2])$/;"	v
 f_mag	src/dataplot.py	/^f_mag = []$/;"	v
 f_max	src/animation.py	/^f_max=0.3$/;"	v
-f_max	src/dataplot.py	/^f_max=0.3$/;"	v
+f_max	src/backup_animation.py	/^f_max=0.3$/;"	v
+f_max	src/dataplot.py	/^f_max=0.35$/;"	v
 f_max	src/test.py	/^        f_max = [0.25]      # maximum force experienced by a vehicle$/;"	v
-f_max	src/test.py	/^        f_max = [0.3]    # maximum force experienced by a vehicle$/;"	v
+f_max	src/test.py	/^        f_max = [0.35]    # maximum force experienced by a vehicle$/;"	v
 fig	src/dataplot.py	/^fig = plt.subplot(2,1,1)$/;"	v
 fig	src/test.py	/^        fig = plt.subplot(2,1,1)$/;"	v
 fig2	src/dataplot.py	/^fig2 = plt.subplot(2, 1, 2)$/;"	v
 fig2	src/test.py	/^        fig2 = plt.subplot(2, 1, 2)$/;"	v
-file_name	src/animation.py	/^file_name =dir_path + "\/results\/data\/robot_03290755_.csv"$/;"	v
-file_name	src/dataplot.py	/^file_name =dir_path + "\/results\/data\/robot_03290755_.csv"$/;"	v
+file_name	src/animation.py	/^file_name =dir_path + "\/results\/data\/robot_" +timeindex+"_.csv"$/;"	v
+file_name	src/backup_animation.py	/^file_name =dir_path + "\/results\/data\/robot_" +timeindex+"_.csv"$/;"	v
+file_name	src/dataplot.py	/^file_name =dir_path + "\/results\/data\/robot_" +timeindex+"_.csv"$/;"	v
 filename_data	src/test.py	/^    filename_data= 'robot_'$/;"	v
 filename_data	src/test.py	/^    filename_data= datafolder+filename_data+timestamp+'.csv'$/;"	v
+filename_obstacle	src/test.py	/^    filename_obstacle =datafolder+filename_obstacle+timestamp+'.csv'$/;"	v
+filename_obstacle	src/test.py	/^    filename_obstacle= 'obstacles_'$/;"	v
 filename_waypoint	src/test.py	/^    filename_waypoint = 'waypoints_'$/;"	v
 filename_waypoint	src/test.py	/^    filename_waypoint =datafolder+filename_waypoint+timestamp+'.csv'$/;"	v
 find_safe_turning_grid	src/grid_based_sweep_coverage_path_planner.py	/^    def find_safe_turning_grid(self, cxind, cyind, gmap):$/;"	m	class:SweepSearcher
 find_sweep_direction_and_start_posi	src/grid_based_sweep_coverage_path_planner.py	/^def find_sweep_direction_and_start_posi(ox, oy):$/;"	f
+finding_intersects	src/raycasting_grid_map.py	/^def finding_intersects(agent_x,agent_y, obstacle,yawreso):$/;"	f
 flight_area_vertices	src/test.py	/^    flight_area_vertices = define_flight_area(initial_pose)$/;"	v
+floatregex	src/animation.py	/^floatregex =re.compile('[-+]?\\d*\\.\\d+|[-+]?\\d+') $/;"	v
+floatregex	src/backup_animation.py	/^floatregex =re.compile('[-+]?\\d*\\.\\d+|[-+]?\\d+') $/;"	v
+floatregex	src/dataplot.py	/^floatregex =re.compile('[-+]?\\d*\\.\\d+|[-+]?\\d+') $/;"	v
 flood_fill	src/grid_map.py	/^def flood_fill(cpoint, pmap):$/;"	f
 folder	src/test.py	/^        folder = 'results\/waypoints\/'       # folder name$/;"	v
 folder	src/test.py	/^        folder = 'results\/waypoints_obs\/'        # folder name$/;"	v
 force_x	src/animation.py	/^force_x = force_x.astype(np.float)$/;"	v
 force_x	src/animation.py	/^force_x = np.asarray(df['fx'][1:])             #robot pos_x$/;"	v
+force_x	src/backup_animation.py	/^force_x = force_x.astype(np.float)$/;"	v
+force_x	src/backup_animation.py	/^force_x = np.asarray(df['fx'][1:])             #robot pos_x$/;"	v
 force_x	src/dataplot.py	/^force_x = force_x.astype(np.float)$/;"	v
 force_x	src/dataplot.py	/^force_x = np.asarray(df['fx'][1:])             #robot pos_x$/;"	v
 force_y	src/animation.py	/^force_y = force_y.astype(np.float)$/;"	v
 force_y	src/animation.py	/^force_y = np.asarray(df['fy'][1:])             #robot pos_y$/;"	v
+force_y	src/backup_animation.py	/^force_y = force_y.astype(np.float)$/;"	v
+force_y	src/backup_animation.py	/^force_y = np.asarray(df['fy'][1:])             #robot pos_y$/;"	v
 force_y	src/dataplot.py	/^force_y = force_y.astype(np.float)$/;"	v
 force_y	src/dataplot.py	/^force_y = np.asarray(df['fy'][1:])             #robot pos_y$/;"	v
+generate_fov_angle	src/raycasting_grid_map.py	/^def generate_fov_angle(agent_yaw, fov_range):$/;"	f
+generate_ray_casting_grid_map	src/raycasting_grid_map.py	/^def generate_ray_casting_grid_map(obstacles,xyreso, yawreso, agent_x=0.0, agent_y=0.0,  agent_yaw=0.0):$/;"	f
+generate_samples	src/obstacle.py	/^    def generate_samples(self, reso=0.2):$/;"	m	class:Obstacle
+generate_vertices	src/obstacle.py	/^    def generate_vertices(self):$/;"	m	class:Obstacle
+get_preocc	src/animation.py	/^def get_preocc(previous_map, grid,map_params):$/;"	f
+get_preocc	src/backup_animation.py	/^def get_preocc(previous_map, grid,map_params):$/;"	f
+get_raycast_to_line	src/raycasting_grid_map.py	/^def get_raycast_to_line(origin,obstacle, obs_points,yawreso):$/;"	f
 get_value_from_xy_index	src/grid_map_lib.py	/^    def get_value_from_xy_index(self, x_ind, y_ind):$/;"	m	class:GridMap
 get_xy_index_from_xy_pos	src/grid_map_lib.py	/^    def get_xy_index_from_xy_pos(self, x_pos, y_pos):$/;"	m	class:GridMap
-goal	src/animation.py	/^        goal = [goal_x[goali], goal_y[goali]]$/;"	v
-goal	src/animation.py	/^goal = [goal_x[goali], goal_y[goali]]$/;"	v
-goal_dist	src/animation.py	/^    goal_dist = np.linalg.norm(goal - state[:2])$/;"	v
-goal_tol	src/animation.py	/^goal_tol=0.1$/;"	v
+goal	src/animation.py	/^        goal = [way_x[goali], way_y[goali]]$/;"	v
+goal	src/animation.py	/^goal = [way_x[goali], way_y[goali]]$/;"	v
+goal	src/backup_animation.py	/^        goal = [way_x[goali], way_y[goali]]$/;"	v
+goal	src/backup_animation.py	/^goal = [way_x[goali], way_y[goali]]$/;"	v
+goal_dist	src/animation.py	/^    goal_dist = sqrt((goal[0] - state[0])**2+(goal[1] - state[1])**2) #distance to gaol$/;"	v
+goal_dist	src/backup_animation.py	/^    goal_dist = sqrt(dx**2+dy**2)$/;"	v
+goal_tol	src/animation.py	/^goal_tol=0.2$/;"	v
+goal_tol	src/backup_animation.py	/^goal_tol=0.2$/;"	v
 goali	src/animation.py	/^goali = 0                           #define goal from waypoints set$/;"	v
+goali	src/backup_animation.py	/^goali = 0                           #define goal from waypoints set$/;"	v
 grid2meters	src/grid_map.py	/^    def grid2meters(self, pose_grid):$/;"	m	class:GridMap
 gridmap	src/test.py	/^    gridmap = GridMap(flight_area_vertices, initial_pose)$/;"	v
 gridobstacles	src/test.py	/^    gridobstacles = [$/;"	v
 initial_pose	src/test.py	/^    initial_pose=[]$/;"	v
+initialize_global_occ_grid_map	src/animation.py	/^def initialize_global_occ_grid_map(params_map):$/;"	f
+initialize_global_occ_grid_map	src/backup_animation.py	/^def initialize_global_occ_grid_map(params_map):$/;"	f
 is_search_done	src/grid_based_sweep_coverage_path_planner.py	/^    def is_search_done(self, gmap):$/;"	m	class:SweepSearcher
+iter	src/animation.py	/^    iter=iter+1$/;"	v
+iter	src/animation.py	/^iter=0$/;"	v
+iter	src/backup_animation.py	/^    iter=iter+1$/;"	v
+iter	src/backup_animation.py	/^iter=0$/;"	v
 iters	src/test.py	/^        iters=0$/;"	v
+k	src/animation.py	/^k = 0.1  # look forward gain$/;"	v
+k	src/backup_animation.py	/^k = 0.1  # look forward gain$/;"	v
+ktheta	src/animation.py	/^ktheta = 0.5$/;"	v
+ktheta	src/backup_animation.py	/^ktheta = 0.5$/;"	v
 labels	src/test.py	/^            labels = ['Turn rate 15 $\\degree$\/s', 'Turn rate 12 $\\degree$\/s']$/;"	v
 line_styles	src/test.py	/^        line_styles = ["--", ":", "-.", '-', '-']$/;"	v
 m	src/test.py	/^    m = Model("ppl")$/;"	v
+main	src/raycasting_grid_map.py	/^def main():$/;"	f
+map_params	src/animation.py	/^class map_params:$/;"	c
+map_params	src/backup_animation.py	/^class map_params:$/;"	c
 marker_styles	src/test.py	/^        marker_styles = ['None', 'None', 'None', 'x', 'None']$/;"	v
 meters2grid	src/grid_map.py	/^    def meters2grid(self, pose_m,):$/;"	m	class:GridMap
 motion	src/animation.py	/^def motion(state, goal, params):$/;"	f
+motion	src/backup_animation.py	/^def motion(state, goal, params):$/;"	f
 move_target_grid	src/grid_based_sweep_coverage_path_planner.py	/^    def move_target_grid(self, cxind, cyind, gmap):$/;"	m	class:SweepSearcher
 n_steps	src/test.py	/^            n_steps = len(v_coords)$/;"	v
 n_way_points	src/test.py	/^    n_way_points = len(wp_coords[0])$/;"	v
@@ -139,31 +211,81 @@ name	src/test.py	/^        name = 'waypoints'              # name of the figure 
 name	src/test.py	/^        name = 'waypoints_obs.png'        # name of the figure to be saved$/;"	v
 name	src/test.py	/^    name=name+timestamp +".png"$/;"	v
 ntimestep	src/animation.py	/^ntimestep = len(pos_x)$/;"	v
+ntimestep	src/backup_animation.py	/^ntimestep = len(pos_x)$/;"	v
 num_vehicles	src/test.py	/^    num_vehicles = len(veh_coords)$/;"	v
-nums	src/animation.py	/^    nums = [int(k) for k in regex.findall(way_coords[i])] #find integer value in string format '[ int, int ]'$/;"	v
-nums	src/dataplot.py	/^    nums = [int(k) for k in regex.findall(way_coords[i])] #find integer value in string format '[ int, int ]'$/;"	v
+nums	src/animation.py	/^        nums = [float(k) for k in floatregex.findall(obstacle_coords[i])] #find integer value in string format '[ int, int ]'$/;"	v
+nums	src/animation.py	/^    nums = [float(k) for k in regex.findall(way_coords[i])] #find integer value in string format '[ int, int ]'$/;"	v
+nums	src/backup_animation.py	/^        nums = [float(k) for k in floatregex.findall(obstacle_coords[i])] #find integer value in string format '[ int, int ]'$/;"	v
+nums	src/backup_animation.py	/^    nums = [float(k) for k in regex.findall(way_coords[i])] #find integer value in string format '[ int, int ]'$/;"	v
+nums	src/dataplot.py	/^        nums = [float(k) for k in floatregex.findall(obstacle_coords[i])] #find integer value in string format '[ int, int ]'$/;"	v
+nums	src/dataplot.py	/^    nums = [float(k) for k in regex.findall(way_coords[i])] #find integer value in string format '[ int, int ]'$/;"	v
 obj_acceleration	src/test.py	/^    obj_acceleration = True    # when True the acceleration is taken into consideration in the objective function$/;"	v
-obs_coords	src/test.py	/^        obs_coords = [[-0.5, 0.5, 0, 5], [-3.5, -2, -1, 2]]     # array containing all obstacles in [x_min,x_max,y_min,y_max] format$/;"	v
+obs	src/animation.py	/^        obs = Obstacle(nums[0]-1, nums[1]-1, nums[2], nums[3])          #xmin,ymin, $/;"	v
+obs	src/backup_animation.py	/^        obs = Obstacle(nums[0]-1, nums[1]-1, nums[2], nums[3])          #xmin,ymin, $/;"	v
+obs_column	src/test.py	/^        obs_column=[]$/;"	v
+obs_coords	src/test.py	/^        obs_coords = [[-0.5, 0.5, 0, 2.5], [-3.5, -2, -1, 2]]     # array containing all obstacles in [x_min,x_max,y_min,y_max] format$/;"	v
 obs_coords	src/test.py	/^        obs_coords = [[-0.5, 0.5, 0, 5]]     # array containing all obstacles in [x_min,x_max,y_min,y_max] format$/;"	v
+obs_str	src/test.py	/^            obs_str = '['+str(obs.x_min)+','+str(obs.x_max)+','+str(obs.y_min)+','+str(obs.y_max)+']'$/;"	v
+obsdf	src/animation.py	/^obsdf = pd.read_csv(obsfile_name , delimiter=',', names = ['obstacle'])$/;"	v
+obsdf	src/backup_animation.py	/^obsdf = pd.read_csv(obsfile_name , delimiter=',', names = ['obstacle'])$/;"	v
+obsdf	src/dataplot.py	/^obsdf = pd.read_csv(obsfile_name , delimiter=',', names = ['obstacle'])$/;"	v
+obsfile_name	src/animation.py	/^obsfile_name =dir_path + "\/results\/data\/obstacles_"+timeindex+"_.csv"$/;"	v
+obsfile_name	src/backup_animation.py	/^obsfile_name =dir_path + "\/results\/data\/obstacles_"+timeindex+"_.csv"$/;"	v
+obsfile_name	src/dataplot.py	/^obsfile_name =dir_path + "\/results\/data\/obstacles_"+timeindex+"_.csv"$/;"	v
+obstacle_coords	src/animation.py	/^obstacle_coords = np.asarray(obsdf['obstacle'][0:])$/;"	v
+obstacle_coords	src/backup_animation.py	/^obstacle_coords = np.asarray(obsdf['obstacle'][0:])$/;"	v
+obstacle_coords	src/dataplot.py	/^obstacle_coords = np.asarray(obsdf['obstacle'][0:])$/;"	v
+obstacles	src/animation.py	/^obstacles = []                                  # list which will contain all obstacles$/;"	v
+obstacles	src/backup_animation.py	/^obstacles = []                                  # list which will contain all obstacles$/;"	v
+obstacles	src/dataplot.py	/^obstacles = []                                  # list which will contain all obstacles$/;"	v
 obstacles	src/test.py	/^    obstacles = []                                  # list which will contain all obstacles$/;"	v
 ox	src/test.py	/^    ox = flight_area_vertices[:,0].tolist() + [flight_area_vertices[0,0]]$/;"	v
 oy	src/test.py	/^    oy = flight_area_vertices[:,1].tolist() + [flight_area_vertices[0,1]]$/;"	v
+p_free_given_zfree	src/animation.py	/^p_free_given_zfree= 0.99$/;"	v
+p_free_given_zfree	src/backup_animation.py	/^p_free_given_zfree= 0.99$/;"	v
+p_free_given_zocc	src/animation.py	/^p_free_given_zocc=0.05$/;"	v
+p_free_given_zocc	src/backup_animation.py	/^p_free_given_zocc=0.05$/;"	v
+p_occ_given_zfree	src/animation.py	/^p_occ_given_zfree= 0.01$/;"	v
+p_occ_given_zfree	src/backup_animation.py	/^p_occ_given_zfree= 0.01$/;"	v
+p_occ_given_zocc	src/animation.py	/^p_occ_given_zocc=0.95$/;"	v
+p_occ_given_zocc	src/backup_animation.py	/^p_occ_given_zocc=0.95$/;"	v
 params	src/animation.py	/^params = Params()$/;"	v
+params	src/backup_animation.py	/^params = Params()$/;"	v
+params_map	src/animation.py	/^params_map =  map_params()$/;"	v
+params_map	src/backup_animation.py	/^params_map =  map_params()$/;"	v
 parser	src/test.py	/^    parser = argparse.ArgumentParser(description="Usage: main.py obs")$/;"	v
 performance_graphs	src/test.py	/^    performance_graphs = True  # include the velocity and acceleration performance of the vehicles$/;"	v
 planning	src/grid_based_sweep_coverage_path_planner.py	/^def planning(ox, oy, reso,$/;"	f
 plot_grid_map	src/grid_map_lib.py	/^    def plot_grid_map(self, ax=None):$/;"	m	class:GridMap
+plot_map	src/animation.py	/^def plot_map(pos_x,pos_y,way_x, way_y, waytimes):$/;"	f
+plot_map	src/backup_animation.py	/^def plot_map(pos_x,pos_y,way_x, way_y, waytimes):$/;"	f
+plot_obstacles	src/animation.py	/^def plot_obstacles(obstacles):$/;"	f
+plot_obstacles	src/backup_animation.py	/^def plot_obstacles(obstacles):$/;"	f
+plot_robot	src/animation.py	/^def plot_robot(pose, params):$/;"	f
+plot_robot	src/backup_animation.py	/^def plot_robot(pose, params):$/;"	f
+pmap_global	src/animation.py	/^        pmap_global = update_occ_grid_map(state, updated_grids,pmap_global,params_map)$/;"	v
+pmap_global	src/animation.py	/^pmap_global = initialize_global_occ_grid_map(params_map)$/;"	v
+pmap_global	src/backup_animation.py	/^        pmap_global = update_occ_grid_map(state, updated_grids,pmap_global,params_map)$/;"	v
+pmap_global	src/backup_animation.py	/^pmap_global = initialize_global_occ_grid_map(params_map)$/;"	v
+polygon_contains_point	src/raycasting_grid_map.py	/^def polygon_contains_point(point, obstacle):$/;"	f
 polygon_contains_point	src/tools.py	/^def polygon_contains_point(point, polygon_vertices):$/;"	f
 pos_x	src/animation.py	/^pos_x = np.asarray(df['x'][1:])             #robot pos_x$/;"	v
 pos_x	src/animation.py	/^pos_x = pos_x.astype(np.float)$/;"	v
+pos_x	src/backup_animation.py	/^pos_x = np.asarray(df['x'][1:])             #robot pos_x$/;"	v
+pos_x	src/backup_animation.py	/^pos_x = pos_x.astype(np.float)$/;"	v
 pos_x	src/dataplot.py	/^pos_x = np.asarray(df['x'][1:])             #robot pos_x$/;"	v
 pos_x	src/dataplot.py	/^pos_x = pos_x.astype(np.float)$/;"	v
 pos_y	src/animation.py	/^pos_y = np.asarray(df['y'][1:])             #robot pos_y$/;"	v
 pos_y	src/animation.py	/^pos_y = pos_y.astype(np.float)$/;"	v
+pos_y	src/backup_animation.py	/^pos_y = np.asarray(df['y'][1:])             #robot pos_y$/;"	v
+pos_y	src/backup_animation.py	/^pos_y = pos_y.astype(np.float)$/;"	v
 pos_y	src/dataplot.py	/^pos_y = np.asarray(df['y'][1:])             #robot pos_y$/;"	v
 pos_y	src/dataplot.py	/^pos_y = pos_y.astype(np.float)$/;"	v
-regex	src/animation.py	/^regex = re.compile(r'[\\+\\-]?[0-9]+')                #set pattern in order to find integer in string$/;"	v
-regex	src/dataplot.py	/^regex = re.compile(r'[\\+\\-]?[0-9]+')                #set pattern in order to find integer in string$/;"	v
+precastDB	src/raycasting_grid_map.py	/^class precastDB:$/;"	c
+precasting	src/raycasting_grid_map.py	/^def precasting(minx, miny, xw, yw, xyreso, yawreso,agent_x,agent_y):$/;"	f
+regex	src/animation.py	/^regex = re.compile('[-+]?\\d*\\.\\d+|[-+]?\\d+')                #set pattern in order to find integer in string$/;"	v
+regex	src/backup_animation.py	/^regex = re.compile('[-+]?\\d*\\.\\d+|[-+]?\\d+')                #set pattern in order to find integer in string$/;"	v
+regex	src/dataplot.py	/^regex = re.compile('[-+]?\\d*\\.\\d+|[-+]?\\d+')                #set pattern in order to find integer in string$/;"	v
 reso	src/test.py	/^    reso = 2.0$/;"	v
 search_free_grid_index_at_edge_y	src/grid_based_sweep_coverage_path_planner.py	/^def search_free_grid_index_at_edge_y(grid_map, from_upper=False):$/;"	f
 search_start_grid	src/grid_based_sweep_coverage_path_planner.py	/^    def search_start_grid(self, grid_map):$/;"	m	class:SweepSearcher
@@ -172,25 +294,47 @@ set_value_from_xy_index	src/grid_map_lib.py	/^    def set_value_from_xy_index(se
 set_value_from_xy_pos	src/grid_map_lib.py	/^    def set_value_from_xy_pos(self, x_pos, y_pos, val):$/;"	m	class:GridMap
 setup_grid_map	src/grid_based_sweep_coverage_path_planner.py	/^def setup_grid_map(ox, oy, reso, sweep_direction, offset_grid=5):$/;"	f
 shape	src/test.py	/^            shape = ['o', '^']$/;"	v
-state	src/animation.py	/^    state = motion(state, goal, params)$/;"	v
-state	src/animation.py	/^state = np.array([pos_x[0],pos_y[0], 0.0, np.pi\/2, 0.0, 0.0])$/;"	v
+show_animation	src/raycasting_grid_map.py	/^show_animation = True$/;"	v
+simple_motion	src/animation.py	/^def simple_motion(state, goal, params):$/;"	f
+simple_motion	src/backup_animation.py	/^def simple_motion(state, goal, params):$/;"	f
+simtime	src/animation.py	/^    simtime = simtime + dt$/;"	v
+simtime	src/animation.py	/^simtime=0.0$/;"	v
+simtime	src/backup_animation.py	/^    simtime = simtime + dt$/;"	v
+simtime	src/backup_animation.py	/^simtime=0.0$/;"	v
+state	src/animation.py	/^    state = simple_motion(state, goal, params)                        #dynamics$/;"	v
+state	src/animation.py	/^state = np.array([pos_x[0],pos_y[0],np.pi\/2, 0.0])$/;"	v
+state	src/backup_animation.py	/^    state = simple_motion(state, goal, params)$/;"	v
+state	src/backup_animation.py	/^state = np.array([pos_x[0],pos_y[0],np.pi\/2, 0.0])$/;"	v
 steps	src/test.py	/^    steps = int(T \/ dt)                             # number of steps$/;"	v
 swap_moving_direction	src/grid_based_sweep_coverage_path_planner.py	/^    def swap_moving_direction(self):$/;"	m	class:SweepSearcher
 sweep_path_search	src/grid_based_sweep_coverage_path_planner.py	/^def sweep_path_search(sweep_searcher, gmap, grid_search_animation=False):$/;"	f
 t	src/test.py	/^    t = time.localtime()$/;"	v
 t_current	src/animation.py	/^    t_current = time.time()$/;"	v
+t_current	src/backup_animation.py	/^    t_current = time.time()$/;"	v
 t_prev_goal	src/animation.py	/^        t_prev_goal = time.time()$/;"	v
+t_prev_goal	src/animation.py	/^t_prev_goal = time.time()$/;"	v
+t_prev_goal	src/backup_animation.py	/^        t_prev_goal = time.time()$/;"	v
+t_prev_goal	src/backup_animation.py	/^t_prev_goal = time.time()$/;"	v
 tellme	src/tools.py	/^        def tellme(s):$/;"	f	function:define_polygon
 test_1	tests/test_vehicle.py	/^    def test_1(self):$/;"	m	class:TestStringMethods
 test_polygon_set	src/grid_map_lib.py	/^def test_polygon_set():$/;"	f
 test_position_set	src/grid_map_lib.py	/^def test_position_set():$/;"	f
+timeindex	src/animation.py	/^timeindex = "04171450"$/;"	v
+timeindex	src/backup_animation.py	/^timeindex = "04171450"$/;"	v
+timeindex	src/dataplot.py	/^timeindex = "04171450"$/;"	v
 timestamp	src/test.py	/^    timestamp =time.strftime('%m%d%H%M_', t)$/;"	v
+tmp	src/dataplot.py	/^        tmp = Obstacle(nums[0], nums[1], nums[2], nums[3])          #xmin,ymin, $/;"	v
 tmp	src/test.py	/^        tmp = Obstacle(ob[0], ob[1], ob[2], ob[3])  # local obstacle variable$/;"	v
 total	src/test.py	/^                total = vehicles[veh].Tf  # Objective function without acceleration$/;"	v
 total	src/test.py	/^    total = 0                                # total number of time steps between all the vehicles (minimize)$/;"	v
-traj	src/animation.py	/^    traj = np.vstack([traj, state[:2]])$/;"	v
+traj	src/animation.py	/^        traj = np.vstack([traj, state[:2]])$/;"	v
 traj	src/animation.py	/^traj = state[:2]$/;"	v
+traj	src/backup_animation.py	/^        traj = np.vstack([traj, state[:2]])$/;"	v
+traj	src/backup_animation.py	/^traj = state[:2]$/;"	v
 trajectories	src/animation.py	/^trajectories = [pos_x, pos_y, vel_x, vel_y, ]$/;"	v
+trajectories	src/backup_animation.py	/^trajectories = [pos_x, pos_y, vel_x, vel_y, ]$/;"	v
+update_occ_grid_map	src/animation.py	/^def update_occ_grid_map(state,observed_grids, previous_map, mapparams):$/;"	f
+update_occ_grid_map	src/backup_animation.py	/^def update_occ_grid_map(state,observed_grids, previous_map, mapparams):$/;"	f
 update_turning_window	src/grid_based_sweep_coverage_path_planner.py	/^    def update_turning_window(self):$/;"	m	class:SweepSearcher
 v_coords	src/test.py	/^            v_coords = []$/;"	v
 v_coords	src/test.py	/^        v_coords = []$/;"	v
@@ -201,44 +345,60 @@ v_coords_y	src/test.py	/^        v_coords_y = []$/;"	v
 v_data	src/test.py	/^        v_data=np.zeros([z,2])$/;"	v
 v_mag	src/dataplot.py	/^v_mag= []$/;"	v
 v_max	src/animation.py	/^v_max=0.4$/;"	v
-v_max	src/dataplot.py	/^v_max=0.4$/;"	v
-v_max	src/test.py	/^    v_max = 0.4              # maximum velocity of the vehicle$/;"	v
+v_max	src/backup_animation.py	/^v_max=0.4$/;"	v
+v_max	src/dataplot.py	/^v_max=0.45$/;"	v
+v_max	src/test.py	/^    v_max = 0.45              # maximum velocity of the vehicle$/;"	v
 veh_coords	src/test.py	/^        veh_coords = [[5, 5, -3.5, 6]]    # array containing all vehicles in [x_0,y_0,x_fin,y_fin] format$/;"	v
 veh_coords	src/test.py	/^    veh_coords = [[1, 1, 0, -2]]     # array containing all vehicles in [x_0,y_0,x_fin,y_fin] format$/;"	v
 vehicle_mass	src/test.py	/^    vehicle_mass = 5           # mass of the vehicles$/;"	v
 vehicles	src/test.py	/^    vehicles = []$/;"	v
 vel_x	src/animation.py	/^vel_x = np.asarray(df['vx'][1:])             #robot pos_x$/;"	v
 vel_x	src/animation.py	/^vel_x = vel_x.astype(np.float)$/;"	v
+vel_x	src/backup_animation.py	/^vel_x = np.asarray(df['vx'][1:])             #robot pos_x$/;"	v
+vel_x	src/backup_animation.py	/^vel_x = vel_x.astype(np.float)$/;"	v
 vel_x	src/dataplot.py	/^vel_x = np.asarray(df['vx'][1:])             #robot pos_x$/;"	v
 vel_x	src/dataplot.py	/^vel_x = vel_x.astype(np.float)$/;"	v
 vel_y	src/animation.py	/^vel_y = np.asarray(df['vy'][1:])             #robot pos_y$/;"	v
 vel_y	src/animation.py	/^vel_y = vel_y.astype(np.float)$/;"	v
+vel_y	src/backup_animation.py	/^vel_y = np.asarray(df['vy'][1:])             #robot pos_y$/;"	v
+vel_y	src/backup_animation.py	/^vel_y = vel_y.astype(np.float)$/;"	v
 vel_y	src/dataplot.py	/^vel_y = np.asarray(df['vy'][1:])             #robot pos_y$/;"	v
 vel_y	src/dataplot.py	/^vel_y = vel_y.astype(np.float)$/;"	v
+visualize	src/animation.py	/^def visualize(traj, pose, obstacles,params):$/;"	f
+visualize	src/backup_animation.py	/^def visualize(traj, pose, obstacles,params):$/;"	f
 vx_init	src/test.py	/^        vx_init = [0.0]   # initial x-component velocity$/;"	v
 vx_init	src/test.py	/^        vx_init = [0]   # initial x-component velocity$/;"	v
 vy_init	src/test.py	/^        vy_init = [-0.0]    # initial y-component velocity$/;"	v
 vy_init	src/test.py	/^        vy_init = [0]   # initial y-component velocity$/;"	v
 way_coords	src/animation.py	/^way_coords = np.asarray(waydf['coords'][1:])$/;"	v
+way_coords	src/backup_animation.py	/^way_coords = np.asarray(waydf['coords'][1:])$/;"	v
 way_coords	src/dataplot.py	/^way_coords = np.asarray(waydf['coords'][1:])$/;"	v
 way_x	src/animation.py	/^way_x=[]$/;"	v
+way_x	src/backup_animation.py	/^way_x=[]$/;"	v
 way_x	src/dataplot.py	/^way_x=[]$/;"	v
 way_y	src/animation.py	/^way_y=[]$/;"	v
+way_y	src/backup_animation.py	/^way_y=[]$/;"	v
 way_y	src/dataplot.py	/^way_y=[]$/;"	v
 waydf	src/animation.py	/^waydf = pd.read_csv(wayfile_name, delimiter=',', names = ['index', 'time', 'coords'])$/;"	v
+waydf	src/backup_animation.py	/^waydf = pd.read_csv(wayfile_name, delimiter=',', names = ['index', 'time', 'coords'])$/;"	v
 waydf	src/dataplot.py	/^waydf = pd.read_csv(wayfile_name, delimiter=',', names = ['index', 'time', 'coords'])$/;"	v
-wayfile_name	src/animation.py	/^wayfile_name =dir_path + "\/results\/data\/waypoints_03290755_.csv"$/;"	v
-wayfile_name	src/dataplot.py	/^wayfile_name =dir_path + "\/results\/data\/waypoints_03290755_.csv"$/;"	v
+wayfile_name	src/animation.py	/^wayfile_name =dir_path + "\/results\/data\/waypoints_" +timeindex+"_.csv"$/;"	v
+wayfile_name	src/backup_animation.py	/^wayfile_name =dir_path + "\/results\/data\/waypoints_" +timeindex+"_.csv"$/;"	v
+wayfile_name	src/dataplot.py	/^wayfile_name =dir_path + "\/results\/data\/waypoints_" +timeindex+"_.csv"$/;"	v
 waytime	src/animation.py	/^waytime= np.asarray(waydf['time'][1:])$/;"	v
+waytime	src/backup_animation.py	/^waytime= np.asarray(waydf['time'][1:])$/;"	v
 waytime	src/dataplot.py	/^waytime= np.asarray(waydf['time'][1:])$/;"	v
 waytimes	src/animation.py	/^waytimes= waytime.astype(np.float)$/;"	v
+waytimes	src/backup_animation.py	/^waytimes= waytime.astype(np.float)$/;"	v
 waytimes	src/dataplot.py	/^waytimes= waytime.astype(np.float)$/;"	v
 wp	src/test.py	/^        wp = True           # switch for use of waypoints. True: waypoints can be used. False: function deactivated$/;"	v
 wp	src/test.py	/^        wp = True       # switch for use of waypoints. True: waypoints can be used. False: function deactivated$/;"	v
 wp_coords	src/test.py	/^        wp_coords = [[[0, -2],[3,3], [-3, 4]]]  # array containing all waypoint in [x_wp,y_wp] format$/;"	v
+wp_coords	src/test.py	/^        wp_coords = [[[1, 3], [3,3],[-3,3],[0,-2], [3,1], [3,-1],[1,-3],[3,-3], [-3, -3]]]  # array containing all waypoint in [x_wp,y_wp] format$/;"	v
 wp_coords	src/test.py	/^    wp_coords=[[]]$/;"	v
 wp_times	src/test.py	/^        wp_times= dict(sorted(wp_times.items()))$/;"	v
 wp_times	src/test.py	/^        wp_times={}$/;"	v
 wpdata	src/test.py	/^        wpdata=[]$/;"	v
 z	src/test.py	/^        z = 0$/;"	v
 z	src/test.py	/^        z=list(wp_times.keys())[-1]           #printing the final time$/;"	v
+z	src/test.py	/^        z=z+1$/;"	v

@@ -61,7 +61,8 @@ if __name__ == '__main__':
     ox = flight_area_vertices[:,0].tolist() + [flight_area_vertices[0,0]]
     oy = flight_area_vertices[:,1].tolist() + [flight_area_vertices[0,1]]
     reso = 2.0
-    goal_x, goal_y, gmap, covmap = planning(ox, oy, reso)
+    goal_x, goal_y, gmap, covmap = planning(ox, oy, reso)    #waypoint geneneration
+    #test for grid map
     # gridmap.draw_map(gridobstacles)
     # plt.plot(goal_x,goal_y,'o', color='b')
     
@@ -87,16 +88,16 @@ if __name__ == '__main__':
         vy_init = [0]   # initial y-component velocity
         # f_max = [0.2]    # maximum force experienced by a vehicle
         f_max = [0.35]    # maximum force experienced by a vehicle
-        T = 120         # maximum time of travel
+        T = 100         # maximum time of travel
         dt = 4          # time step size
         d_obs = 0.25     # minimum distance required from obstacle
         M = 75          # number of constraints in order to approximate the force and velocity magnitudes
         
-        obs_coords = [[-0.5, 0.5, 0, 5], [-3.5, -2, -1, 2]]     # array containing all obstacles in [x_min,x_max,y_min,y_max] format
+        obs_coords = [[-0.5, 0.5, 0, 2.5], [-3.5, -2, -1, 2]]     # array containing all obstacles in [x_min,x_max,y_min,y_max] format
         # obs_coords = []                  # array containing all obstacles in [x_min,x_max,y_min,y_max] format
         # veh_coords = [[3, 3, 0, -2]]     # array containing all vehicles in [x_0,y_0,x_fin,y_fin] format
         # wp_coords = [[[-0.7, 6], [3,3],[1,5],[-5, 4]]]  # array containing all waypoint in [x_wp,y_wp] format
-        # wp_coords = [[[1, 3], [3,3],[-3,3],[0,-2], [3,1], [3,-1],[1,-3],[3,-3], [-3, -3]]]  # array containing all waypoint in [x_wp,y_wp] format
+        wp_coords = [[[1, 3], [3,3],[-3,3],[0,-2], [3,1], [3,-1],[1,-3],[3,-3], [-3, -3]]]  # array containing all waypoint in [x_wp,y_wp] format
         # veh_coords = [[3, 4, 0, -2]]     # array containing all vehicles in [x_0,y_0,x_fin,y_fin] format
         # wp_coords = [[[-0.7, 6], [3,3],[1,5],[-5, 4]]]  # array containing all waypoint in [x_wp,y_wp] format
         # wp_coords = [[[1, 3],[-4,0.5], [3,3],[-3,3],[0,-2], [3,1], [3,-1],[-1.5,0.5],[3,-3], [-3, -3]]]  # array containing all waypoint in [x_wp,y_wp] format

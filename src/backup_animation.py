@@ -83,9 +83,9 @@ def draw_occmap_global(data, minx, maxx, miny, maxy, xyreso, ax):
     # plt.axis("equal")
 
 def get_preocc(previous_map, grid,map_params):
-    #Find grid value from the previouwmap
-    # 1) find the global position in the map
-    # 2) find the index based on the global position
+    #Find grid value from the map
+    #find the position in the map
+    #global position
     px = grid.px
     py = grid.py
 
@@ -209,8 +209,14 @@ def visualize(traj, pose, obstacles,params):
 
     axes[0].set_xlim([-params.area_size, params.area_size])   # limit the plot space
     axes[0].set_ylim([-params.area_size, params.area_size])   # limit the plot space
+    # ax.set_xlim([-3.0, 3.0])
+    # ax.set_ylim([-3.0, 3.0])
     axes[0].plot(traj[:,0], traj[:,1], 'k')
+    # plt.axis("equal")
+    # plot_robot(pose, params)
     # plt.legend()
+
+
 
 
 #dyanmics
@@ -249,13 +255,14 @@ def Update_phi(state, goal):
     cur_yaw = state[2]
     err_phi = des_phi-cur_yaw
     # err_phi = math.atan2(goal[1] - state[1], goal[0] - state[0]) - state[2]
-    # print("des_phi: ",des_phi)
-    # print("cur_phi: ",cur_yaw)
-    # print("err_phi: ",err_phi)
+    print("des_phi: ",des_phi)
+    print("cur_phi: ",cur_yaw)
+    print("err_phi: ",err_phi)
     # if phi>0.0:
         # phi=0.9
     # else:
         # phi=-0.9
+
     # if err_phi > math.pi:
        # err_phi = err_phi-2*math.pi 
     # elif err_phi <- math.pi:
@@ -363,6 +370,17 @@ for i in range(len(obstacle_coords)):
 
 
 
+
+
+
+    
+
+# num_obs=2
+# ox = (np.random.rand(num_obs) - 0.5) * 10.0
+# oy = (np.random.rand(num_obs) - 0.5) * 10.0
+# ox=[]
+# oy=[]
+
 #plot figures 
 # fig,axes=plt.figure(figsize=(10,20))
 axes[0].scatter(pos_x[0], pos_y[0], facecolor='blue',edgecolor='blue')      #initial point
@@ -387,7 +405,6 @@ axes[0].set_ylim([-area_size, area_size])   # limit the plot space
 axes[0].grid(True)
 # axes[0].tight_layout()
 
-#simulation settings
 ntimestep = len(pos_x)
 goal_tol=0.2
 
@@ -412,12 +429,20 @@ pmap_global = initialize_global_occ_grid_map(params_map)
 
 # for i in range(ntimestep):
 for _ in range(params.numiters):
-    state = simple_motion(state, goal, params)                        #dynamics
-    goal_dist = sqrt((goal[0] - state[0])**2+(goal[1] - state[1])**2) #distance to gaol
+    state = simple_motion(state, goal, params)
+    #########Fixme--temporary code
+    # state[2]+=1*math.pi/6
+    # if state[2]>2*np.pi:
+        # state[2]=-2*np.pi
+    ####################
+    dx = goal[0] - state[0]
+    dy = goal[1] - state[1]
+    goal_dist = sqrt(dx**2+dy**2)
     simtime = simtime + dt
     print("simtime" , simtime)
     t_current = time.time()
-    if goal_dist < goal_tol:                                          # goal is reached
+    if goal_dist < goal_tol: # goal is reached
+        print('----------Switching to the next goal.----------')
         print('Time from the previous reached goal:', t_current - t_prev_goal)
         # if goali < len(goal_x) - 1:
         if goali < len(way_x) - 1:
@@ -427,7 +452,6 @@ for _ in range(params.numiters):
         t_prev_goal = time.time()
         goal = [way_x[goali], way_y[goali]]
 
-    #plot
     if params.animate:
         #figure1
         axes[0].cla()
@@ -449,7 +473,7 @@ for _ in range(params.numiters):
         # axes[1].plot(ox, oy, "xr")
 
 
-        #figure3- global occupancy grid
+        #figure3
         axes[2].cla()
         pmap_global = update_occ_grid_map(state, updated_grids,pmap_global,params_map)
         draw_occmap_global(pmap_global,params_map.xmin_global, params_map.xmax_global, params_map.ymin_global,
@@ -462,6 +486,9 @@ for _ in range(params.numiters):
     # if iter%50==1:
         # input()
 
+# traj = np.vstack([traj, state[:2]])
+# plt.plot(goal[0], goal[1], 'ro', markersize=12, label='Goal position', zorder=20)
+# visualize(traj, state, params)
 plt.show()
      
      
