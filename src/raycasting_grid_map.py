@@ -25,11 +25,6 @@ def polygon_contains_point(point, obstacle):
     polygon = Polygon(obstacle_pts)
     return polygon.contains(point)
 
-def finding_intersects(agent_x,agent_y, obstacle,yawreso):
-    #TODo: points from polygon
-    print("hi")
-
-
 
 
 def check_polygon_visible(min_angle,max_angle,fov_anglelist):
@@ -164,7 +159,7 @@ def get_raycast_to_line(origin,obstacle, obs_points,yawreso):
     angle_intersect = dict()
 
     if point3_x == None:
-        num_angle =math.floor((max_angle-min_angle)/yawreso)
+        num_angle =math.ceil((max_angle-min_angle)/yawreso)
         for i in range(num_angle):
             cur_angle = min_angle + i*yawreso
             slope = math.tan(cur_angle)
@@ -178,7 +173,7 @@ def get_raycast_to_line(origin,obstacle, obs_points,yawreso):
                 temp_y =slope*(point1_x-origin_x)+origin_y
                 intersects =[point1_x,temp_y]
             elif point1_y == point2_y:#horizontal
-                temp_x = 1/slope*(point1_y+slope*origin_x+origin_y)
+                temp_x = 1/slope*(point1_y+slope*origin_x-origin_y)
                 intersects =[temp_x,point1_y]
             else:
                 print("obs is not rectangle")
@@ -186,12 +181,11 @@ def get_raycast_to_line(origin,obstacle, obs_points,yawreso):
             angle_intersect[cur_angle]=intersects
     else:
         # print("point3", point3_x , " , ", point3_y)
-        
         angle_nn = atan_zero_to_twopi(point3_y-origin_y,point3_x-origin_x)
 
         num_angles=[]
-        num_angle1 =math.floor((angle_nn-min_angle)/yawreso)
-        num_angle2 =math.floor((max_angle-angle_nn)/yawreso)
+        num_angle1 =math.ceil((angle_nn-min_angle)/yawreso)
+        num_angle2 =math.ceil((max_angle-angle_nn)/yawreso)
         num_angles.append(num_angle1)
         num_angles.append(num_angle2)
     
@@ -201,13 +195,11 @@ def get_raycast_to_line(origin,obstacle, obs_points,yawreso):
         next_x = obstacle.vertices[obs_points[2]][0]
         next_y = obstacle.vertices[obs_points[2]][1]
 
-        small_anlge = min_angle 
+        small_angle= min_angle 
         intersects=[]
         for num_angle in num_angles:
-            print("======num_angles", num_angle)
             for i in range(num_angle):
-                print("iiii-----", i)
-                cur_angle = small_anlge + i*yawreso
+                cur_angle = small_angle+ i*yawreso
                 slope = math.tan(cur_angle)
                 if abs(slope)==0:
                     print("slope is zero")
@@ -215,12 +207,12 @@ def get_raycast_to_line(origin,obstacle, obs_points,yawreso):
             
                 #intersects
                 if previous_x == next_x: #vertical
-                    print("vertical")
+                    # print("vertical")
                     temp_y =slope*(previous_x-origin_x)+origin_y
                     intersects =[previous_x,temp_y]
                 elif previous_y == next_y:#horizontal
-                    print("horizontal")
-                    temp_x = 1/slope*(previous_y+slope*origin_x+origin_y)
+                    # print("horizontal")
+                    temp_x = 1/slope*(previous_y+slope*origin_x-origin_y)
                     intersects =[temp_x,previous_y]
                 else:
                     print("obs is not rectangle")
@@ -228,7 +220,7 @@ def get_raycast_to_line(origin,obstacle, obs_points,yawreso):
                     # print("previous_y:" , previous_y)
                     # print("next_x:" , next_x)
                     # print("next_y:" , next_y)
-                if i ==num_angle-1:
+                if i ==(num_angle-1):
                     small_angle = angle_nn 
                     previous_x = obstacle.vertices[obs_points[2]][0]
                     previous_y = obstacle.vertices[obs_points[2]][1]
@@ -237,8 +229,8 @@ def get_raycast_to_line(origin,obstacle, obs_points,yawreso):
 
                 angle_intersect[cur_angle]=intersects
 
-    print("angle_dictionaries")
-    print(angle_intersect)
+    # print("angle_dictionaries")
+    # print(angle_intersect)
 
     return angle_intersect
 
@@ -285,12 +277,8 @@ def generate_ray_casting_grid_map(obstacles,xyreso, yawreso, agent_x=0.0, agent_
     pmap = [[0.0 for i in range(yw)] for i in range(xw)]
     
     precast = precasting(minx, miny, xw, yw, xyreso, yawreso, agent_x, agent_y)
-
-    print("agent_yaw: ", agent_yaw)
     fov_type, fov_anglelist = generate_fov_angle(agent_yaw, 2*math.pi)
     # fov_type, fov_anglelist = generate_fov_angle(agent_yaw, math.pi/3)
-    print(fov_anglelist)
-    print("----------------")
     #fov_anglelist[0] = min_angle 315
     #fov_anglelist[1] = max_angle 45
 
@@ -428,7 +416,7 @@ def generate_ray_casting_grid_map(obstacles,xyreso, yawreso, agent_x=0.0, agent_
             for angle,pt in obsdict.items():
                 angleid =  int(math.floor(angle/ yawreso))
                 gridlist = precast[angleid]
-                ix = int((pt[0]- minx) / xyreso)
+                ix = int((pt[0] - minx) / xyreso)
                 iy = int((pt[1] - miny) / xyreso)
 
                 d= math.sqrt((sensor_pose[0]-pt[0])**2 + (sensor_pose[1]-pt[1])**2)
@@ -444,11 +432,11 @@ def generate_ray_casting_grid_map(obstacles,xyreso, yawreso, agent_x=0.0, agent_
                 pmap[min_grid.ix][min_grid.iy]=1.0
                 # print("obstacle boundary:(x,y) : ",  min_grid.px, ", ", min_grid.py)
                 min_grid.value=1.0
-                updated_gridlist.append(grid)
+                updated_gridlist.append(min_grid)
 
             iterator+=1
 
-    return pmap, updated_gridlist, obs_vertices, closest_vertices, minx, maxx, miny, maxy, xyreso
+    return pmap, updated_gridlist, obsdict, obs_vertices, closest_vertices, minx, maxx, miny, maxy, xyreso
 
 #shoulde be written in terms of radian
 def generate_fov_angle(agent_yaw, fov_range):

@@ -139,7 +139,6 @@ filename_waypoint	src/test.py	/^    filename_waypoint = 'waypoints_'$/;"	v
 filename_waypoint	src/test.py	/^    filename_waypoint =datafolder+filename_waypoint+timestamp+'.csv'$/;"	v
 find_safe_turning_grid	src/grid_based_sweep_coverage_path_planner.py	/^    def find_safe_turning_grid(self, cxind, cyind, gmap):$/;"	m	class:SweepSearcher
 find_sweep_direction_and_start_posi	src/grid_based_sweep_coverage_path_planner.py	/^def find_sweep_direction_and_start_posi(ox, oy):$/;"	f
-finding_intersects	src/raycasting_grid_map.py	/^def finding_intersects(agent_x,agent_y, obstacle,yawreso):$/;"	f
 flight_area_vertices	src/test.py	/^    flight_area_vertices = define_flight_area(initial_pose)$/;"	v
 floatregex	src/animation.py	/^floatregex =re.compile('[-+]?\\d*\\.\\d+|[-+]?\\d+') $/;"	v
 floatregex	src/backup_animation.py	/^floatregex =re.compile('[-+]?\\d*\\.\\d+|[-+]?\\d+') $/;"	v

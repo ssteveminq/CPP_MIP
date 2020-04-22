@@ -77,7 +77,7 @@ def draw_occmap(data, minx, maxx, miny, maxy, xyreso,agent_x, agent_y, ax):
 def draw_occmap_global(data, minx, maxx, miny, maxy, xyreso, ax):
     x, y = np.mgrid[slice(minx - xyreso / 2.0, maxx + xyreso / 2.0, xyreso),
                     slice(miny - xyreso / 2.0, maxy + xyreso / 2.0, xyreso)]
-    ax.pcolor(x, y, data, vmax=1.0, cmap=plt.cm.Reds)
+    ax.pcolor(x, y, data, vmax=1.0, cmap=plt.cm.Blues)
     ax.set_xlim([1.1*minx, 1.1*maxx])   # limit the plot space
     ax.set_ylim([1.1*miny, 1.1**maxy])   # limit the plot space
     # plt.axis("equal")
@@ -100,15 +100,19 @@ def update_occ_grid_map(state,observed_grids, previous_map, mapparams):
 
     ##for observed cell --> update
 
+    print("length of updated grids = ", len(observed_grids))
     for grid in observed_grids:
         prior= get_preocc(previous_map, grid, mapparams)
         if grid.value==1: #the object detection case
-            posterior = (p_occ_given_zocc*prior)/(p_occ_given_zocc*prior +p_free_given_zocc *(1-prior))
+            # posterior = (p_occ_given_zocc*prior)/(p_occ_given_zocc*prior +p_free_given_zocc *(1-prior))
+            posterior =1 
         elif grid.value==0: # if the detection is free
-            posterior = (p_free_given_zfree*prior)/(p_free_given_zfree*prior +p_occ_given_zfree *(1-prior))
+            # posterior = (p_free_given_zfree*prior)/(p_free_given_zfree*prior +p_occ_given_zfree *(1-prior))
+            posterior = 0
         elif grid.value==0.5:
+            posterior = 0.5
+            # print("here")
             # print
-            continue
         
         px = grid.px
         py = grid.py
@@ -122,7 +126,7 @@ def update_occ_grid_map(state,observed_grids, previous_map, mapparams):
 
 def initialize_global_occ_grid_map(params_map):
 
-    pmap_global = [[0.5 for i in range(params_map.yw)] for i in range(params_map.xw)]
+    pmap_global = [[0.0 for i in range(params_map.yw)] for i in range(params_map.xw)]
     return pmap_global
 
 
@@ -439,13 +443,18 @@ for _ in range(params.numiters):
 
         #figure2- local sensor window
         axes[1].cla()
-        pmap_local, updated_grids, obs_verticeid, closest_vertexid, minx, maxx, miny, maxy, xyreso = generate_ray_casting_grid_map(obstacles, params_map.xyreso, params_map.yawreso, state[0],state[1], state[2])
+        pmap_local, updated_grids, intersect_dic, obs_verticeid, closest_vertexid, minx, maxx, miny, maxy, xyreso = generate_ray_casting_grid_map(obstacles, params_map.xyreso, params_map.yawreso, state[0],state[1], state[2])
         draw_occmap(pmap_local, minx, maxx, miny, maxy, xyreso, state[0],state[1], axes[1])
         #draw sensor ray to obstacles
         for i in range(len(obstacles)):
             axes[0].plot([state[0], obstacles[i].vertices[obs_verticeid[i][0]][0]], [state[1], obstacles[i].vertices[obs_verticeid[i][0]][1]], color='orange')
             axes[0].plot([state[0], obstacles[i].vertices[obs_verticeid[i][1]][0]], [state[1], obstacles[i].vertices[obs_verticeid[i][1]][1]], color='orange')
             axes[0].plot([state[0], obstacles[i].vertices[closest_vertexid[i]][0]], [state[1], obstacles[i].vertices[closest_vertexid[i]][1]], color='orange')
+        #test intersection
+        for angle,inter_point in intersect_dic.items():
+            axes[0].plot(inter_point[0], inter_point[1], '*', markersize= 5, fillstyle='none',color='green')
+
+
         # axes[1].plot(ox, oy, "xr")
 
 
