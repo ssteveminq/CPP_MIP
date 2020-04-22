@@ -1,6 +1,7 @@
 """
 Ray casting 2D grid map example
-author: Atsushi Sakai (@Atsushi_twi)
+First author: Atsushi Sakai (@Atsushi_twi)
+modifeid by : Minkyu Kim (@ssteveminq)
 """
 
 import math
@@ -11,6 +12,8 @@ from shapely.geometry.polygon import Polygon
 
 EXTEND_AREA = 15.0
 show_animation = True
+l_occ = np.log(0.3/0.7)
+l_free = np.log(0.3/0.7)
 
 def polygon_contains_point(point, obstacle):
 
@@ -79,7 +82,7 @@ def check_polygon_visible(min_angle,max_angle,fov_anglelist):
 
 
 def calc_grid_map_config(xyreso, agent_x,agent_y):
-    sensor_range=10
+    sensor_range=5
     minx = agent_x - sensor_range
     maxx = agent_x + sensor_range
     miny = agent_y - sensor_range
@@ -274,7 +277,8 @@ def generate_ray_casting_grid_map(obstacles,xyreso, yawreso, agent_x=0.0, agent_
     updated_gridlist=[]
     minx, miny, maxx, maxy, xw, yw = calc_grid_map_config(xyreso, agent_x, agent_y )
     #make grid map with xw, yw (initialize)
-    pmap = [[0.0 for i in range(yw)] for i in range(xw)]
+    pmap = [[l_free for i in range(yw)] for i in range(xw)]
+    #save the grid list for entire pmap
     
     precast = precasting(minx, miny, xw, yw, xyreso, yawreso, agent_x, agent_y)
     fov_type, fov_anglelist = generate_fov_angle(agent_yaw, 2*math.pi)
@@ -423,20 +427,21 @@ def generate_ray_casting_grid_map(obstacles,xyreso, yawreso, agent_x=0.0, agent_
                 min_d = 100
                 for grid in gridlist:
                     if grid.d > d:
-                        pmap[grid.ix][grid.iy] = 0.5
+                        pmap[grid.ix][grid.iy] = 0  #log_unknown =0
                         grid.value=0.5
                         updated_gridlist.append(grid)
                         if min_d>grid.d:
                             min_d = grid.d
                             min_grid = grid
-                pmap[min_grid.ix][min_grid.iy]=1.0
+                pmap[min_grid.ix][min_grid.iy]=np.log(0.7/0.3)  #log_occ =0
+
                 # print("obstacle boundary:(x,y) : ",  min_grid.px, ", ", min_grid.py)
-                min_grid.value=1.0
+                min_grid.value=np.log(0.7/0.3)
                 updated_gridlist.append(min_grid)
 
             iterator+=1
 
-    return pmap, updated_gridlist, obsdict, obs_vertices, closest_vertices, minx, maxx, miny, maxy, xyreso
+    return pmap, updated_gridlist, obsdict, obs_vertices, closest_vertices, minx, maxx, miny, maxy, xyreso, xw,yw
 
 #shoulde be written in terms of radian
 def generate_fov_angle(agent_yaw, fov_range):

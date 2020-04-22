@@ -25,6 +25,9 @@ p_occ_given_zfree= 0.01
 p_free_given_zocc=0.05
 p_free_given_zfree= 0.99
 
+l_occ=np.log(0.7/0.3)
+l_free=np.log(0.3/0.7)
+
 #pp control 
 k = 0.1  # look forward gain
 Lfc = 1.0  # look-ahead distance
@@ -38,12 +41,12 @@ class map_params:
     def __init__(self):
         self.xyreso = 0.25  # x-y grid resolution [m]
         self.yawreso = math.radians(6)  # yaw angle resolution [rad]
-        self.xmin_global=-15
-        self.xmax_global=15
-        self.ymin_global=-15
-        self.ymax_global=15
-        self.xw = int(round((self.xmax_global - self.xmin_global) / self.xyreso))
-        self.yw = int(round((self.ymax_global - self.ymin_global) / self.xyreso))
+        self.xmin=-15
+        self.xmax=15
+        self.ymin=-15
+        self.ymax=15
+        self.xw = int(round((self.xmax - self.xmin) / self.xyreso))
+        self.yw = int(round((self.ymax - self.ymin) / self.xyreso))
 
 
 class Params:
@@ -66,21 +69,35 @@ class Params:
         # self.yaw = yaw
         # self.v = v
 
-def draw_occmap(data, minx, maxx, miny, maxy, xyreso,agent_x, agent_y, ax):
+def draw_occmap(data, params_map,agent_x, agent_y, ax):
+
+    minx=params_map.xmin
+    miny=params_map.ymin
+    maxx=params_map.xmax
+    maxy=params_map.ymax
+    xyreso=params_map.xyreso
+
     x, y = np.mgrid[slice(minx - xyreso / 2.0, maxx + xyreso / 2.0, xyreso),
                     slice(miny - xyreso / 2.0, maxy + xyreso / 2.0, xyreso)]
     ax.pcolor(x+agent_x, y+agent_y, data, vmax=1.0, cmap=plt.cm.Blues)
     ax.set_xlim([agent_x-2*params.area_size, agent_x+2*params.area_size])   # limit the plot space
     ax.set_ylim([agent_y-2*params.area_size, agent_y+2*params.area_size])   # limit the plot space
-    # plt.axis("equal")
 
-def draw_occmap_global(data, minx, maxx, miny, maxy, xyreso, ax):
+def draw_occmap_global(data,parmas_globalmap, ax):
+
+    minx=params_globalmap.xmin
+    miny=params_globalmap.ymin
+    maxx=params_globalmap.xmax
+    maxy=params_globalmap.ymax
+    xyreso=params_globalmap.xyreso
+    data = 1-1./(1.0+np.exp(data))
+
     x, y = np.mgrid[slice(minx - xyreso / 2.0, maxx + xyreso / 2.0, xyreso),
                     slice(miny - xyreso / 2.0, maxy + xyreso / 2.0, xyreso)]
     ax.pcolor(x, y, data, vmax=1.0, cmap=plt.cm.Blues)
     ax.set_xlim([1.1*minx, 1.1*maxx])   # limit the plot space
-    ax.set_ylim([1.1*miny, 1.1**maxy])   # limit the plot space
-    # plt.axis("equal")
+    ax.set_ylim([1.1*miny, 1.1*maxy])   # limit the plot space
+
 
 def get_preocc(previous_map, grid,map_params):
     #Find grid value from the previouwmap
@@ -90,19 +107,37 @@ def get_preocc(previous_map, grid,map_params):
     py = grid.py
 
     #map index
-    ix = math.floor((px-map_params.xmin_global)/map_params.xyreso)
-    iy = math.floor((py-map_params.ymin_global)/map_params.xyreso)
+    ix = math.floor((px-map_params.xmin)/map_params.xyreso)
+    iy = math.floor((py-map_params.ymin)/map_params.xyreso)
 
     return previous_map[ix][iy]
  
 
-def update_occ_grid_map(state,observed_grids, previous_map, mapparams):
+def update_occ_grid_map(state, local_map, params_local, global_map, params_global):
 
     ##for observed cell --> update
+    # print("local grids, xw, yw : ", params_local.xw, params_local.yw)
+    # print("global grids, xw, yw : ", params_global.xw, params_global.yw)
+    updated_list =[]
 
+    for ix_local in range(params_local.xw-1):
+        for iy_local in range(params_local.yw-1):
+            px = params_local.xmin+ix_local*params_local.xyreso
+            py = params_local.ymin+iy_local*params_local.xyreso
+
+            ix_global= math.floor((px-params_global.xmin)/params_global.xyreso)
+            iy_global= math.floor((py-params_global.ymin)/params_global.xyreso)
+            # print("(ix_global, iy_global): ",ix_global, " , ", iy_global)
+            meas = local_map[ix_local][iy_local]
+            global_map[ix_global][iy_global] +=meas
+            # print(global_map)
+
+            # if meas = 0.5 
+            # global_map[ix_global][iy_global] = 
+    '''
     print("length of updated grids = ", len(observed_grids))
     for grid in observed_grids:
-        prior= get_preocc(previous_map, grid, mapparams)
+        prior= get_preocc(global_map, grid, mapparams)
         if grid.value==1: #the object detection case
             # posterior = (p_occ_given_zocc*prior)/(p_occ_given_zocc*prior +p_free_given_zocc *(1-prior))
             posterior =1 
@@ -117,12 +152,13 @@ def update_occ_grid_map(state,observed_grids, previous_map, mapparams):
         px = grid.px
         py = grid.py
 
-        ix = math.floor((px-mapparams.xmin_global)/mapparams.xyreso)
-        iy = math.floor((py-mapparams.ymin_global)/mapparams.xyreso)
+        ix = math.floor((px-mapparams.xmin)/mapparams.xyreso)
+        iy = math.floor((py-mapparams.ymin)/mapparams.xyreso)
         # print("px,py - ix,iy",px,py,", ", ix,iy, ": posterior -->", posterior)
         pmap_global[ix][iy]=posterior
+    '''
 
-    return pmap_global
+    return global_map
 
 def initialize_global_occ_grid_map(params_map):
 
@@ -252,18 +288,6 @@ def Update_phi(state, goal):
     des_phi = math.atan2(goal[1] - state[1], goal[0] - state[0])
     cur_yaw = state[2]
     err_phi = des_phi-cur_yaw
-    # err_phi = math.atan2(goal[1] - state[1], goal[0] - state[0]) - state[2]
-    # print("des_phi: ",des_phi)
-    # print("cur_phi: ",cur_yaw)
-    # print("err_phi: ",err_phi)
-    # if phi>0.0:
-        # phi=0.9
-    # else:
-        # phi=-0.9
-    # if err_phi > math.pi:
-       # err_phi = err_phi-2*math.pi 
-    # elif err_phi <- math.pi:
-        # err_phi=err_phi+2*math.pi
 
     return err_phi
 
@@ -295,7 +319,8 @@ def motion(state, goal, params):
 fig,axes=plt.subplots(nrows=3,ncols=1,figsize=(10,30))
 
 params = Params()
-params_map =  map_params()
+params_globalmap =  map_params()
+params_localmap =  map_params()
 
 timeindex = "04171450"
 # timeindex = "04021858"
@@ -412,7 +437,7 @@ print("initial state: ",state)
 print("goal : ",goal)
 
 t_prev_goal = time.time()
-pmap_global = initialize_global_occ_grid_map(params_map)
+pmap_global = initialize_global_occ_grid_map(params_globalmap)
 
 # for i in range(ntimestep):
 for _ in range(params.numiters):
@@ -443,8 +468,8 @@ for _ in range(params.numiters):
 
         #figure2- local sensor window
         axes[1].cla()
-        pmap_local, updated_grids, intersect_dic, obs_verticeid, closest_vertexid, minx, maxx, miny, maxy, xyreso = generate_ray_casting_grid_map(obstacles, params_map.xyreso, params_map.yawreso, state[0],state[1], state[2])
-        draw_occmap(pmap_local, minx, maxx, miny, maxy, xyreso, state[0],state[1], axes[1])
+        pmap_local, updated_grids, intersect_dic, obs_verticeid, closest_vertexid, params_localmap.xmin, params_localmap.xmax, params_localmap.ymin, params_localmap.ymax, params_localmap.xyreso, params_localmap.xw, params_localmap.yw= generate_ray_casting_grid_map(obstacles, params_localmap.xyreso, params_localmap.yawreso, state[0],state[1], state[2])
+        draw_occmap(pmap_local, params_localmap, state[0],state[1], axes[1])
         #draw sensor ray to obstacles
         for i in range(len(obstacles)):
             axes[0].plot([state[0], obstacles[i].vertices[obs_verticeid[i][0]][0]], [state[1], obstacles[i].vertices[obs_verticeid[i][0]][1]], color='orange')
@@ -460,9 +485,10 @@ for _ in range(params.numiters):
 
         #figure3- global occupancy grid
         axes[2].cla()
-        pmap_global = update_occ_grid_map(state, updated_grids,pmap_global,params_map)
-        draw_occmap_global(pmap_global,params_map.xmin_global, params_map.xmax_global, params_map.ymin_global,
-                params_map.ymax_global, params_map.xyreso, axes[2])
+        pmap_global = update_occ_grid_map(state, pmap_local,params_localmap, pmap_global,params_globalmap)
+        draw_occmap_global(pmap_global,params_globalmap, axes[2])
+        entropy = get_map_entropy(pmap_global)
+        print("entropy : ", entropy)
 
         plt.pause(0.001)
         # plt.show()

@@ -97,9 +97,9 @@ dir_path	src/dataplot.py	/^dir_path=dir_path[:-4]$/;"	v
 draw	src/obstacle.py	/^    def draw(self,axes=None):$/;"	m	class:Obstacle
 draw_heatmap	src/raycasting_grid_map.py	/^def draw_heatmap(data, minx, maxx, miny, maxy, xyreso):$/;"	f
 draw_map	src/grid_map.py	/^    def draw_map(self, obstacles,ax=None):$/;"	m	class:GridMap
-draw_occmap	src/animation.py	/^def draw_occmap(data, minx, maxx, miny, maxy, xyreso,agent_x, agent_y, ax):$/;"	f
+draw_occmap	src/animation.py	/^def draw_occmap(data, params_map,agent_x, agent_y, ax):$/;"	f
 draw_occmap	src/backup_animation.py	/^def draw_occmap(data, minx, maxx, miny, maxy, xyreso,agent_x, agent_y, ax):$/;"	f
-draw_occmap_global	src/animation.py	/^def draw_occmap_global(data, minx, maxx, miny, maxy, xyreso, ax):$/;"	f
+draw_occmap_global	src/animation.py	/^def draw_occmap_global(data,parmas_globalmap, ax):$/;"	f
 draw_occmap_global	src/backup_animation.py	/^def draw_occmap_global(data, minx, maxx, miny, maxy, xyreso, ax):$/;"	f
 dt	src/animation.py	/^dt = 0.2  # [s]$/;"	v
 dt	src/backup_animation.py	/^dt = 0.2  # [s]$/;"	v
@@ -107,6 +107,7 @@ dt	src/test.py	/^        dt = 4          # time step size$/;"	v
 dt	src/test.py	/^        dt = 4.             # time step size$/;"	v
 dx	src/backup_animation.py	/^    dx = goal[0] - state[0]$/;"	v
 dy	src/backup_animation.py	/^    dy = goal[1] - state[1]$/;"	v
+entropy	src/animation.py	/^        entropy = get_map_entropy(pmap_global)$/;"	v
 epsilon	src/test.py	/^    epsilon = 0.001                          # effect of the force on the objective function$/;"	v
 expand_grid	src/grid_map_lib.py	/^    def expand_grid(self):$/;"	m	class:GridMap
 extra	src/test.py	/^        extra = ''$/;"	v
@@ -193,6 +194,10 @@ k	src/animation.py	/^k = 0.1  # look forward gain$/;"	v
 k	src/backup_animation.py	/^k = 0.1  # look forward gain$/;"	v
 ktheta	src/animation.py	/^ktheta = 0.5$/;"	v
 ktheta	src/backup_animation.py	/^ktheta = 0.5$/;"	v
+l_free	src/animation.py	/^l_free=np.log(0.3\/0.7)$/;"	v
+l_free	src/raycasting_grid_map.py	/^l_free = np.log(0.3\/0.7)$/;"	v
+l_occ	src/animation.py	/^l_occ=np.log(0.7\/0.3)$/;"	v
+l_occ	src/raycasting_grid_map.py	/^l_occ = np.log(0.3\/0.7)$/;"	v
 labels	src/test.py	/^            labels = ['Turn rate 15 $\\degree$\/s', 'Turn rate 12 $\\degree$\/s']$/;"	v
 line_styles	src/test.py	/^        line_styles = ["--", ":", "-.", '-', '-']$/;"	v
 m	src/test.py	/^    m = Model("ppl")$/;"	v
@@ -250,7 +255,8 @@ p_occ_given_zocc	src/animation.py	/^p_occ_given_zocc=0.95$/;"	v
 p_occ_given_zocc	src/backup_animation.py	/^p_occ_given_zocc=0.95$/;"	v
 params	src/animation.py	/^params = Params()$/;"	v
 params	src/backup_animation.py	/^params = Params()$/;"	v
-params_map	src/animation.py	/^params_map =  map_params()$/;"	v
+params_globalmap	src/animation.py	/^params_globalmap =  map_params()$/;"	v
+params_localmap	src/animation.py	/^params_localmap =  map_params()$/;"	v
 params_map	src/backup_animation.py	/^params_map =  map_params()$/;"	v
 parser	src/test.py	/^    parser = argparse.ArgumentParser(description="Usage: main.py obs")$/;"	v
 performance_graphs	src/test.py	/^    performance_graphs = True  # include the velocity and acceleration performance of the vehicles$/;"	v
@@ -262,8 +268,8 @@ plot_obstacles	src/animation.py	/^def plot_obstacles(obstacles):$/;"	f
 plot_obstacles	src/backup_animation.py	/^def plot_obstacles(obstacles):$/;"	f
 plot_robot	src/animation.py	/^def plot_robot(pose, params):$/;"	f
 plot_robot	src/backup_animation.py	/^def plot_robot(pose, params):$/;"	f
-pmap_global	src/animation.py	/^        pmap_global = update_occ_grid_map(state, updated_grids,pmap_global,params_map)$/;"	v
-pmap_global	src/animation.py	/^pmap_global = initialize_global_occ_grid_map(params_map)$/;"	v
+pmap_global	src/animation.py	/^        pmap_global = update_occ_grid_map(state, pmap_local,params_localmap, pmap_global,params_globalmap)$/;"	v
+pmap_global	src/animation.py	/^pmap_global = initialize_global_occ_grid_map(params_globalmap)$/;"	v
 pmap_global	src/backup_animation.py	/^        pmap_global = update_occ_grid_map(state, updated_grids,pmap_global,params_map)$/;"	v
 pmap_global	src/backup_animation.py	/^pmap_global = initialize_global_occ_grid_map(params_map)$/;"	v
 polygon_contains_point	src/raycasting_grid_map.py	/^def polygon_contains_point(point, obstacle):$/;"	f
@@ -332,7 +338,7 @@ traj	src/backup_animation.py	/^        traj = np.vstack([traj, state[:2]])$/;"	v
 traj	src/backup_animation.py	/^traj = state[:2]$/;"	v
 trajectories	src/animation.py	/^trajectories = [pos_x, pos_y, vel_x, vel_y, ]$/;"	v
 trajectories	src/backup_animation.py	/^trajectories = [pos_x, pos_y, vel_x, vel_y, ]$/;"	v
-update_occ_grid_map	src/animation.py	/^def update_occ_grid_map(state,observed_grids, previous_map, mapparams):$/;"	f
+update_occ_grid_map	src/animation.py	/^def update_occ_grid_map(state, local_map, params_local, global_map, params_global):$/;"	f
 update_occ_grid_map	src/backup_animation.py	/^def update_occ_grid_map(state,observed_grids, previous_map, mapparams):$/;"	f
 update_turning_window	src/grid_based_sweep_coverage_path_planner.py	/^    def update_turning_window(self):$/;"	m	class:SweepSearcher
 v_coords	src/test.py	/^            v_coords = []$/;"	v
