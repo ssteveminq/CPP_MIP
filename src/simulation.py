@@ -1,4 +1,5 @@
 # !/usr/bin/env python3
+import argparse
 from numpy import genfromtxt
 import numpy as np
 from math import *
@@ -8,6 +9,8 @@ import csv
 import matplotlib.pyplot as plt
 from obstacle import Obstacle
 from raycasting_grid_map import generate_ray_casting_grid_map, calc_grid_map_config
+from utils.configuration_space import configuration_space
+from  VCD import VerticalCellDecomposition
 import pandas as pd
 import os
 import re
@@ -40,6 +43,11 @@ class map_params:
         self.ymax=15
         self.xw = int(round((self.xmax - self.xmin) / self.xyreso))
         self.yw = int(round((self.ymax - self.ymin) / self.xyreso))
+        self.boundaries=[]
+        self.boundaries.append((self.xmin,self.ymin))
+        self.boundaries.append((self.xmax,self.ymin))
+        self.boundaries.append((self.xmax,self.ymax))
+        self.boundaries.append((self.xmin,self.ymax))
 
 
 class Params:
@@ -51,7 +59,7 @@ class Params:
         self.min_vel = 0.0 # m/s
         self.sensor_range_m = 0.5 # m
         self.animate = 1
-        self.area_size=5
+        self.area_size=12
         # self.time_to_switch_goal = 5.0 # sec #inactive for now
         # self.sweep_resolution = 0.4 # m
 
@@ -73,8 +81,8 @@ def draw_occmap(data, params_map,agent_x, agent_y, ax):
     x, y = np.mgrid[slice(minx - xyreso / 2.0, maxx + xyreso / 2.0, xyreso),
                     slice(miny - xyreso / 2.0, maxy + xyreso / 2.0, xyreso)]
     ax.pcolor(x+agent_x, y+agent_y, data, vmax=1.0, cmap=plt.cm.Blues)
-    ax.set_xlim([agent_x-2*params.area_size, agent_x+2*params.area_size])   # limit the plot space
-    ax.set_ylim([agent_y-2*params.area_size, agent_y+2*params.area_size])   # limit the plot space
+    ax.set_xlim([agent_x-params.area_size, agent_x+params.area_size])   # limit the plot space
+    ax.set_ylim([agent_y-params.area_size, agent_y+params.area_size])   # limit the plot space
 
 def draw_occmap_global(data,parmas_globalmap, ax):
 
@@ -196,8 +204,8 @@ def plot_map(pos_x,pos_y,way_x, way_y, waytimes):
     axes[0].set_xlabel("x[m]")
     axes[0].set_ylabel("y[m]")
     axes[0].grid(True)
-    for i in range(len(waytimes)):
-        axes[0].text(way_x[i], way_y[i]-1,str(waytimes[i]), color='r')
+    # for i in range(len(waytimes)):
+        # axes[0].text(way_x[i], way_y[i]-1,str(waytimes[i]), color='r')
 
 
 #obstacles
@@ -278,195 +286,224 @@ def motion(state, goal, params):
 
     return state
 
-#Define two windows: 
-# axes[0] : robot, obstacle, waypoints, trajectory
-# axes[1] : sensor_map,occ_grid
-fig,axes=plt.subplots(nrows=3,ncols=1,figsize=(10,30))
 
-params = Params()
-params_globalmap =  map_params()
-params_localmap =  map_params()
+if __name__ == "__main__":
 
-timeindex = "04171450"
-# timeindex = "04021858"
-# Open the desired file for reading
-dir_path = os.path.dirname(os.path.realpath(__file__))
-dir_path=dir_path[:-4]
-file_name =dir_path + "/results/data/robot_" +timeindex+"_.csv"
-wayfile_name =dir_path + "/results/data/waypoints_" +timeindex+"_.csv"
-obsfile_name =dir_path + "/results/data/obstacles_"+timeindex+"_.csv"
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-in",help="input file (default: input.txt)",default="input2.txt")
+    args = vars(parser.parse_args())
+    # cspace = configuration_space(args['in'])
+    # cspace.plot_config_space()
+    # input()
+    # planner = VerticalCellDecomposition(cspace)
+    #Define two windows: 
+    # axes[0] : robot, obstacle, waypoints, trajectory
+    # axes[1] : sensor_map,occ_grid
+    fig,axes=plt.subplots(nrows=3,ncols=1,figsize=(10,30))
 
-# Open the desired file for reading
-df = pd.read_csv(file_name, delimiter=',', names = ['index', 'x', 'y', 'vx', 'vy', 'fx', 'fy'])
-waydf = pd.read_csv(wayfile_name, delimiter=',', names = ['index', 'time', 'coords'])
-obsdf = pd.read_csv(obsfile_name , delimiter=',', names = ['obstacle'])
+    params = Params()
+    params_globalmap =  map_params()
+    params_localmap =  map_params()
 
-waytime= np.asarray(waydf['time'][1:])
-waytimes= waytime.astype(np.float)
+    timeindex = "04171450"
+    # timeindex = "04021858"
+    # Open the desired file for reading
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    dir_path=dir_path[:-4]
+    file_name =dir_path + "/results/data/robot_" +timeindex+"_.csv"
+    wayfile_name =dir_path + "/results/data/waypoints_" +timeindex+"_.csv"
+    obsfile_name =dir_path + "/results/data/obstacles2_"+timeindex+"_.csv"
 
-# idx_array = np.arange(len(list(df['index'])))   #time index
-pos_x = np.asarray(df['x'][1:])             #robot pos_x
-pos_y = np.asarray(df['y'][1:])             #robot pos_y
+    # Open the desired file for reading
+    df = pd.read_csv(file_name, delimiter=',', names = ['index', 'x', 'y', 'vx', 'vy', 'fx', 'fy'])
+    waydf = pd.read_csv(wayfile_name, delimiter=',', names = ['index', 'time', 'coords'])
+    obsdf = pd.read_csv(obsfile_name , delimiter=',', names = ['obstacle'])
 
-#convert from string to float 
-pos_x = pos_x.astype(np.float)
-pos_y = pos_y.astype(np.float)
+    waytime= np.asarray(waydf['time'][1:])
+    waytimes= waytime.astype(np.float)
 
-vel_x = np.asarray(df['vx'][1:])             #robot pos_x
-vel_y = np.asarray(df['vy'][1:])             #robot pos_y
+    # idx_array = np.arange(len(list(df['index'])))   #time index
+    pos_x = np.asarray(df['x'][1:])             #robot pos_x
+    pos_y = np.asarray(df['y'][1:])             #robot pos_y
 
-#convert from string to float 
-vel_x = vel_x.astype(np.float)
-vel_y = vel_y.astype(np.float)
+    #convert from string to float 
+    pos_x = pos_x.astype(np.float)
+    pos_y = pos_y.astype(np.float)
 
-force_x = np.asarray(df['fx'][1:])             #robot pos_x
-force_y = np.asarray(df['fy'][1:])             #robot pos_y
+    vel_x = np.asarray(df['vx'][1:])             #robot pos_x
+    vel_y = np.asarray(df['vy'][1:])             #robot pos_y
 
-#convert from string to float 
-force_x = force_x.astype(np.float)
-force_y = force_y.astype(np.float)
+    #convert from string to float 
+    vel_x = vel_x.astype(np.float)
+    vel_y = vel_y.astype(np.float)
 
-trajectories = [pos_x, pos_y, vel_x, vel_y, ]
+    trajectories = [pos_x, pos_y, vel_x, vel_y, ]
 
-#waypoint
-way_x=[]
-way_y=[]
+    #waypoint
+    way_x=[]
+    way_y=[]
 
-regex = re.compile('[-+]?\d*\.\d+|[-+]?\d+')                #set pattern in order to find integer in string
-way_coords = np.asarray(waydf['coords'][1:])
-for i in range(len(way_coords)):
-    nums = [float(k) for k in regex.findall(way_coords[i])] #find integer value in string format '[ int, int ]'
-    way_x.append(nums[0])
-    way_y.append(nums[1])
-    # print("waypoints : (x,y ) = (", way_x,", ", way_y,")")
+    regex = re.compile('[-+]?\d*\.\d+|[-+]?\d+')                #set pattern in order to find integer in string
+    way_coords = np.asarray(waydf['coords'][1:])
+    for i in range(len(way_coords)):
+        nums = [float(k) for k in regex.findall(way_coords[i])] #find integer value in string format '[ int, int ]'
+        way_x.append(nums[0])
+        way_y.append(nums[1])
+        # print("waypoints : (x,y ) = (", way_x,", ", way_y,")")
 
-# print("waypoints :way_x)
-floatregex =re.compile('[-+]?\d*\.\d+|[-+]?\d+') 
-obstacles = []                                  # list which will contain all obstacles
-obstacle_coords = np.asarray(obsdf['obstacle'][0:])
-# print("obstacle coords")
-# print(obstacle_coords)
-for i in range(len(obstacle_coords)):
-    if i<1:
+    # print("waypoints :way_x)
+    floatregex =re.compile('[-+]?\d*\.\d+|[-+]?\d+') 
+    obstacles = []                                  # list which will contain all obstacles
+    obstacle_coords = np.asarray(obsdf['obstacle'][0:])
+    # print("obstacle coords")
+    # print(obstacle_coords)
+    for i in range(len(obstacle_coords)):
         nums = [float(k) for k in floatregex.findall(obstacle_coords[i])] #find integer value in string format '[ int, int ]'
         # print(nums)
         obs = Obstacle(nums[0]-1, nums[1]-1, nums[2], nums[3])          #xmin,ymin, 
         # obs.draw()
         obstacles.append(obs)                                   # attach obstacle to obstacle list
-# print("num ofobstacles:", len(obstacles))
+    # print("num ofobstacles:", len(obstacles))
+
+    #create cspace
+    # init_pos=[pos_x[0],pos_y[0]]
+    init_pos=[5, 9]
+    goal_pos=[-5, -8]
+    cspace = configuration_space(args['in'])
+    # cspace=configuration_space()
+    # cspace.reset_cspace(params_globalmap.boundaries,init_pos,goal_pos, obstacles )
+    # cspace.plot_config_space()
+    planner = VerticalCellDecomposition(cspace)
+    planner.construct_graph()
+    # path, path_idx = planner.search(True)
+    vcdpoints = planner.get_vcd_vertices()
+    # input()
+    # print(vcdpoints)
+    # expected_entropy
+
+
+    #waypoint from vcd
+    way_x=[]
+    way_y=[]
+
+    for point in vcdpoints:
+        print("x: ", point[0])
+        print("y: ", point[1])
+        way_x.append(point[0])
+        way_y.append(point[1])
+        # print("waypoints : (x,y ) = (", way_x,", ", way_y,")")
 
 
 
-#plot figures 
-# fig,axes=plt.figure(figsize=(10,20))
-axes[0].scatter(pos_x[0], pos_y[0], facecolor='blue',edgecolor='blue')      #initial point
-axes[0].scatter(pos_x[-1], pos_y[-1], facecolor='red',edgecolor='red')      #final point
-axes[0].plot(pos_x, pos_y, 'o', markersize = 20, fillstyle='none',color='black')             #trajectory point
-axes[0].plot(way_x, way_y, '*', markersize= 10, fillstyle='none',color='green')             #trajectory point
-for i in range(len(waytimes)):
-    axes[0].text(way_x[i], way_y[i]-1,str(waytimes[i]), color='g')
-
-area_size=5
-locs, labels = plt.xticks()
-# locs, labels = plt.yticks()
-#FixMe!
-# axes[0].xticks(np.arange(-area_size,area_size,1.0))
-# axes[0].yticks(np.arange(-area_size,area_size,1.0))
-# ax = plt.axes()
-
-axes[0].set_xlabel('x')
-axes[0].set_ylabel('y')
-axes[0].set_xlim([-area_size, area_size])   # limit the plot space
-axes[0].set_ylim([-area_size, area_size])   # limit the plot space
-axes[0].grid(True)
-# axes[0].tight_layout()
-
-#simulation settings
-ntimestep = len(pos_x)
-goal_tol=0.2
-
-goali = 0                           #define goal from waypoints set
-goal = [way_x[goali], way_y[goali]]
-	
-
-# initial state = [x(m), y(m), yaw(rad), v(m/s), omega(rad/s)]
-# state = np.array([pos_x[0],pos_y[0], 0.0, np.pi/2, 0.0, 0.0])
-state = np.array([pos_x[0],pos_y[0],np.pi/2, 0.0])
-print("initial state: ",state)
-traj = state[:2]
-iter=0
-simtime=0.0
-
-#Checking initial and final goal
-print("initial state: ",state)
-print("goal : ",goal)
-
-t_prev_goal = time.time()
-pmap_global = initialize_global_occ_grid_map(params_globalmap)
-initial_entropy = get_map_entropy(pmap_global,params_globalmap)
-print("initial entropy: ", initial_entropy )
-
-# for i in range(ntimestep):
-for _ in range(params.numiters):
-    state = simple_motion(state, goal, params)                        #dynamics
-    goal_dist = sqrt((goal[0] - state[0])**2+(goal[1] - state[1])**2) #distance to gaol
-    simtime = simtime + dt
-    # print("simtime" , simtime)
-    t_current = time.time()
-    if goal_dist < goal_tol:                                          # goal is reached
-        print('Time from the previous reached goal:', t_current - t_prev_goal)
-        # if goali < len(goal_x) - 1:
-        if goali < len(way_x) - 1:
-            goali += 1
-        else:
-            break
-        t_prev_goal = time.time()
-        goal = [way_x[goali], way_y[goali]]
-
-    #plot
-    if params.animate:
-        #figure1
-        axes[0].cla()
-        # plt.plot(goal[0], goal[1])
-        plot_map(pos_x,pos_y,way_x,way_y,waytimes)
-        axes[0].plot(goal[0], goal[1])
-        traj = np.vstack([traj, state[:2]])
-        visualize(traj, state, obstacles, params)
-
-        #figure2- local sensor window
-        axes[1].cla()
-        pmap_local, updated_grids, intersect_dic, obs_verticeid, closest_vertexid, params_localmap.xmin, params_localmap.xmax, params_localmap.ymin, params_localmap.ymax, params_localmap.xyreso, params_localmap.xw, params_localmap.yw= generate_ray_casting_grid_map(obstacles, params_localmap.xyreso, params_localmap.yawreso, state[0],state[1], state[2])
-        draw_occmap(pmap_local, params_localmap, state[0],state[1], axes[1])
-        #draw sensor ray to obstacles
-        for i in range(len(obstacles)):
-            axes[0].plot([state[0], obstacles[i].vertices[obs_verticeid[i][0]][0]], [state[1], obstacles[i].vertices[obs_verticeid[i][0]][1]], color='orange')
-            axes[0].plot([state[0], obstacles[i].vertices[obs_verticeid[i][1]][0]], [state[1], obstacles[i].vertices[obs_verticeid[i][1]][1]], color='orange')
-            axes[0].plot([state[0], obstacles[i].vertices[closest_vertexid[i]][0]], [state[1], obstacles[i].vertices[closest_vertexid[i]][1]], color='orange')
-        #test intersection
-        for angle,inter_point in intersect_dic.items():
-            axes[0].plot(inter_point[0], inter_point[1], '*', markersize= 5, fillstyle='none',color='green')
 
 
-        # axes[1].plot(ox, oy, "xr")
+    #plot figures 
+    # fig,axes=plt.figure(figsize=(10,20))
+    axes[0].scatter(pos_x[0], pos_y[0], facecolor='blue',edgecolor='blue')      #initial point
+    axes[0].scatter(pos_x[-1], pos_y[-1], facecolor='red',edgecolor='red')      #final point
+    axes[0].plot(pos_x, pos_y, 'o', markersize = 20, fillstyle='none',color='black')             #trajectory point
+    axes[0].plot(way_x, way_y, '*', markersize= 10, fillstyle='none',color='green')             #trajectory point
+    # for i in range(len(waytimes)):
+        # axes[0].text(way_x[i], way_y[i]-1,str(waytimes[i]), color='g')
+
+    area_size=12
+    locs, labels = plt.xticks()
+    # locs, labels = plt.yticks()
+    #FixMe!
+    # axes[0].xticks(np.arange(-area_size,area_size,1.0))
+    # axes[0].yticks(np.arange(-area_size,area_size,1.0))
+    # ax = plt.axes()
+
+    axes[0].set_xlabel('x')
+    axes[0].set_ylabel('y')
+    axes[0].set_xlim([-area_size, area_size])   # limit the plot space
+    axes[0].set_ylim([-area_size, area_size])   # limit the plot space
+    axes[0].grid(True)
+    # axes[0].tight_layout()
+
+    #simulation settings
+    ntimestep = len(pos_x)
+    goal_tol=0.2
+
+    goali = 0                           #define goal from waypoints set
+    goal = [way_x[goali], way_y[goali]]
+        
+
+    # initial state = [x(m), y(m), yaw(rad), v(m/s), omega(rad/s)]
+    # state = np.array([pos_x[0],pos_y[0], 0.0, np.pi/2, 0.0, 0.0])
+    state = np.array([pos_x[0],pos_y[0],np.pi/2, 0.0])
+    print("initial state: ",state)
+    traj = state[:2]
+    iter=0
+    simtime=0.0
+
+    #Checking initial and final goal
+    print("initial state: ",state)
+    print("goal : ",goal)
+
+    t_prev_goal = time.time()
+    pmap_global = initialize_global_occ_grid_map(params_globalmap)
+    initial_entropy = get_map_entropy(pmap_global,params_globalmap)
+    print("initial entropy: ", initial_entropy )
+
+    # for i in range(ntimestep):
+    for _ in range(params.numiters):
+        state = simple_motion(state, goal, params)                        #dynamics
+        goal_dist = sqrt((goal[0] - state[0])**2+(goal[1] - state[1])**2) #distance to gaol
+        simtime = simtime + dt
+        # print("simtime" , simtime)
+        t_current = time.time()
+        if goal_dist < goal_tol:                                          # goal is reached
+            print('Time from the previous reached goal:', t_current - t_prev_goal)
+            # if goali < len(goal_x) - 1:
+            if goali < len(way_x) - 1:
+                goali += 1
+            else:
+                break
+            t_prev_goal = time.time()
+            goal = [way_x[goali], way_y[goali]]
+
+        #plot
+        if params.animate:
+            #figure1
+            axes[0].cla()
+            # plt.plot(goal[0], goal[1])
+            plot_map(pos_x,pos_y,way_x,way_y,waytimes)
+            axes[0].plot(goal[0], goal[1])
+            traj = np.vstack([traj, state[:2]])
+            visualize(traj, state, obstacles, params)
+
+            #figure2- local sensor window
+            axes[1].cla()
+            pmap_local, updated_grids, intersect_dic, obs_verticeid, closest_vertexid, params_localmap.xmin, params_localmap.xmax, params_localmap.ymin, params_localmap.ymax, params_localmap.xyreso, params_localmap.xw, params_localmap.yw= generate_ray_casting_grid_map(obstacles, params_localmap.xyreso, params_localmap.yawreso, state[0],state[1], state[2])
+            draw_occmap(pmap_local, params_localmap, state[0],state[1], axes[1])
+            #draw sensor ray to obstacles
+            for i in range(len(obstacles)):
+                axes[0].plot([state[0], obstacles[i].vertices[obs_verticeid[i][0]][0]], [state[1], obstacles[i].vertices[obs_verticeid[i][0]][1]], color='orange')
+                axes[0].plot([state[0], obstacles[i].vertices[obs_verticeid[i][1]][0]], [state[1], obstacles[i].vertices[obs_verticeid[i][1]][1]], color='orange')
+                axes[0].plot([state[0], obstacles[i].vertices[closest_vertexid[i]][0]], [state[1], obstacles[i].vertices[closest_vertexid[i]][1]], color='orange')
+            #test intersection
+            # for angle,inter_point in intersect_dic.items():
+                # axes[0].plot(inter_point[0], inter_point[1], '*', markersize= 5, fillstyle='none',color='green')
+
+            # axes[1].plot(ox, oy, "xr")
 
 
-        #figure3- global occupancy grid
-        axes[2].cla()
-        pmap_global = update_occ_grid_map(state, pmap_local,params_localmap, pmap_global,params_globalmap)
-        draw_occmap_global(pmap_global,params_globalmap, axes[2])
-        entropy = get_map_entropy(pmap_global, params_globalmap)
-        print("----entropy : ", entropy)
+            #figure3- global occupancy grid
+            axes[2].cla()
+            pmap_global = update_occ_grid_map(state, pmap_local,params_localmap, pmap_global,params_globalmap)
+            draw_occmap_global(pmap_global,params_globalmap, axes[2])
+            entropy = get_map_entropy(pmap_global, params_globalmap)
+            print("----entropy : ", entropy)
 
-        plt.pause(0.001)
-        # plt.show()
+            plt.pause(0.001)
+            # plt.show()
 
-    iter=iter+1
-    # if iter%50==1:
-        # input()
+        iter=iter+1
+        # if iter%50==1:
+            # input()
 
-plt.show()
-     
-     
+    plt.show()
 
 
 

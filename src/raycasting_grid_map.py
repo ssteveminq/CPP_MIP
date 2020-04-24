@@ -12,7 +12,7 @@ from shapely.geometry.polygon import Polygon
 
 EXTEND_AREA = 15.0
 show_animation = True
-l_occ = np.log(0.3/0.7)
+l_occ = np.log(0.7/0.3)
 l_free = np.log(0.3/0.7)
 
 def polygon_contains_point(point, obstacle):
@@ -151,15 +151,15 @@ def get_raycast_to_line(origin,obstacle, obs_points,yawreso):
 
     else:
         min_angle = angle_pt2
-        max_algle = angle_pt
+        max_angle = angle_pt
 
         point1_x = obstacle.vertices[obs_points[1]][0]
         point1_y = obstacle.vertices[obs_points[1]][1]
         point2_x = obstacle.vertices[obs_points[0]][0]
         point2_y = obstacle.vertices[obs_points[0]][1]
 
-
     angle_intersect = dict()
+    print("max_angle",max_angle)
 
     if point3_x == None:
         num_angle =math.ceil((max_angle-min_angle)/yawreso)
@@ -179,6 +179,8 @@ def get_raycast_to_line(origin,obstacle, obs_points,yawreso):
                 temp_x = 1/slope*(point1_y+slope*origin_x-origin_y)
                 intersects =[temp_x,point1_y]
             else:
+                print("point1 : ", point1_x, ", ", point1_y)
+                print("point2 : ", point2_x, ", ", point2_y)
                 print("obs is not rectangle")
 
             angle_intersect[cur_angle]=intersects
@@ -219,10 +221,12 @@ def get_raycast_to_line(origin,obstacle, obs_points,yawreso):
                     intersects =[temp_x,previous_y]
                 else:
                     print("obs is not rectangle")
-                    # print("previous_x:" , previous_x)
-                    # print("previous_y:" , previous_y)
-                    # print("next_x:" , next_x)
-                    # print("next_y:" , next_y)
+                    # print("point1 : ", point1_x, ", ", point1_y)
+                    # print("point2 : ", point2_x, ", ", point2_y)
+                    print("previous_x:" , previous_x)
+                    print("previous_y:" , previous_y)
+                    print("next_x:" , next_x)
+                    print("next_y:" , next_y)
                 if i ==(num_angle-1):
                     small_angle = angle_nn 
                     previous_x = obstacle.vertices[obs_points[2]][0]
@@ -342,8 +346,12 @@ def generate_ray_casting_grid_map(obstacles,xyreso, yawreso, agent_x=0.0, agent_
         if polygon_contains_point(sensor_pose, obs)==False:  #check if sensor is in side obstacles
             max_angle = -100
             min_angle = +100
-            for i in range(len(obs.vertices)):
-                obs_angle = math.atan2(obs.vertices[i][1]-sensor_pose[1],obs.vertices[i][0]-sensor_pose[0])
+            visible_vertices = obs.get_visible_vertices(agent_x,agent_y)
+            # for i in range(len(obs.vertices)):
+            # for i in range(len(visible_vertices)):
+                # obs_angle = math.atan2(visible_vertices[i][1]-sensor_pose[1],visible_vertices[i][0]-sensor_pose[0])
+            for vid, vcoord in visible_vertices.items():
+                obs_angle = atan_zero_to_twopi(vcoord[1]-sensor_pose[1],vcoord[0]-sensor_pose[0])
                 # obs_angle-=agent_yaw
                 if obs_angle>max_angle:
                     max_angle = obs_angle
@@ -386,6 +394,7 @@ def generate_ray_casting_grid_map(obstacles,xyreso, yawreso, agent_x=0.0, agent_
     obs_vertices=[] 
     closest_vertices=[]
     iterator =0
+    obs_iter=0
 
     for obs in obstacles:
         if polygon_contains_point(sensor_pose, obs)==False:  #check if sensor is in side obstacles
@@ -395,24 +404,30 @@ def generate_ray_casting_grid_map(obstacles,xyreso, yawreso, agent_x=0.0, agent_
             max_id=0
             min_id=0
             nn_id=0
-            for i in range(len(obs.vertices)):
-                obs_angle = atan_zero_to_twopi(obs.vertices[i][1]-sensor_pose[1],obs.vertices[i][0]-sensor_pose[0])
-                dist_to_agent = math.sqrt((obs.vertices[i][0]-sensor_pose[0]) **2 + (obs.vertices[i][1]-sensor_pose[1]) **2 )
+            visible_vertices= obs.get_visible_vertices(agent_x,agent_y)
+            # for i in range(len(obs.vertices)):
+            for vid, vcoord in visible_vertices.items():
+                obs_angle = atan_zero_to_twopi(vcoord[1]-sensor_pose[1],vcoord[0]-sensor_pose[0])
+                dist_to_agent = math.sqrt((vcoord[0]-sensor_pose[0]) **2 + (vcoord[1]-sensor_pose[1]) **2 )
+                # obs_angle = atan_zero_to_twopi(obs.vertices[i][1]-sensor_pose[1],obs.vertices[i][0]-sensor_pose[0])
+                # dist_to_agent = math.sqrt((obs.vertices[i][0]-sensor_pose[0]) **2 + (obs.vertices[i][1]-sensor_pose[1]) **2 )
 
                 if obs_angle>max_angle:
                     max_angle = obs_angle
-                    max_id=i
+                    # max_id=i
+                    max_id=vid
                 if obs_angle<min_angle:
                     min_angle = obs_angle
-                    min_id=i
+                    min_id=vid
                 if dist_to_agent<min_dist:
                     min_dist = dist_to_agent
-                    nn_id = i
+                    nn_id = vid
                     nn_angle = obs_angle
 
             obs_vertices.append([min_id, max_id, nn_id])
             obs_angles.append([min_angle, max_angle, nn_angle])
             closest_vertices.append(nn_id)
+            print("obs iter : ", obs_iter,", vertices",  obs_vertices)
 
             #get anlge and intersects from obstacles
             obsdict = get_raycast_to_line([agent_x,agent_y],obs, obs_vertices[iterator],yawreso)
@@ -425,6 +440,7 @@ def generate_ray_casting_grid_map(obstacles,xyreso, yawreso, agent_x=0.0, agent_
 
                 d= math.sqrt((sensor_pose[0]-pt[0])**2 + (sensor_pose[1]-pt[1])**2)
                 min_d = 100
+                is_min_grid=False
                 for grid in gridlist:
                     if grid.d > d:
                         pmap[grid.ix][grid.iy] = 0  #log_unknown =0
@@ -433,13 +449,16 @@ def generate_ray_casting_grid_map(obstacles,xyreso, yawreso, agent_x=0.0, agent_
                         if min_d>grid.d:
                             min_d = grid.d
                             min_grid = grid
-                pmap[min_grid.ix][min_grid.iy]=np.log(0.7/0.3)  #log_occ =0
-
+                            is_min_grid=True
+                        
                 # print("obstacle boundary:(x,y) : ",  min_grid.px, ", ", min_grid.py)
-                min_grid.value=np.log(0.7/0.3)
-                updated_gridlist.append(min_grid)
+                if is_min_grid:
+                    pmap[min_grid.ix][min_grid.iy]=l_occ  #log_occ 
+                    min_grid.value=l_occ
+                    updated_gridlist.append(min_grid)
 
             iterator+=1
+        obs_iter+=1
 
     return pmap, updated_gridlist, obsdict, obs_vertices, closest_vertices, minx, maxx, miny, maxy, xyreso, xw,yw
 
