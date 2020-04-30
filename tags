@@ -13,7 +13,7 @@ Kp	src/backup_animation.py	/^Kp = 1.0  # speed propotional gain$/;"	v
 Kp	src/simulation.py	/^Kp = 1.0  # speed propotional gain$/;"	v
 Kv	src/animation.py	/^Kv = 0.05  # speed propotional gain$/;"	v
 Kv	src/backup_animation.py	/^Kv = 0.05  # speed propotional gain$/;"	v
-Kv	src/simulation.py	/^Kv = 0.05  # speed propotional gain$/;"	v
+Kv	src/simulation.py	/^Kv = 0.15  # speed propotional gain$/;"	v
 L	src/animation.py	/^L = 1.0  # [m] wheel base of vehicle$/;"	v
 L	src/backup_animation.py	/^L = 1.0  # [m] wheel base of vehicle$/;"	v
 L	src/simulation.py	/^L = 1.0  # [m] wheel base of vehicle$/;"	v
@@ -70,19 +70,20 @@ add_obstacles_to_grid_map	src/grid_map.py	/^    def add_obstacles_to_grid_map(se
 area_size	src/animation.py	/^area_size=5$/;"	v
 area_size	src/backup_animation.py	/^area_size=5$/;"	v
 area_size	src/dataplot.py	/^area_size=7.5$/;"	v
-area_size	src/simulation.py	/^    area_size=12$/;"	v
+area_size	src/simulation.py	/^    area_size=15$/;"	v
 area_size	src/test.py	/^        area_size = 10      # window size$/;"	v
 area_size	src/test.py	/^        area_size = 10  # window size$/;"	v
 args	src/simulation.py	/^    args = vars(parser.parse_args())$/;"	v
 args	src/test.py	/^    args = parser.parse_args()$/;"	v
 array	src/utils/priority_queue.py	/^  array = [42,23,16,15,4,8]$/;"	v
 atan_zero_to_twopi	src/raycasting_grid_map.py	/^def atan_zero_to_twopi(y, x):$/;"	f
+average	src/VCD.py	/^    def average(self,lst):$/;"	m	class:VerticalCellDecomposition
 ax	src/dataplot.py	/^ax = plt.axes()$/;"	v
 bresenham	src/grid_map.py	/^def bresenham(start, end):$/;"	f
 calc_grid_central_xy_position_from_index	src/grid_map_lib.py	/^    def calc_grid_central_xy_position_from_index(self, index, lower_pos):$/;"	m	class:GridMap
 calc_grid_central_xy_position_from_xy_index	src/grid_map_lib.py	/^    def calc_grid_central_xy_position_from_xy_index(self, x_ind, y_ind):$/;"	m	class:GridMap
 calc_grid_index_from_xy_index	src/grid_map_lib.py	/^    def calc_grid_index_from_xy_index(self, x_ind, y_ind):$/;"	m	class:GridMap
-calc_grid_map_config	src/raycasting_grid_map.py	/^def calc_grid_map_config(xyreso, agent_x,agent_y):$/;"	f
+calc_grid_map_config	src/raycasting_grid_map.py	/^def calc_grid_map_config(xyreso, agent_x,agent_y, sensor_range):$/;"	f
 calc_xy_index_from_position	src/grid_map_lib.py	/^    def calc_xy_index_from_position(self, pos, lower_pos, max_index):$/;"	m	class:GridMap
 check_inside_polygon	src/grid_map_lib.py	/^    def check_inside_polygon(iox, ioy, x, y):$/;"	m	class:GridMap
 check_occupied_from_xy_index	src/grid_map_lib.py	/^    def check_occupied_from_xy_index(self, xind, yind, occupied_val=1.0):$/;"	m	class:GridMap
@@ -112,7 +113,7 @@ data	src/test.py	/^        data= np.append(data,f_data,1)$/;"	v
 datafolder	src/test.py	/^    datafolder = 'results\/data\/'       # folder name$/;"	v
 define_flight_area	src/test.py	/^def define_flight_area(initial_pose):$/;"	f
 define_polygon	src/tools.py	/^def define_polygon(num_pts=4, ax=None):$/;"	f
-det	src/utils/graph_utils.py	/^	def det(a, b):$/;"	f	function:line_intersection
+det	src/utils/graph_utils.py	/^    def det(a, b):$/;"	f	function:line_intersection
 df	src/animation.py	/^df = pd.read_csv(file_name, delimiter=',', names = ['index', 'x', 'y', 'vx', 'vy', 'fx', 'fy'])$/;"	v
 df	src/backup_animation.py	/^df = pd.read_csv(file_name, delimiter=',', names = ['index', 'x', 'y', 'vx', 'vy', 'fx', 'fy'])$/;"	v
 df	src/dataplot.py	/^df = pd.read_csv(file_name, delimiter=',', names = ['index', 'x', 'y', 'vx', 'vy', 'fx', 'fy'])$/;"	v
@@ -205,6 +206,8 @@ generate_fov_angle	src/raycasting_grid_map.py	/^def generate_fov_angle(agent_yaw
 generate_ray_casting_grid_map	src/raycasting_grid_map.py	/^def generate_ray_casting_grid_map(obstacles,xyreso, yawreso, agent_x=0.0, agent_y=0.0,  agent_yaw=0.0):$/;"	f
 generate_samples	src/obstacle.py	/^    def generate_samples(self, reso=0.2):$/;"	m	class:Obstacle
 generate_vertices	src/obstacle.py	/^    def generate_vertices(self):$/;"	m	class:Obstacle
+generate_waypoint	src/VCD.py	/^    def generate_waypoint(self, params_local):$/;"	m	class:VerticalCellDecomposition
+get_area_polygon	src/VCD.py	/^    def get_area_polygon(self, region):$/;"	m	class:VerticalCellDecomposition
 get_final_path	src/utils/uniform_cost_search.py	/^    def get_final_path(self):$/;"	m	class:Search
 get_map_entropy	src/animation.py	/^def get_map_entropy(pmap_global,params_map):$/;"	f
 get_map_entropy	src/simulation.py	/^def get_map_entropy(pmap_global,params_map):$/;"	f
@@ -354,6 +357,7 @@ plot_obstacles	src/animation.py	/^def plot_obstacles(obstacles):$/;"	f
 plot_obstacles	src/backup_animation.py	/^def plot_obstacles(obstacles):$/;"	f
 plot_obstacles	src/simulation.py	/^def plot_obstacles(obstacles):$/;"	f
 plot_polygon	src/utils/configuration_space.py	/^    def plot_polygon(self,coords,axes=None):$/;"	m	class:configuration_space
+plot_regions	src/VCD.py	/^    def plot_regions(self, ax=None):$/;"	m	class:VerticalCellDecomposition
 plot_robot	src/animation.py	/^def plot_robot(pose, params):$/;"	f
 plot_robot	src/backup_animation.py	/^def plot_robot(pose, params):$/;"	f
 plot_robot	src/simulation.py	/^def plot_robot(pose, params):$/;"	f
@@ -386,6 +390,7 @@ pos_y	src/simulation.py	/^    pos_y = pos_y.astype(np.float)$/;"	v
 pq	src/utils/priority_queue.py	/^  pq = priority_queue()$/;"	v
 precastDB	src/raycasting_grid_map.py	/^class precastDB:$/;"	c
 precasting	src/raycasting_grid_map.py	/^def precasting(minx, miny, xw, yw, xyreso, yawreso,agent_x,agent_y):$/;"	f
+print_region	src/VCD.py	/^    def print_region(self):$/;"	m	class:VerticalCellDecomposition
 priority_queue	src/utils/priority_queue.py	/^class priority_queue:$/;"	c
 regex	src/animation.py	/^regex = re.compile('[-+]?\\d*\\.\\d+|[-+]?\\d+')                #set pattern in order to find integer in string$/;"	v
 regex	src/backup_animation.py	/^regex = re.compile('[-+]?\\d*\\.\\d+|[-+]?\\d+')                #set pattern in order to find integer in string$/;"	v
@@ -473,7 +478,6 @@ v_max	src/backup_animation.py	/^v_max=0.4$/;"	v
 v_max	src/dataplot.py	/^v_max=0.45$/;"	v
 v_max	src/simulation.py	/^v_max=0.4$/;"	v
 v_max	src/test.py	/^    v_max = 0.45              # maximum velocity of the vehicle$/;"	v
-vcdpoints	src/simulation.py	/^    vcdpoints = planner.get_vcd_vertices()$/;"	v
 veh_coords	src/test.py	/^        veh_coords = [[5, 5, -3.5, 6]]    # array containing all vehicles in [x_0,y_0,x_fin,y_fin] format$/;"	v
 veh_coords	src/test.py	/^    veh_coords = [[1, 1, 0, -2]]     # array containing all vehicles in [x_0,y_0,x_fin,y_fin] format$/;"	v
 vehicle_mass	src/test.py	/^    vehicle_mass = 5           # mass of the vehicles$/;"	v
@@ -522,6 +526,7 @@ wayfile_name	src/animation.py	/^wayfile_name =dir_path + "\/results\/data\/waypo
 wayfile_name	src/backup_animation.py	/^wayfile_name =dir_path + "\/results\/data\/waypoints_" +timeindex+"_.csv"$/;"	v
 wayfile_name	src/dataplot.py	/^wayfile_name =dir_path + "\/results\/data\/waypoints_" +timeindex+"_.csv"$/;"	v
 wayfile_name	src/simulation.py	/^    wayfile_name =dir_path + "\/results\/data\/waypoints_" +timeindex+"_.csv"$/;"	v
+waypoint_vcd	src/simulation.py	/^    waypoint_vcd = planner.generate_waypoint(params_localmap)$/;"	v
 waytime	src/animation.py	/^waytime= np.asarray(waydf['time'][1:])$/;"	v
 waytime	src/backup_animation.py	/^waytime= np.asarray(waydf['time'][1:])$/;"	v
 waytime	src/dataplot.py	/^waytime= np.asarray(waydf['time'][1:])$/;"	v

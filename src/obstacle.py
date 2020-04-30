@@ -17,10 +17,6 @@ class Obstacle:
         self.vertices.append((self.x_min, self.y_max))
 
     def get_visible_vertices(self, agent_x, agent_y):
-        print("agent_x : ", agent_x)
-        print("agent_y : ", agent_y)
-        print("xmin, xmax: ", self.x_min, self.x_max)
-        print("ymin, ymax: ", self.y_min, self.y_max)
         visible_vertices={}
         if agent_x < self.x_min: 
             if agent_y> self.y_max:

@@ -81,8 +81,7 @@ def check_polygon_visible(min_angle,max_angle,fov_anglelist):
 
 
 
-def calc_grid_map_config(xyreso, agent_x,agent_y):
-    sensor_range=5
+def calc_grid_map_config(xyreso, agent_x,agent_y, sensor_range):
     minx = agent_x - sensor_range
     maxx = agent_x + sensor_range
     miny = agent_y - sensor_range
@@ -159,16 +158,16 @@ def get_raycast_to_line(origin,obstacle, obs_points,yawreso):
         point2_y = obstacle.vertices[obs_points[0]][1]
 
     angle_intersect = dict()
-    print("max_angle",max_angle)
+    # print("max_angle",max_angle)
 
     if point3_x == None:
         num_angle =math.ceil((max_angle-min_angle)/yawreso)
         for i in range(num_angle):
             cur_angle = min_angle + i*yawreso
             slope = math.tan(cur_angle)
-            if abs(slope)==0:
-                print("slope is zero")
-                return []
+            # if abs(slope)==0:
+                # print("slope is zero")
+                # return []
 
             intersects=[]
             #intersects
@@ -278,8 +277,12 @@ def precasting(minx, miny, xw, yw, xyreso, yawreso,agent_x,agent_y):
 def generate_ray_casting_grid_map(obstacles,xyreso, yawreso, agent_x=0.0, agent_y=0.0,  agent_yaw=0.0):
 
 
+    yawreso= params.yawreso
+    xyreso = params.xyreso
+    sensor_range =params.sensor_range
+
     updated_gridlist=[]
-    minx, miny, maxx, maxy, xw, yw = calc_grid_map_config(xyreso, agent_x, agent_y )
+    minx, miny, maxx, maxy, xw, yw = calc_grid_map_config(xyreso, agent_x, agent_y, sensor_range)
     #make grid map with xw, yw (initialize)
     pmap = [[l_free for i in range(yw)] for i in range(xw)]
     #save the grid list for entire pmap
@@ -427,7 +430,7 @@ def generate_ray_casting_grid_map(obstacles,xyreso, yawreso, agent_x=0.0, agent_
             obs_vertices.append([min_id, max_id, nn_id])
             obs_angles.append([min_angle, max_angle, nn_angle])
             closest_vertices.append(nn_id)
-            print("obs iter : ", obs_iter,", vertices",  obs_vertices)
+            # print("obs iter : ", obs_iter,", vertices",  obs_vertices)
 
             #get anlge and intersects from obstacles
             obsdict = get_raycast_to_line([agent_x,agent_y],obs, obs_vertices[iterator],yawreso)

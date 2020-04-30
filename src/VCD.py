@@ -1,5 +1,6 @@
 import ast, math, operator
 import matplotlib.pyplot as plt
+import numpy as np
 
 from utils.configuration_space import Roadmap
 from collections import defaultdict
@@ -11,43 +12,65 @@ class VerticalCellDecomposition:
         self.cspace = cspace
 
         self.polygon_vertices = [item for sublist in cspace.polygons for item in sublist]
+        print("self.polygon_vertices")
+        print(self.polygon_vertices)
 
         self.polygon_edges = []
 
         for polygon in cspace.polygons:
             for i in range(len(polygon)):
                 self.polygon_edges.append([polygon[i%len(polygon)],polygon[(i+1)%len(polygon)]])
+        print("polygon-edge")
+        print(self.polygon_edges)
 
         self.decomposition_lines = []
         self.decomposition_lines_midpts = []
         self.decomposition_lines_map = defaultdict(list)
         self.regions = []
-
         self.roadmap = Roadmap()
 
     def construct_decomposition_lines(self,vertex,verticalLine,pointList,top):
+        # print("top", top)
+        # print("vertex: ", vertex)
+        # print("vertical line: ", verticalLine)
         for edge in self.polygon_edges:
             if (vertex not in edge):  # exclude edges containing the self vertex
                 point = line_intersection(verticalLine, edge)
+                # print("edge:", edge, ", point: ",point )
                 if point is not None: # If they intersect...
                     pointList.append(point)
+            # else: #if an edge containg the self vertex and edge is vertical
+                # if top and edge[0][1] == edge[1][1]:
+                    # point =[vertex[0],-100]
+                    # pointList.append(point)
+        # print("pointList", pointList)
 
         # Find nearest point of intersection
         nearest_point = pointList[0]
         for i in range(1, len(pointList)):
-            if top and pointList[i][1] < nearest_point[1]:
+            if top and pointList[i][1] < nearest_point[1]: #find the small y
                 nearest_point = pointList[i]
-            elif pointList[i][1] > nearest_point[1]:
+            elif pointList[i][1] > nearest_point[1]: #find the big y
                 nearest_point = pointList[i]
+
+        # print("nearest point", nearest_point)
 
         # Check if the nearest point falls on same polygon. If so, ignore the vertical line
         for polygon in self.cspace.polygons:
             if vertex in polygon:
-                if not on_polygon(nearest_point[0], nearest_point[1], polygon): 
+                if not on_polygon(nearest_point[0], nearest_point[1], polygon):
+                    # print("not on polygon")
                     self.decomposition_lines.append([vertex, nearest_point])
 
                     # create vertice_decompLines_map {vertex : pointList}
-                    self.decomposition_lines_map[tuple(vertex)].append([vertex,nearest_point])
+                    self.decomposition_lines_map[vertex].append([vertex,nearest_point])
+                    # print("added:", [vertex,nearest_point])
+                    # input()
+                # else:
+                    # print("on polygon--nearest point", nearest_point[0], nearest_point[1],", polygon:", polygon )
+
+        # print("decompsotion_lines_map", self.decomposition_lines_map)
+        # input()
 
     # Iterate over all edges for each vertex
     def vertical_lines(self):
@@ -55,6 +78,8 @@ class VerticalCellDecomposition:
             # TopLine
             top = True
             pointList = [(vertex[0], self.cspace.boundary[2][1])]
+            # verticalLine = [vertex[y], (vertex[0], self.cspace.boundary[2][1])]
+            # verticalLine = [(vertex[0], self.cspace.boundary[2][1]), (vertex[0], self.cspace.boundary[2][1])]
             verticalLine = [vertex, (vertex[0], self.cspace.boundary[2][1])]
             self.construct_decomposition_lines(vertex,verticalLine,pointList,top)
 
@@ -105,36 +130,84 @@ class VerticalCellDecomposition:
 
         return []
 
+    def print_region(self):
+        for i,region in enumerate(self.regions):
+            print(str(i), " -th region : ")
+            for point in region:
+                print(point)
+    def average(self,lst):
+        return sum(lst)/len(lst)
+
+    def get_area_polygon(self, region):
+        x_sets =[]
+        y_sets =[]
+        for point in region:
+            x_sets.append(point[0])
+            y_sets.append(point[1])
+        x_mean =self.average(x_sets)
+        y_mean =self.average(y_sets)
+
+        if(len(y_sets)>2):
+            tmp=y_sets[3]
+            y_sets[3]=y_sets[2]
+            y_sets[2]=tmp
+        for i in range(len(x_sets)):
+            x_sets[i] = x_sets[i] - x_mean 
+            y_sets[i] = y_sets[i] - y_mean 
+        # everything else is the same as maxb's code
+        correction = x_sets[-1] * y_sets[0] - y_sets[-1]* x_sets[0]
+        main_area = np.dot(x_sets[:-1], y_sets[1:]) - np.dot(y_sets[:-1], x_sets[1:])
+        return 0.5*np.abs(main_area + correction)
+
+
+
     def region_disection(self):
         maxY = self.cspace.boundary[2][1]
         minY = self.cspace.boundary[0][1]
+        print("boundary:", self.cspace.boundary)
 
+        self.original_vertices = self.polygon_vertices
         self.polygon_vertices = sorted(self.polygon_vertices, key=lambda x: x[0])
-        first = (self.decomposition_lines_map[tuple(self.polygon_vertices[0])])
-        second= (self.decomposition_lines_map[tuple(self.polygon_vertices[-1])])
-        firstCell = [self.cspace.boundary[0],self.cspace.boundary[3],first[0][0],\
-             first[0][1]]
-        lastCell =  [self.cspace.boundary[2],self.cspace.boundary[1],second[0][0],\
-             second[0][1]]
-        # firstCell = [self.cspace.boundary[0],self.cspace.boundary[3],self.decomposition_lines_map[tuple(self.polygon_vertices[0])][0][1],\
-             # self.decomposition_lines_map[tuple(self.polygon_vertices[0])][1][1]]
-        # lastCell =  [self.cspace.boundary[2],self.cspace.boundary[1],self.decomposition_lines_map[tuple(self.polygon_vertices[-1])][0][1],\
-             # self.decomposition_lines_map[tuple(self.polygon_vertices[-1])][1][1]]
+        if self.polygon_vertices[0][0]==self.polygon_vertices[1][0]:
+            print("connect both line")
+            first = (self.decomposition_lines_map[self.polygon_vertices[0]])
+            first2= (self.decomposition_lines_map[self.polygon_vertices[1]])
+            firstCell= [self.cspace.boundary[0],self.cspace.boundary[3],first[0][1],first2[0][1]]
+        else:
+            first = (self.decomposition_lines_map[self.polygon_vertices[0]])
+            firstCell = [self.cspace.boundary[0],self.cspace.boundary[3],first[0][0],first[0][1]]
+
+
+        if self.polygon_vertices[-1][0]==self.polygon_vertices[-2][0]:
+            second= (self.decomposition_lines_map[self.polygon_vertices[-1]])
+            second2= (self.decomposition_lines_map[self.polygon_vertices[-2]])
+            lastCell =  [self.cspace.boundary[2],self.cspace.boundary[1],second[0][1],second2[0][1]]
+        else:
+            second= (self.decomposition_lines_map[self.polygon_vertices[-1]])
+            lastCell =  [self.cspace.boundary[2],self.cspace.boundary[1],second[0][0],second[0][1]]
+
+        # firstCell = [self.cspace.boundary[0],self.cspace.boundary[3],self.decomposition_lines_map[self.polygon_vertices[0]][0][1],\
+             # self.decomposition_lines_map[self.polygon_vertices[0]][1][1]]
+        # lastCell =  [self.cspace.boundary[2],self.cspace.boundary[1],self.decomposition_lines_map[self.polygon_vertices[-1]][0][1],\
+             # self.decomposition_lines_map[self.polygon_vertices[-1]][1][1]]
 
         self.regions.append(firstCell)
         self.regions.append(lastCell)
 
         # Iterate over vertices
-        for i,vertex in enumerate(self.polygon_vertices[:-1]): 
+        for i,vertex in enumerate(self.polygon_vertices[:-2]): 
             # iterate over its decomposition lines
             for j in range(len(self.decomposition_lines_map[vertex])):
                 # check if both vertices are having both up and down
                 current_vertex = self.decomposition_lines_map[vertex][j][1]
                 next_vertex = self.polygon_vertices[i+1]
+                print("current_vertex", current_vertex)
+                print("next_vertex", next_vertex)
 
                 if(len(self.decomposition_lines_map[vertex])==2) and (len(self.decomposition_lines_map[next_vertex])==2):
                     ov = [self.decomposition_lines_map[vertex][0][1],self.decomposition_lines_map[vertex][1][1],\
                         self.decomposition_lines_map[next_vertex][0][1],self.decomposition_lines_map[next_vertex][1][1]]
+                    print("ov", ov)
 
                     if((ov[0][1] in (maxY, minY)) and (ov[1][1] in (maxY, minY)) and (ov[2][1] in (maxY, minY)) and \
                                     (ov[3][1] in (maxY, minY))):
@@ -153,9 +226,13 @@ class VerticalCellDecomposition:
                         self.regions.append(self.decomposition_lines_map[vertex][j]+lst)
                         # TODO, do not remove the comment below
                         # print(self.decomposition_lines_map[vertex][j]+lst)
+                print(self.regions)
+                input() 
 
         self.roadmap.vertices_dict[0] = list(self.cspace.start_state)
         self.roadmap.vertices_dict[1] = list(self.cspace.goal_state)
+
+        self.roadmap.vertices_dict_noedge[0] = list(self.cspace.start_state)
 
         for i,region in enumerate(self.regions):
             c_x = 0
@@ -166,10 +243,12 @@ class VerticalCellDecomposition:
                 c_y += point[1]/float(len(region))
 
             self.roadmap.vertices_dict[i+2] = [c_x,c_y]      
+            self.roadmap.vertices_dict_noedge[i+2] = [c_x,c_y]
 
     def construct_graph(self):
         self.vertical_lines()
         self.region_disection()
+        # input()
 
         max_key = list(self.roadmap.vertices_dict.keys())[-1]
 
@@ -193,6 +272,7 @@ class VerticalCellDecomposition:
                 self.roadmap.edge_weights[j+2].append(distance(point,centroid))
                 break
 
+        #mk - remove midpoints from vertices
         for i in range(len(self.decomposition_lines_midpts)):
             self.roadmap.vertices_dict[max_key+i+1] = self.decomposition_lines_midpts[i]
 
@@ -220,8 +300,65 @@ class VerticalCellDecomposition:
                 self.roadmap.adjacency_dict[max_key+j+1].append(i+2)
                 self.roadmap.edge_weights[max_key+j+1].append(distance(point,centroid))
 
+    def generate_waypoint(self, params_local):
+        
+        local_width = params_local.sensor_range*2
+        local_height= params_local.sensor_range*2
+        print("generage waypoints")
+        # for i 
+        waypoints  =[]
+        for i,region in enumerate(self.regions):
+            print("region", region)
+            area = self.get_area_polygon(region)
+            if area > local_width*local_height:
+                xmin=100
+                ymin=100
+                xmax=-100
+                ymax=-100
+                for point in region:
+                    if xmin>point[0]:
+                        xmin = point[0]
+                    if xmax<point[0]:
+                        xmax = point[0]
+                    if ymin>point[1]:
+                        ymin = point[1]
+                    if ymax<point[1]:
+                        ymax = point[1]
+
+                num_cell_x = math.ceil((xmax-xmin)/local_width)
+                num_cell_y = math.ceil((ymax-ymin)/local_height)
+                for u in range(num_cell_x):
+                    for v in range(num_cell_y):
+                        way_x = xmin+(2*u+0.5)*local_width/2
+                        way_y = ymin+(2*v+0.5)*local_height/2
+                        if way_x > xmax:
+                            way_x = xmax-3.0
+                        if way_y > ymax:
+                            way_y = ymax-3.0
+                        waypoints.append((way_x,way_y))
+                        print("waypoint-areaexceed-", way_x, ", ", way_y)
+            else:
+                x_sets=[]
+                y_sets=[]
+                for point in region:
+                    x_sets.append(point[0])
+                    y_sets.append(point[1])
+                x_mean =self.average(x_sets)
+                y_mean =self.average(y_sets)
+                waypoints.append((x_mean,y_mean))
+                print("waypoint-averaged-", x_mean, ", ", y_mean)
+
+                
+        # print(waypoints)
+        input()
+        return waypoints
+
+
+
     def get_vcd_vertices(self):
-        return self.roadmap.vertices_dict.values()
+        # points = # return self.roadmap.vertices_dict.values()
+        return self.roadmap.vertices_dict_noedge.values()
+
 
     def plot_vcd(self):
         self.cspace.plot_config_space(showPlot=False)
@@ -229,16 +366,43 @@ class VerticalCellDecomposition:
         for point in self.roadmap.vertices_dict.values():
             plt.plot(point[0],point[1],marker='o',color='black')
 
-        # for key in self.roadmap.adjacency_dict.keys():
-            # for value in self.roadmap.adjacency_dict[key]:
-                # plt.plot([self.roadmap.vertices_dict[key][0],self.roadmap.vertices_dict[value][0]],\
-                    # [self.roadmap.vertices_dict[key][1],self.roadmap.vertices_dict[value][1]],color='y')
+        for key in self.roadmap.adjacency_dict.keys():
+            for value in self.roadmap.adjacency_dict[key]:
+                plt.plot([self.roadmap.vertices_dict[key][0],self.roadmap.vertices_dict[value][0]],\
+                    [self.roadmap.vertices_dict[key][1],self.roadmap.vertices_dict[value][1]],color='y')
 
         # plot decomposition lines
         for line in self.decomposition_lines:
             x = [line[0][0],line[1][0]]
             y = [line[0][1],line[1][1]]
             plt.plot(x,y,'b')
+
+    def plot_regions(self, ax=None):
+
+        num_colors = len(self.regions)
+        if ax==None:
+            ax = plt.gca()
+
+        cm =plt.get_cmap('gist_rainbow')
+        for i,region in enumerate(self.regions):
+            x_sets =[]
+            y_sets =[]
+            for point in region:
+                x_sets.append(point[0])
+                y_sets.append(point[1])
+            col = cm(1.*i/num_colors)
+            # area = planner.get_area_polygon(region)
+            if len(y_sets)>2:
+                tmp=y_sets[3]
+                y_sets[3]=y_sets[2]
+                y_sets[2]=tmp
+
+            ax.fill(x_sets,y_sets, color=col,alpha=0.3)
+
+        ax.set_xlim([-12.5, 12.5])   # limit the plot space
+        ax.set_ylim([-12.5, 12.5])   # limit the plot space
+
+
 
     def search(self,showPlot=False):
         ucs = Search(self.roadmap)

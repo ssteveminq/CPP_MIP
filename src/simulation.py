@@ -28,7 +28,7 @@ l_free=np.log(0.2/0.8)
 k = 0.1  # look forward gain
 Lfc = 1.0  # look-ahead distance
 Kp = 1.0  # speed propotional gain
-Kv = 0.05  # speed propotional gain
+Kv = 0.15  # speed propotional gain
 ktheta = 0.5
 dt = 0.2  # [s]
 L = 1.0  # [m] wheel base of vehicle
@@ -37,10 +37,10 @@ class map_params:
     def __init__(self):
         self.xyreso = 0.25  # x-y grid resolution [m]
         self.yawreso = math.radians(6)  # yaw angle resolution [rad]
-        self.xmin=-15
-        self.xmax=15
-        self.ymin=-15
-        self.ymax=15
+        self.xmin=-12.5
+        self.xmax=12.5
+        self.ymin=12.5
+        self.ymax=12.5
         self.xw = int(round((self.xmax - self.xmin) / self.xyreso))
         self.yw = int(round((self.ymax - self.ymin) / self.xyreso))
         self.boundaries=[]
@@ -48,6 +48,7 @@ class map_params:
         self.boundaries.append((self.xmax,self.ymin))
         self.boundaries.append((self.xmax,self.ymax))
         self.boundaries.append((self.xmin,self.ymax))
+        self.sensor_range=5
 
 
 class Params:
@@ -59,7 +60,7 @@ class Params:
         self.min_vel = 0.0 # m/s
         self.sensor_range_m = 0.5 # m
         self.animate = 1
-        self.area_size=12
+        self.area_size=10
         # self.time_to_switch_goal = 5.0 # sec #inactive for now
         # self.sweep_resolution = 0.4 # m
 
@@ -81,8 +82,8 @@ def draw_occmap(data, params_map,agent_x, agent_y, ax):
     x, y = np.mgrid[slice(minx - xyreso / 2.0, maxx + xyreso / 2.0, xyreso),
                     slice(miny - xyreso / 2.0, maxy + xyreso / 2.0, xyreso)]
     ax.pcolor(x+agent_x, y+agent_y, data, vmax=1.0, cmap=plt.cm.Blues)
-    ax.set_xlim([agent_x-params.area_size, agent_x+params.area_size])   # limit the plot space
-    ax.set_ylim([agent_y-params.area_size, agent_y+params.area_size])   # limit the plot space
+    ax.set_xlim([agent_x-params.sesnor_range, agent_x+params.sesnor_range])   # limit the plot space
+    ax.set_ylim([agent_y-params.sesnor_range, agent_y+params.sesnor_range])   # limit the plot space
 
 def draw_occmap_global(data,parmas_globalmap, ax):
 
@@ -292,10 +293,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-in",help="input file (default: input.txt)",default="input2.txt")
     args = vars(parser.parse_args())
-    # cspace = configuration_space(args['in'])
-    # cspace.plot_config_space()
-    # input()
-    # planner = VerticalCellDecomposition(cspace)
     #Define two windows: 
     # axes[0] : robot, obstacle, waypoints, trajectory
     # axes[1] : sensor_map,occ_grid
@@ -375,20 +372,52 @@ if __name__ == "__main__":
     # cspace.plot_config_space()
     planner = VerticalCellDecomposition(cspace)
     planner.construct_graph()
-    # path, path_idx = planner.search(True)
-    vcdpoints = planner.get_vcd_vertices()
+    # planner.print_region()
     # input()
-    # print(vcdpoints)
-    # expected_entropy
+    # path, path_idx = planner.search(True)
+    # input()
+    # vcdpoints = planner.get_vcd_vertices()
+    waypoint_vcd = planner.generate_waypoint(params_localmap)
+    # vcdregions = planner.regions
+    # num_colors = len(vcdregions)
+    planner.plot_regions(axes[2])
+    '''
+    ##plot vcd regions
+    cm =plt.get_cmap('gist_rainbow')
+    for i,region in enumerate(vcdregions):
+        x_sets =[]
+        y_sets =[]
+        for point in region:
+            x_sets.append(point[0])
+            y_sets.append(point[1])
+        col = cm(1.*i/num_colors)
+        area = planner.get_area_polygon(region)
+        if len(y_sets)>2:
+            tmp=y_sets[3]
+            y_sets[3]=y_sets[2]
+            y_sets[2]=tmp
 
+        axes[2].fill(x_sets,y_sets, color=col,alpha=0.3)
+
+    axes[2].set_xlim([-12.5, 12.5])   # limit the plot space
+    axes[2].set_ylim([-12.5, 12.5])   # limit the plot space
+    # input()
+    # if i, polygon in enumerate(planner.polygon_vertices):
+        
+
+    # axes[2].plot(planner.polygon_vertices, color='b',alpha=0.3)
+    plt.show()
+    '''
+
+    # expected_entropy
 
     #waypoint from vcd
     way_x=[]
     way_y=[]
 
-    for point in vcdpoints:
-        print("x: ", point[0])
-        print("y: ", point[1])
+    for point in waypoint_vcd:
+        # print("x: ", point[0])
+        # print("y: ", point[1])
         way_x.append(point[0])
         way_y.append(point[1])
         # print("waypoints : (x,y ) = (", way_x,", ", way_y,")")
@@ -402,11 +431,11 @@ if __name__ == "__main__":
     axes[0].scatter(pos_x[0], pos_y[0], facecolor='blue',edgecolor='blue')      #initial point
     axes[0].scatter(pos_x[-1], pos_y[-1], facecolor='red',edgecolor='red')      #final point
     axes[0].plot(pos_x, pos_y, 'o', markersize = 20, fillstyle='none',color='black')             #trajectory point
-    axes[0].plot(way_x, way_y, '*', markersize= 10, fillstyle='none',color='green')             #trajectory point
+    axes[2].plot(way_x, way_y, '*', markersize= 10, fillstyle='none',color='green')             #trajectory point
     # for i in range(len(waytimes)):
         # axes[0].text(way_x[i], way_y[i]-1,str(waytimes[i]), color='g')
 
-    area_size=12
+    area_size=15
     locs, labels = plt.xticks()
     # locs, labels = plt.yticks()
     #FixMe!
@@ -428,6 +457,7 @@ if __name__ == "__main__":
     goali = 0                           #define goal from waypoints set
     goal = [way_x[goali], way_y[goali]]
         
+    plt.show()
 
     # initial state = [x(m), y(m), yaw(rad), v(m/s), omega(rad/s)]
     # state = np.array([pos_x[0],pos_y[0], 0.0, np.pi/2, 0.0, 0.0])
@@ -475,13 +505,13 @@ if __name__ == "__main__":
 
             #figure2- local sensor window
             axes[1].cla()
-            pmap_local, updated_grids, intersect_dic, obs_verticeid, closest_vertexid, params_localmap.xmin, params_localmap.xmax, params_localmap.ymin, params_localmap.ymax, params_localmap.xyreso, params_localmap.xw, params_localmap.yw= generate_ray_casting_grid_map(obstacles, params_localmap.xyreso, params_localmap.yawreso, state[0],state[1], state[2])
+            pmap_local, updated_grids, intersect_dic, obs_verticeid, closest_vertexid, params_localmap.xmin, params_localmap.xmax, params_localmap.ymin, params_localmap.ymax, params_localmap.xyreso, params_localmap.xw, params_localmap.yw= generate_ray_casting_grid_map(obstacles, params_localmap, state[0],state[1], state[2])
             draw_occmap(pmap_local, params_localmap, state[0],state[1], axes[1])
             #draw sensor ray to obstacles
-            for i in range(len(obstacles)):
-                axes[0].plot([state[0], obstacles[i].vertices[obs_verticeid[i][0]][0]], [state[1], obstacles[i].vertices[obs_verticeid[i][0]][1]], color='orange')
-                axes[0].plot([state[0], obstacles[i].vertices[obs_verticeid[i][1]][0]], [state[1], obstacles[i].vertices[obs_verticeid[i][1]][1]], color='orange')
-                axes[0].plot([state[0], obstacles[i].vertices[closest_vertexid[i]][0]], [state[1], obstacles[i].vertices[closest_vertexid[i]][1]], color='orange')
+            # for i in range(len(obstacles)):
+                # axes[0].plot([state[0], obstacles[i].vertices[obs_verticeid[i][0]][0]], [state[1], obstacles[i].vertices[obs_verticeid[i][0]][1]], color='orange')
+                # axes[0].plot([state[0], obstacles[i].vertices[obs_verticeid[i][1]][0]], [state[1], obstacles[i].vertices[obs_verticeid[i][1]][1]], color='orange')
+                # axes[0].plot([state[0], obstacles[i].vertices[closest_vertexid[i]][0]], [state[1], obstacles[i].vertices[closest_vertexid[i]][1]], color='orange')
             #test intersection
             # for angle,inter_point in intersect_dic.items():
                 # axes[0].plot(inter_point[0], inter_point[1], '*', markersize= 5, fillstyle='none',color='green')
@@ -494,7 +524,7 @@ if __name__ == "__main__":
             pmap_global = update_occ_grid_map(state, pmap_local,params_localmap, pmap_global,params_globalmap)
             draw_occmap_global(pmap_global,params_globalmap, axes[2])
             entropy = get_map_entropy(pmap_global, params_globalmap)
-            print("----entropy : ", entropy)
+            # print("----entropy : ", entropy)
 
             plt.pause(0.001)
             # plt.show()

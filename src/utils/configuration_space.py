@@ -65,6 +65,7 @@ class Roadmap:
         self.vertices_dict = {}
         self.adjacency_dict = defaultdict(list)
         self.edge_weights = defaultdict(list)
+        self.vertices_dict_noedge = {}
 
 if __name__ == "__main__":
 	cspace = configuration_space("input.txt")
