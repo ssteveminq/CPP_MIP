@@ -165,6 +165,10 @@ if __name__ == '__main__':
             x_wp.append(x_dummy)
             y_wp.append(y_dummy)
 
+    print("x_wp", x_wp)
+    print("y_wp", y_wp)
+    input()
+
     # Initialize model
     m = Model("ppl")
 
@@ -211,7 +215,7 @@ if __name__ == '__main__':
 
     # Obtaining the objective function
     total = 0                                # total number of time steps between all the vehicles (minimize)
-    epsilon = 0.001                          # effect of the force on the objective function
+    epsilon = 0.5                          # effect of the force on the objective function
     for veh in range(len(vehicles)):
             if obj_acceleration:
                 # total += vehicles[veh].b[i] * i + vehicles[veh].fm[i]*epsilon  # Objective function with acceleration

@@ -40,6 +40,7 @@ class map_params:
         self.ymax=15
         self.xw = int(round((self.xmax - self.xmin) / self.xyreso))
         self.yw = int(round((self.ymax - self.ymin) / self.xyreso))
+        self.sensor_range=5
 
 
 class Params:
@@ -435,7 +436,7 @@ for _ in range(params.numiters):
 
         #figure2- local sensor window
         axes[1].cla()
-        pmap_local, updated_grids, intersect_dic, obs_verticeid, closest_vertexid, params_localmap.xmin, params_localmap.xmax, params_localmap.ymin, params_localmap.ymax, params_localmap.xyreso, params_localmap.xw, params_localmap.yw= generate_ray_casting_grid_map(obstacles, params_localmap.xyreso, params_localmap.yawreso, state[0],state[1], state[2])
+        pmap_local, updated_grids, intersect_dic, obs_verticeid, closest_vertexid, params_localmap.xmin, params_localmap.xmax, params_localmap.ymin, params_localmap.ymax, params_localmap.xyreso, params_localmap.xw, params_localmap.yw= generate_ray_casting_grid_map(obstacles, params_localmap, state[0],state[1], state[2])
         draw_occmap(pmap_local, params_localmap, state[0],state[1], axes[1])
         #draw sensor ray to obstacles
         for i in range(len(obstacles)):

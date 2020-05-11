@@ -1,4 +1,5 @@
-# !/usr/bin/env python3
+from gurobipy import *
+from vehicle import Vehicle
 import argparse
 from numpy import genfromtxt
 import numpy as np
@@ -8,7 +9,7 @@ import argparse
 import csv
 import matplotlib.pyplot as plt
 from obstacle import Obstacle
-from raycasting_grid_map import generate_ray_casting_grid_map, calc_grid_map_config, atan_zero_to_twopi
+from raycasting_grid_map import generate_ray_casting_grid_map, calc_grid_map_config
 from utils.configuration_space import configuration_space
 from  VCD import VerticalCellDecomposition
 import pandas as pd
@@ -17,9 +18,7 @@ import re
 import time
 from matplotlib.patches import Polygon, Rectangle, Circle
 import matplotlib as mpl
-#import numpy as np
-f_max=0.3
-v_max=0.4
+
 #probability
 l_occ=np.log(0.8/0.2)
 l_free=np.log(0.2/0.8)
@@ -63,13 +62,6 @@ class Params:
         # self.time_to_switch_goal = 5.0 # sec #inactive for now
         # self.sweep_resolution = 0.4 # m
 
-# class State:
-    # def __init__(self, x=0.0, y=0.0, yaw=0.0, v=0.0):
-        # self.x = x
-        # self.y = y
-        # self.yaw = yaw
-        # self.v = v
-
 def draw_occmap(data, params_map,agent_x, agent_y, ax):
 
     minx=params_map.xmin
@@ -81,8 +73,8 @@ def draw_occmap(data, params_map,agent_x, agent_y, ax):
     x, y = np.mgrid[slice(minx - xyreso / 2.0, maxx + xyreso / 2.0, xyreso),
                     slice(miny - xyreso / 2.0, maxy + xyreso / 2.0, xyreso)]
     ax.pcolor(x+agent_x, y+agent_y, data, vmax=1.0, cmap=plt.cm.Blues)
-    ax.set_xlim([agent_x-params_map.sensor_range, agent_x+params_map.sensor_range])   # limit the plot space
-    ax.set_ylim([agent_y-params_map.sensor_range, agent_y+params_map.sensor_range])   # limit the plot space
+    ax.set_xlim([agent_x-params.sesnor_range, agent_x+params.sesnor_range])   # limit the plot space
+    ax.set_ylim([agent_y-params.sesnor_range, agent_y+params.sesnor_range])   # limit the plot space
 
 def draw_occmap_global(data,parmas_globalmap, ax):
 
@@ -111,7 +103,6 @@ def get_map_entropy(pmap_global,params_map):
             # entropy_sum+=p*math.log(p)
 
     return -entropy_sum
-
 
 def update_occ_grid_map(state, local_map, params_local, global_map, params_global):
     ##for observed cell in local window--> update
@@ -191,7 +182,6 @@ def plot_robot(pose, params):
     # axes[0].fill(np.array(sensor_outline[0, :]).flatten(),
              # np.array(sensor_outline[1, :]).flatten(),'y', alpha=0.25)
 
-
 def plot_map(pos_x,pos_y,way_x, way_y, waytimes):
     axes[0].scatter(pos_x[0], pos_y[0], facecolor='blue',edgecolor='blue')      #initial point
     axes[0].scatter(pos_x[-1], pos_y[-1], facecolor='red',edgecolor='red')      #final point
@@ -200,8 +190,8 @@ def plot_map(pos_x,pos_y,way_x, way_y, waytimes):
     axes[0].set_xlabel("x[m]")
     axes[0].set_ylabel("y[m]")
     axes[0].grid(True)
-    # for i in range(len(waytimes)):
-        # axes[0].text(way_x[i], way_y[i]-1,str(waytimes[i]), color='r')
+    for i in range(len(waytimes)):
+        axes[0].text(way_x[i], way_y[i]-1,str(waytimes[i]), color='r')
 
 
 #obstacles
@@ -226,26 +216,24 @@ def visualize(traj, pose, obstacles,params):
 def simple_motion(state, goal, params):
     # state = [x(m), y(m), yaw(rad) ,velocity(m/s)]
     # input = [a(m/s**2), steering(rad) ]
+    # print("goal:", goal)
     a =Update_a(state,goal)
     delta = Update_phi(state,goal)
     # print("a:", a, ", delta: ", delta)
-    print("delta:", delta)
-    print("pre-state[2]:", state[2])
-    print("goal:", goal)
+    # print("pre-state[2]:", state[2])
 
     state[0] +=  state[3] * math.cos(state[2]) * dt
     state[1] +=  state[3] * math.sin(state[2]) * dt
-    state[2] +=  state[3] * math.tan(delta) * dt
+    # state[2] +=  state[3] / L * math.tan(delta) * dt
+    state[2] +=  0.75*math.sin(delta) * dt
     # state[2] +=  0.75*math.sin(delta) * dt
     state[3] +=  a * dt
 
-    print("post-state[2]:", state[2])
+    # print("pre-state[2]:", state[2])
 
     if state[3] >= params.max_vel: state[3] = params.max_vel
     if state[3] <= params.min_vel: state[3] = params.min_vel
 
-    if state[2] >= 2*math.pi: state[2] -= 2*math.pi
-    if state[2] <= -2*math.pi: state[2] += 2*math.pi
     return state
 
 def Update_a(state, goal):
@@ -258,12 +246,9 @@ def Update_a(state, goal):
     return input_a
 
 def Update_phi(state, goal):
-    # des_phi = math.atan2(goal[1] - state[1], goal[0] - state[0])
-    des_phi = atan_zero_to_twopi(goal[1] - state[1], goal[0] - state[0])
+    des_phi = math.atan2(goal[1] - state[1], goal[0] - state[0])
     cur_yaw = state[2]
-    print("des_phi:, ", des_phi, "cur_yaw: ", state[2] )
-    err_phi = 0.5*(des_phi-cur_yaw)
-    # err_phi = des_phi
+    err_phi = des_phi-cur_yaw
 
     return err_phi
 
@@ -293,11 +278,13 @@ def motion(state, goal, params):
 
 
 
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-in",help="input file (default: input.txt)",default="input2.txt")
     parser.add_argument("-load",help="load saved data? [y/n] (default: n)",default="n")
+    parser.add_argument("-opt",help="optimization? [y/n] (default: y)",default="y")
     args = vars(parser.parse_args())
     #Define two windows: 
     # axes[0] : robot, obstacle, waypoints, trajectory
@@ -307,6 +294,13 @@ if __name__ == "__main__":
     params = Params()
     params_globalmap =  map_params()
     params_localmap =  map_params()
+
+    cspace = configuration_space(args['in'])
+    init_pos=cspace.start_state 
+    goal_pos=cspace.goal_state 
+    planner = VerticalCellDecomposition(cspace)
+    planner.construct_graph()
+    waypoint_vcd = planner.generate_waypoint(params_localmap)
 
     if args['load']=='y':
 
@@ -366,37 +360,349 @@ if __name__ == "__main__":
             nums = [float(k) for k in floatregex.findall(obstacle_coords[i])] #find integer value in string format '[ int, int ]'
             # print(nums)
             obs = Obstacle(nums[0]-1, nums[1]-1, nums[2], nums[3])          #xmin,ymin, 
-            obs.draw()
+            # obs.draw()
             obstacles.append(obs)                                   # attach obstacle to obstacle list
         # print("num ofobstacles:", len(obstacles))
         print("---load completed")
 
+    if args['opt']=='y':
+        area_size = 12      # window size
+        wp = True           # switch for use of waypoints. True: waypoints can be used. False: function deactivated
+        vx_init = [0.0]   # initial x-component velocity
+        vy_init = [0.0]    # initial y-component velocity
+        T = 152             # maximum time of travel
+        dt = 4.             # time step size
+        d_obs = 1.0         # minimum distance required from obstacle
+        M = 75              # number of constraints in order to approximate the force and velocity magnitudes
+        
+        obs_coords = cspace.get_obs()
+        steps = int(T / dt)                             # number of steps
+        obstacles=[]
+        for ob in obs_coords:                           # for every obstacle
+            tmp = Obstacle(ob[0], ob[1], ob[2], ob[3])  # local obstacle variable
+            # tmp.draw()                                  # draw local obstacle
+            obstacles.append(tmp)                       # attach obstacle to obstacle list
+
+
+        wp_vcds = planner.generate_waypoint(params_localmap)
+        print("wp_vcds", wp_vcds)
+        # obs_coords = [[-0.5, 0.5, 0, 5]]     # array containing all obstacles in [x_min,x_max,y_min,y_max] format
+        veh_coords = [[4, 8, -3.5, 6]]    # array containing all vehicles in [x_0,y_0,x_fin,y_fin] format
+        # veh_coords = [[5, 5]]    # array containing all vehicles in [x_0,y_0] format
+        # wp_coords = [[[0, -2],[3,3], [-3, 4]]]  # array containing all waypoint in [x_wp,y_wp] format
+        name = 'waypoints_obs.png'        # name of the figure to be saved
+        folder = 'results/waypoints_obs/'        # folder name
+
+        constrain_multiple_vehicles = False   # True: add contraints related to multiple vehicle, False: do not add
+        constrain_waypoints = True            # True: add contraints related to waypoints, False: do not add
+        constrain_obstacles = True           # True: add contraints related to avoiding obstacles, False: do not add
+
+        num_vehicles = len(veh_coords)
+        x0 = []; y0 = []; th0 = []; v0=[];                                 # initial positions for all vehicles/
+        x_fin = []; y_fin = []                           # final positions for all vehicles
+        for i in range(num_vehicles):
+            x0.append(veh_coords[i][0])
+            y0.append(veh_coords[i][1])
+            # th0.append(0.0)
+            # v0.append(0.0)
+            x_fin.append(veh_coords[i][2])
+            y_fin.append(veh_coords[i][3])
+        # print("x0", x0)
+        # print("y0", y0)
+        # print("th0", th0)
+        # print("v0", v0)
+
+    # Create location of all waypoints for all vehicles
+    n_way_points = len(wp_vcds)
+    x_wp = []; y_wp = []                             # position of all waypoints of all vehicles
+    if wp:                                           # if wp is True, waypoints are used
+        for i in range(num_vehicles):
+            x_dummy = []; y_dummy = []               # position of all waypoints of one vehicle
+            for j in range(n_way_points):
+                x_dummy.append(wp_vcds[j][0])
+                y_dummy.append(wp_vcds[j][1])
+
+            x_wp.append(x_dummy)
+            y_wp.append(y_dummy)
+
+    print("x_wp", x_wp[0])
+    print("y_wp", y_wp[0])
+    print("area_size", area_size)
+
+    ###### optimization #######
+    # Initialize model
+    m = Model("ppl")
+
+    ###### Inputs to the generation of the vehicles ######
+    vehicle_mass = 5        # mass of the vehicles
+    # v_max = 0.225         # maximum velocity of the vehicle
+    v_max = 0.75             # maximum velocity of the vehicle
+    vx_init = [0]           # initial x-component velocity
+    vy_init = [0]           # initial y-component velocity
+    v_init=0.0
+    f_max = [1.0]           # maximum force experienced by a vehicle
+    obs_coords = [[5, 7, -2, 1], [-1.0, 1.0, 0.0, 2.0]]     # array containing all obstacles in [x_min,x_max,y_min,y_max] format
+    performance_graphs = True  # include the velocity and acceleration performance of the vehicles
+    obj_acceleration = False   # when True the acceleration is taken into consideration in the objective function
+
+    if not obj_acceleration:  # if the acceleration is not included in the objective function, 'acc' is added to the file name
+        extra = 'acc_'
+    else:
+        extra = ''
+
+    # Create vehicles and add model main variables
+    vehicles = []
+    for i in range(num_vehicles):
+        # print(f_max[min(i, len(f_max)-1)])
+        if wp:
+            vehicles.append(
+                Vehicle(vehicle_mass, dt, T, x0[i], y0[i], i, m, M, v_max, f_max[min(i, len(f_max)-1)], area_size, x_fin[i], y_fin[i],
+                        wp, x_wp[i], y_wp[i]))
+        else:
+            vehicles.append(
+                Vehicle(vehicle_mass, dt, T, x0[i], y0[i],i, m, M, v_max, f_max[min(i, len(f_max)-1)], area_size, x_fin[i], y_fin[i],
+                        wp))
+
+    # Add constraints and add model secondary variables
+    for i in range(num_vehicles):        
+        vehicles[i].constrain_dynamics(vx_init[i], vy_init[i])
+        vehicles[i].constrain_positions()
+
+        if(constrain_obstacles):
+            vehicles[i].constrain_obstacles(obstacles, d_obs)
+        
+        # if(constrain_multiple_vehicles):
+            # vehicles[i].constrain_multiple_vehicles(vehicles, 0.6)
+        
+        if(constrain_waypoints):
+            vehicles[i].constrain_waypoints()
+
+
+    # Obtaining the objective function
+    total = 0                                # total number of time steps between all the vehicles (minimize)
+    epsilon = 0.1                          # effect of the force on the objective function
+    for veh in range(len(vehicles)):
+            if obj_acceleration:
+                for i in range(steps):
+                    total += vehicles[veh].fm[i]*epsilon  # Objective function with acceleration
+                total += vehicles[veh].Tf
+            else:
+                # for i in range(steps):
+                    # total += vehicles[veh].b[i] * i    # Objective function without acceleration
+                total = vehicles[veh].Tf  # Objective function without acceleration
+
+
+    m.setObjective(total, GRB.MINIMIZE)
+    # Optimizing the model and obtaining the values of he parameters and the objective function
+    m.optimize()
+    m.getVars()
+    # input()
+
+
+    # Update filename with time
+    datafolder = 'results/data/'       # folder name
+    filename_data= 'robot_'
+    filename_waypoint = 'waypoints_'
+    filename_obstacle= 'obstacles_'
+    t = time.localtime()
+    timestamp =time.strftime('%m%d%H%M_', t)
+    name=name+timestamp +".png"
+    filename_data= datafolder+filename_data+timestamp+'.csv'
+    filename_waypoint =datafolder+filename_waypoint+timestamp+'.csv'
+    filename_obstacle =datafolder+filename_obstacle+timestamp+'.csv'
+
+    # Plotting the results
+    for i in range(num_vehicles):
+        z = 0
+        plt.scatter(vehicles[i].x[18].x, vehicles[i].y[18].x, facecolor = 'black', edgecolor = 'black')
+        # Plot dashed lines connecting initial and final points for all vehicles
+        plt.plot([veh_coords[i][0], veh_coords[i][2]], [veh_coords[i][1], veh_coords[i][3]], 'k--', alpha = 0.5)
+        '''
+        if args.obs == 1:
+            # Plot a bold point at the 18th point as done in the paper
+            plt.scatter(vehicles[i].x[18].x, vehicles[i].y[18].x, facecolor = 'black', edgecolor = 'black')
+            # Plot dashed lines connecting initial and final points for all vehicles
+            plt.plot([veh_coords[i][0], veh_coords[i][2]], [veh_coords[i][1], veh_coords[i][3]], 'k--', alpha = 0.5)
+        elif args.obs == 2:
+            # Plot dashed lines connecting initial and final points for all vehicles
+            plt.plot([veh_coords[i][0], veh_coords[i][2]], [veh_coords[i][1], veh_coords[i][3]], 'k--', alpha=0.5)
+        elif args.obs == 3 or args.obs == 4:
+            # Plot arrow as shown in the paper
+            plt.arrow(7.5, 5, -2, 0, length_includes_head=True, head_width=0.3)
+
+        '''
+        # for k in range(steps):                 # obtaining time step at which vehicle reaches the final point
+            # Z = str(vehicles[i].b[k])
+            # if Z[-5] == "1":
+                # z = k
+                # break
+        # obtaining time step at which vehicle reaches which waypoint
+        wp_times={}
+        for k in range(len(vehicles[i].kset)):
+            for j in range(steps):
+                Z = str(vehicles[i].kset[k][j])
+                if Z[-5] == "1":
+                    wp_times[j]=k
+                    # wp_times[j]=wp_coords[k]
+        wp_times= dict(sorted(wp_times.items()))
+        z=list(wp_times.keys())[-1]           #printing the final time
+        print("final_time:", z)
+
+     
+        z=z+1
+        coords = np.zeros([z,2])
+        for j in range(z):                    # obtaining the coordinates to plot
+            coords[j, :] = [vehicles[i].x[j].x,vehicles[i].y[j].x]
+        if wp:                                # plotting the location of the waypoints
+            for jj in range(len(x_wp[i])):
+                plt.plot(x_wp[i][jj], y_wp[i][jj], '*', color='b')
+                plt.text(x_wp[i][jj], y_wp[i][jj]-1,str(jj), color='b')
+        
+        # if args.obs == 0:
+        labels = ['Turn rate 15 $\degree$/s', 'Turn rate 12 $\degree$/s']
+        shape = ['o', '^']
+        plt.plot(coords[:,0], coords[:,1], shape[i], fillstyle='none',color='black',label=labels[i])
+        plt.legend()
+        # else:
+            # plt.scatter(coords[:,0], coords[:,1], facecolor = 'none', edgecolor = 'black')  # plot the trajectories of the vehicles
+
+
+        #comment below 2 lines because of elimination fix final points
+        # plt.plot(vehicles[i].x_fin, vehicles[i].y_fin, '*', color='k')    # plot the final points star
+        # plt.scatter(vehicles[i].x_fin, vehicles[i].y_fin, facecolor = 'none', edgecolor = 'black')  # plot the final points circle
+
+    plt.xlim([-area_size, area_size])   # limit the plot space
+    plt.ylim([-area_size, area_size])   # limit the plot space
+    # if args.obs == 0:
+        # plt.xlim([-10, area_size])   # limit the plot space
+        # plt.ylim([-10, area_size])   # limit the plot space
+ 
+
+    # plt.savefig(folder + extra + name)                   # save the resulting plot
+    if performance_graphs:  # Plot the velocity and acceleration of the vehicles of the different experiments
+        line_styles = ["--", ":", "-.", '-', '-']
+        marker_styles = ['None', 'None', 'None', 'x', 'None']
+
+        # Plot the velocity
+        fig = plt.subplot(2,1,1)
+        plt.xlabel('Time steps [-]')
+        plt.ylabel("Velocity [m/s]")
+        plt.title("Velocity per time step")
+        v_coords_x = []
+        v_coords_y = []
+        v_coords = []
+
+        # gathering velocity and force data 
+        v_data=np.zeros([z,2])
+        f_data=np.zeros([z,2])
+        for j in range(z):                    # obtaining the coordinates to plot
+            v_data[j, :] = [vehicles[i].vx[j].x,vehicles[i].vy[j].x]
+            f_data[j, :] = [vehicles[i].fx[j].x,vehicles[i].fy[j].x]
+    
+        # for multiple vehicles : v_coords_x, v_coords_y are temporary variables
+        for j in range(len(vehicles)):                  # extract the velocity of each vehicle
+            for i in range(len(vehicles[0].vx)):
+                v_coords_x.append(vehicles[j].vx[i].x)  # velocity in the x-direction
+                v_coords_y.append(vehicles[j].vy[i].x)  # velocity in the y-direction
+                v_coords.append(sqrt(vehicles[j].vy[i].x ** 2 + vehicles[j].vx[i].x ** 2))  # velocity magnitude
+            n_steps = len(v_coords)
+            fig.plot(range(len(v_coords)), v_coords, color = 'black', label= "Vehicle " + str(j+1), linestyle = line_styles[j], marker = marker_styles[j])
+            #need to comment in for multiple vehicles#############
+            v_coords_x = []
+            v_coords_y = []
+            v_coords = []
+            #################################################################
+
+        # Plot the maximum velocity
+        fig.plot(range(n_steps), [vehicles[0].v_max]*n_steps, color = 'black', label="Maximum velocity = " + str(vehicles[0].v_max) + ' [m/s]', linestyle = line_styles[4], marker = marker_styles[4])
+        plt.legend()
+        plt.grid(True)
+
+        # Plot the force
+        fig2 = plt.subplot(2, 1, 2)
+        plt.xlabel('Time steps [-]')
+        plt.ylabel("Force [N]")
+        plt.title("Acceleration per time step")
+        f_coords_x = []
+        f_coords_y = []
+        f_coords = []
+        for j in range(len(vehicles)):                 # extract the forces applied to each vehicle
+            for i in range(len(vehicles[0].vx)):
+                f_coords_x.append(vehicles[j].fx[i].x)  # force applied in the x-direction
+                f_coords_y.append(vehicles[j].fy[i].x)  # force applied  in the y-direction
+                f_coords.append(sqrt(vehicles[j].fy[i].x ** 2 + vehicles[j].fx[i].x ** 2))   # force magnitude
+
+            plt.plot(range(n_steps), f_coords, color='black', label= "Vehicle " + str(j+1), linestyle = line_styles[j], marker = marker_styles[j])
+            #need to comment in for multiple vehicles#############
+            f_coords_x = []
+            f_coords_y = []
+            f_coords = []
+            #################################################################
+
+        # Plot the maximum force
+        fig2.plot(range(n_steps), [vehicles[0].f_max] * n_steps, color='black', label="Maximum force = " + str(vehicles[0].f_max) + ' [N]', linestyle = line_styles[4], marker = marker_styles[4])
+        plt.legend()
+        plt.grid(True)
+        plt.tight_layout()                                   # Make sure the titles and labels are visible
+        plt.savefig(folder + extra + "Performance_" + name)  # save the resulting plot
+
+        #save data to csv file
+        data= np.append(coords,v_data,1)
+        data= np.append(data,f_data,1)
+        pd.DataFrame(data, columns=["x" , "y", "vx" , "vy", "fx" , "fy"]).to_csv(filename_data,header=True)
+
+        wpdata=[]
+        iters=0
+        for key,value in wp_times.items():
+            # wpdata.append([key, wp_coords[0][iters]])
+            wpdata.append([key, wp_vcds[int(value)]])
+
+        (pd.DataFrame(data=wpdata, columns=["time", "(x,y)"]).to_csv(filename_waypoint, header=True))
+
+        obs_column=[]
+        for obs in obstacles:
+            obs_str = '['+str(obs.x_min)+','+str(obs.x_max)+','+str(obs.y_min)+','+str(obs.y_max)+']'
+            obs_column.append(obs_str)     # array containing all obstacles in [x_min,x_max,y_min,y_max] format
+
+        (pd.DataFrame(data=obs_column, columns=["obstacle"]).to_csv(filename_obstacle, header=True))
+
+
+
+
+
+
+
+
+    plt.show()
+
+
+
     #create cspace
     # init_pos=[pos_x[0],pos_y[0]]
-    init_pos=[5, 4]
-    goal_pos=[-5, -8]
+    # init_pos=[5, 4]
+    # goal_pos=[-5, -8]
     # cspace = configuration_space(args['in'])
-    cspace=configuration_space()
-    cspace.reset_cspace(params_globalmap.boundaries,init_pos,goal_pos, obstacles)
+    # cspace=configuration_space()
+    # cspace.reset_cspace(params_globalmap.boundaries,init_pos,goal_pos, obstacles )
     # cspace.plot_config_space()
-    planner = VerticalCellDecomposition(cspace)
-    planner.construct_graph()
+    # planner = VerticalCellDecomposition(cspace)
+    # planner.construct_graph()
     # path, path_idx = planner.search(True)
-    waypoint_vcd = planner.generate_waypoint(params_localmap)
-    # planner.plot_regions(axes[2])
+    # waypoint_vcd = planner.generate_waypoint(params_localmap)
 
     #waypoint from vcd
-    way_x=[]
-    way_y=[]
+    # way_x=[]
+    # way_y=[]
 
-    for point in waypoint_vcd:
+    # for point in waypoint_vcd:
         # print("x: ", point[0])
         # print("y: ", point[1])
-        way_x.append(point[0])
-        way_y.append(point[1])
+        # way_x.append(point[0])
+        # way_y.append(point[1])
         # print("waypoints : (x,y ) = (", way_x,", ", way_y,")")
 
 
+    '''
     #plot figures 
     # fig,axes=plt.figure(figsize=(10,20))
     axes[0].scatter(pos_x[0], pos_y[0], facecolor='blue',edgecolor='blue')      #initial point
@@ -428,7 +734,7 @@ if __name__ == "__main__":
     goali = 0                           #define goal from waypoints set
     goal = [way_x[goali], way_y[goali]]
         
-    # plt.show()
+    plt.show()
 
     # initial state = [x(m), y(m), yaw(rad), v(m/s), omega(rad/s)]
     # state = np.array([pos_x[0],pos_y[0], 0.0, np.pi/2, 0.0, 0.0])
@@ -505,6 +811,7 @@ if __name__ == "__main__":
             # input()
 
     plt.show()
+    '''
 
 
 

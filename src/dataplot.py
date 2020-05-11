@@ -15,7 +15,7 @@ f_max=0.35
 v_max=0.45
 
 # timeindex = "04021858"
-timeindex = "04171450"
+timeindex = "04302233"
 # Open the desired file for reading
 dir_path = os.path.dirname(os.path.realpath(__file__))
 dir_path=dir_path[:-4]
@@ -68,23 +68,22 @@ floatregex =re.compile('[-+]?\d*\.\d+|[-+]?\d+')
 obstacles = []                                  # list which will contain all obstacles
 obstacle_coords = np.asarray(obsdf['obstacle'][0:])
 for i in range(len(obstacle_coords)):
-    if i<1:
-        nums = [float(k) for k in floatregex.findall(obstacle_coords[i])] #find integer value in string format '[ int, int ]'
-        tmp = Obstacle(nums[0], nums[1], nums[2], nums[3])          #xmin,ymin, 
-        tmp.draw()
-        obstacles.append(tmp)                                   # attach obstacle to obstacle list
+    nums = [float(k) for k in floatregex.findall(obstacle_coords[i])] #find integer value in string format '[ int, int ]'
+    tmp = Obstacle(nums[0], nums[1], nums[2], nums[3])          #xmin,ymin, 
+    tmp.draw()
+    obstacles.append(tmp)                                   # attach obstacle to obstacle list
 
 
 #plot figures 
 plt.scatter(pos_x[0], pos_y[0], facecolor='blue',edgecolor='blue')      #initial point
 plt.scatter(pos_x[-1], pos_y[-1], facecolor='red',edgecolor='red')      #final point
-plt.plot(pos_x, pos_y, 'o', markersize = 10, fillstyle='none',color='black')             #trajectory point
+plt.plot(pos_x, pos_y, 'o', markersize = 25, fillstyle='none',color='black')             #trajectory point
 plt.plot(way_x, way_y, '*', markersize= 10, fillstyle='none',color='green')             #trajectory point
 for i in range(len(waytimes)):
     plt.text(way_x[i], way_y[i]-1,str(waytimes[i]), color='g')
 
 
-area_size=7.5
+area_size=13
 locs, labels = plt.xticks()
 locs, labels = plt.yticks()
 plt.xticks(np.arange(-area_size,area_size,1.0))

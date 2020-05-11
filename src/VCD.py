@@ -64,13 +64,10 @@ class VerticalCellDecomposition:
 
                     # create vertice_decompLines_map {vertex : pointList}
                     self.decomposition_lines_map[vertex].append([vertex,nearest_point])
-                    # print("added:", [vertex,nearest_point])
-                    # input()
                 # else:
                     # print("on polygon--nearest point", nearest_point[0], nearest_point[1],", polygon:", polygon )
 
         # print("decompsotion_lines_map", self.decomposition_lines_map)
-        # input()
 
     # Iterate over all edges for each vertex
     def vertical_lines(self):
@@ -195,14 +192,12 @@ class VerticalCellDecomposition:
         self.regions.append(lastCell)
 
         # Iterate over vertices
-        for i,vertex in enumerate(self.polygon_vertices[:-2]): 
+        for i,vertex in enumerate(self.polygon_vertices[:-2]): #MK
             # iterate over its decomposition lines
             for j in range(len(self.decomposition_lines_map[vertex])):
                 # check if both vertices are having both up and down
                 current_vertex = self.decomposition_lines_map[vertex][j][1]
                 next_vertex = self.polygon_vertices[i+1]
-                print("current_vertex", current_vertex)
-                print("next_vertex", next_vertex)
 
                 if(len(self.decomposition_lines_map[vertex])==2) and (len(self.decomposition_lines_map[next_vertex])==2):
                     ov = [self.decomposition_lines_map[vertex][0][1],self.decomposition_lines_map[vertex][1][1],\
@@ -226,8 +221,6 @@ class VerticalCellDecomposition:
                         self.regions.append(self.decomposition_lines_map[vertex][j]+lst)
                         # TODO, do not remove the comment below
                         # print(self.decomposition_lines_map[vertex][j]+lst)
-                print(self.regions)
-                input() 
 
         self.roadmap.vertices_dict[0] = list(self.cspace.start_state)
         self.roadmap.vertices_dict[1] = list(self.cspace.goal_state)
@@ -248,7 +241,6 @@ class VerticalCellDecomposition:
     def construct_graph(self):
         self.vertical_lines()
         self.region_disection()
-        # input()
 
         max_key = list(self.roadmap.vertices_dict.keys())[-1]
 
@@ -304,11 +296,10 @@ class VerticalCellDecomposition:
         
         local_width = params_local.sensor_range*2
         local_height= params_local.sensor_range*2
-        print("generage waypoints")
         # for i 
         waypoints  =[]
         for i,region in enumerate(self.regions):
-            print("region", region)
+            # print("region", region)
             area = self.get_area_polygon(region)
             if area > local_width*local_height:
                 xmin=100
@@ -335,8 +326,7 @@ class VerticalCellDecomposition:
                             way_x = xmax-3.0
                         if way_y > ymax:
                             way_y = ymax-3.0
-                        waypoints.append((way_x,way_y))
-                        print("waypoint-areaexceed-", way_x, ", ", way_y)
+                        waypoints.append([way_x,way_y])
             else:
                 x_sets=[]
                 y_sets=[]
@@ -345,12 +335,8 @@ class VerticalCellDecomposition:
                     y_sets.append(point[1])
                 x_mean =self.average(x_sets)
                 y_mean =self.average(y_sets)
-                waypoints.append((x_mean,y_mean))
-                print("waypoint-averaged-", x_mean, ", ", y_mean)
+                waypoints.append([x_mean,y_mean])
 
-                
-        # print(waypoints)
-        input()
         return waypoints
 
 

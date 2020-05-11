@@ -274,7 +274,7 @@ def precasting(minx, miny, xw, yw, xyreso, yawreso,agent_x,agent_y):
 
     return precast
 
-def generate_ray_casting_grid_map(obstacles,xyreso, yawreso, agent_x=0.0, agent_y=0.0,  agent_yaw=0.0):
+def generate_ray_casting_grid_map(obstacles,params, agent_x=0.0, agent_y=0.0,  agent_yaw=0.0):
 
 
     yawreso= params.yawreso
@@ -350,32 +350,35 @@ def generate_ray_casting_grid_map(obstacles,xyreso, yawreso, agent_x=0.0, agent_
             max_angle = -100
             min_angle = +100
             visible_vertices = obs.get_visible_vertices(agent_x,agent_y)
+            # print("visible vertices: ",visible_vertices )
             # for i in range(len(obs.vertices)):
             # for i in range(len(visible_vertices)):
                 # obs_angle = math.atan2(visible_vertices[i][1]-sensor_pose[1],visible_vertices[i][0]-sensor_pose[0])
-            for vid, vcoord in visible_vertices.items():
-                obs_angle = atan_zero_to_twopi(vcoord[1]-sensor_pose[1],vcoord[0]-sensor_pose[0])
-                # obs_angle-=agent_yaw
-                if obs_angle>max_angle:
-                    max_angle = obs_angle
-                if obs_angle<min_angle:
-                    min_angle = obs_angle
+            if len(visible_vertices)>0:
+                print("visible vertices: ",visible_vertices )
+                for vid, vcoord in visible_vertices.items():
+                    obs_angle = atan_zero_to_twopi(vcoord[1]-sensor_pose[1],vcoord[0]-sensor_pose[0])
+                    # obs_angle-=agent_yaw
+                    if obs_angle>max_angle:
+                        max_angle = obs_angle
+                    if obs_angle<min_angle:
+                        min_angle = obs_angle
 
-            if min_angle <0 and max_angle <0:
-                min_angle+=2*math.pi
-                max_angle+=2*math.pi
+                if min_angle <0 and max_angle <0:
+                    min_angle+=2*math.pi
+                    max_angle+=2*math.pi
 
-            if min_angle<-math.pi/2 and max_angle >math.pi/2:
-                min_angle+=2*math.pi
-                tmp = min_angle
-                min_angle = max_angle
-                max_angle = tmp
-            if max_angle>0 and max_angle<math.pi/2 and min_angle<0:
-                #min angle will be larger than max angle for this case
-                min_angle+=2*math.pi
-            
-            # if obs_angle<0:
-                # obs_angle+=2*math.pi
+                if min_angle<-math.pi/2 and max_angle >math.pi/2:
+                    min_angle+=2*math.pi
+                    tmp = min_angle
+                    min_angle = max_angle
+                    max_angle = tmp
+                if max_angle>0 and max_angle<math.pi/2 and min_angle<0:
+                    #min angle will be larger than max angle for this case
+                    min_angle+=2*math.pi
+                
+                # if obs_angle<0:
+                    # obs_angle+=2*math.pi
         else:
             print("Error! - agent is in an obstacle region")
             break
@@ -409,23 +412,27 @@ def generate_ray_casting_grid_map(obstacles,xyreso, yawreso, agent_x=0.0, agent_
             nn_id=0
             visible_vertices= obs.get_visible_vertices(agent_x,agent_y)
             # for i in range(len(obs.vertices)):
-            for vid, vcoord in visible_vertices.items():
-                obs_angle = atan_zero_to_twopi(vcoord[1]-sensor_pose[1],vcoord[0]-sensor_pose[0])
-                dist_to_agent = math.sqrt((vcoord[0]-sensor_pose[0]) **2 + (vcoord[1]-sensor_pose[1]) **2 )
-                # obs_angle = atan_zero_to_twopi(obs.vertices[i][1]-sensor_pose[1],obs.vertices[i][0]-sensor_pose[0])
-                # dist_to_agent = math.sqrt((obs.vertices[i][0]-sensor_pose[0]) **2 + (obs.vertices[i][1]-sensor_pose[1]) **2 )
 
-                if obs_angle>max_angle:
-                    max_angle = obs_angle
-                    # max_id=i
-                    max_id=vid
-                if obs_angle<min_angle:
-                    min_angle = obs_angle
-                    min_id=vid
-                if dist_to_agent<min_dist:
-                    min_dist = dist_to_agent
-                    nn_id = vid
-                    nn_angle = obs_angle
+            if len(visible_vertices)>0:
+                for vid, vcoord in visible_vertices.items():
+                    obs_angle = atan_zero_to_twopi(vcoord[1]-sensor_pose[1],vcoord[0]-sensor_pose[0])
+                    dist_to_agent = math.sqrt((vcoord[0]-sensor_pose[0]) **2 + (vcoord[1]-sensor_pose[1]) **2 )
+                    # obs_angle = atan_zero_to_twopi(obs.vertices[i][1]-sensor_pose[1],obs.vertices[i][0]-sensor_pose[0])
+                    # dist_to_agent = math.sqrt((obs.vertices[i][0]-sensor_pose[0]) **2 + (obs.vertices[i][1]-sensor_pose[1]) **2 )
+
+                    if obs_angle>max_angle:
+                        max_angle = obs_angle
+                        # max_id=i
+                        max_id=vid
+                    if obs_angle<min_angle:
+                        min_angle = obs_angle
+                        min_id=vid
+                    if dist_to_agent<min_dist:
+                        min_dist = dist_to_agent
+                        nn_id = vid
+                        nn_angle = obs_angle
+            else:
+                continue
 
             obs_vertices.append([min_id, max_id, nn_id])
             obs_angles.append([min_angle, max_angle, nn_angle])

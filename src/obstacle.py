@@ -63,15 +63,15 @@ class Obstacle:
 
     def draw(self,axes=None):
         if axes==None:
-            plt.plot([self.x_min, self.x_max], [self.y_max, self.y_max], color='green')
-            plt.plot([self.x_min, self.x_max], [self.y_min, self.y_min], color='green')
-            plt.plot([self.x_min, self.x_min], [self.y_min, self.y_max], color='green')
-            plt.plot([self.x_max, self.x_max], [self.y_max, self.y_min], color='green')
+            plt.plot([self.x_min, self.x_max], [self.y_max, self.y_max], color='black')
+            plt.plot([self.x_min, self.x_max], [self.y_min, self.y_min], color='black')
+            plt.plot([self.x_min, self.x_min], [self.y_min, self.y_max], color='black')
+            plt.plot([self.x_max, self.x_max], [self.y_max, self.y_min], color='black')
         else:
-            axes.plot([self.x_min, self.x_max], [self.y_max, self.y_max], color='green')
-            axes.plot([self.x_min, self.x_max], [self.y_min, self.y_min], color='green')
-            axes.plot([self.x_min, self.x_min], [self.y_min, self.y_max], color='green')
-            axes.plot([self.x_max, self.x_max], [self.y_max, self.y_min], color='green')
+            axes.plot([self.x_min, self.x_max], [self.y_max, self.y_max], color='black')
+            axes.plot([self.x_min, self.x_max], [self.y_min, self.y_min], color='black')
+            axes.plot([self.x_min, self.x_min], [self.y_min, self.y_max], color='black')
+            axes.plot([self.x_max, self.x_max], [self.y_max, self.y_min], color='black')
 
     def generate_samples(self, reso=0.2):
         obstacles =[]

@@ -58,6 +58,28 @@ class configuration_space:
 
         self.start_state = init_pos
         self.goal_state = goal_pos
+    def get_obs(self):
+        obstacles=[]
+        for obs in self.polygons:
+            xmin=100
+            ymin=100
+            xmax=-100
+            ymax=-100
+            for point in obs:
+                if xmin>point[0]:
+                    xmin = point[0]
+                if xmax<point[0]:
+                    xmax = point[0]
+                if ymin>point[1]:
+                    ymin = point[1]
+                if ymax<point[1]:
+                    ymax = point[1]
+            obstacles.append([xmin,xmax,ymin,ymax])
+
+        return obstacles
+
+
+
 
             
 class Roadmap:

@@ -1,15 +1,17 @@
 from gurobipy import *
 import gurobipy as grb
 import numpy as np
-import math
+from math import *
 
-class Vehicle:
-    def __init__(self, mass: float, dt: float, T: float, x0: float, y0: float, id: int, model, M, v_max, f_max, area_size, x_fin: float, y_fin: float, wp: bool, x_wp=None, y_wp=None):
+class UAV:
+    def __init__(self, mass: float, dt: float, T: float, x0: float, y0: float, th0: float, v0: float, id: int, model, M, v_max, a_max, area_size, x_fin: float, y_fin: float, wp: bool, x_wp=None, y_wp=None):
         self.steps = int(T/dt)        # number of time steps
         self.id = id                  # vehicle id
         self.dt = dt                  # time step size
         self.x0 = x0                  # vehicle initial position x-coordinate
         self.y0 = y0                  # vehicle initial position y-coordinate
+        self.th0 = th0                # vehicle initial orientation (radian)
+        self.v0 = v0                # vehicle initial orientation (radian)
         self.x_fin = x_fin            # vehicle final position x-coordinate
         self.y_fin = y_fin            # vehicle final position y-coordinate
         self.m = mass                 # vehicle mass
@@ -17,7 +19,7 @@ class Vehicle:
         self.wp = wp                  # switch of waypoints
         self.x_wp = x_wp              # x-coordinate of waypoints
         self.y_wp = y_wp              # y-coordinate of waypoints
-        self.f_max = f_max            # max force magnitude to be applied
+        self.a_max = a_max            # max force magnitude to be applied
         self.v_max = v_max            # max allowed velocity
         self.model = model
         self.M = M
@@ -26,37 +28,88 @@ class Vehicle:
         # Add variable arrays, length = amount of steps
         self.x = self.model.addVars(self.steps, lb=-area_size, ub=area_size)     # x-ccordinate at each time step
         self.y = self.model.addVars(self.steps, lb=-area_size, ub=area_size)     # y-coordinate at each time step
-        self.vx = self.model.addVars(self.steps, lb=-v_max, ub=v_max)   # velocity x-component at each time step
-        self.vy = self.model.addVars(self.steps, lb=-v_max, ub=v_max)   # velocity y-component at each time step
-        self.fx = self.model.addVars(self.steps, lb=-f_max, ub=f_max)   # acceleration x-component at each time step
-        self.fy = self.model.addVars(self.steps, lb=-f_max, ub=f_max)   # acceleration y-component at each time step
-        self.fm = self.model.addVars(self.steps, lb=0, ub=f_max)
+        self.th = self.model.addVars(self.steps, lb=0, ub=2*math.pi)     # y-coordinate at each time step
+        self.v = self.model.addVars(self.steps, lb=0.0, ub=v_max)   # velocity x-component at each time step
+        self.a = self.model.addVars(self.steps, lb=-a_max, ub=a_max)   # velocity x-component at each time step
+        self.phi = self.model.addVars(self.steps, lb=0.0, ub=2*math.pi)   # velocity x-component at each time step
+        print("self.x0:", x0)
+        print("self.y0:", y0)
+        print("self.th0:", th0)
+        print("self.v0:", v0)
+        # print("self.a0:", a0)
 
-    def constrain_dynamics(self, vx_init, vy_init):
+    def approximate_cos(slef, x):
+        x_aug = x / (2*math.pi)
+        output =0
+        if x_aug >=0 and x_aug <= 1/8:
+            output=1
+        elif x_aug<= 3/8:
+            output = 2-8*x_aug
+        elif x_aug<= 5/8:
+            output = -1
+        elif x_aug<= 7/8:
+            output = -6+8*x_aug 
+        elif x_aug<=1:
+            output = 1
+        return output
+
+    def approximate_sin(slef, x):
+        x_aug = x / (2*math.pi)
+        output =0
+        if x_aug >=0 and x_aug <= 1/8:
+            output=8*x_aug
+        elif x_aug<= 3/8:
+            output = 1
+        elif x_aug<= 5/8:
+            output = +4-8*x_aug
+        elif x_aug<= 7/8:
+            output = -1
+        elif x_aug<=1:
+            output = -8+8*x_aug
+        return output
+
+
+
+    def constrain_dynamics(self, v_init):
         # Add constrain to each variable in the respective array
         # Step position and velocity constraints
-        self.model.addConstrs((self.x[i+1] == (self.x[i] + self.dt*self.vx[i]) for i in range(self.steps-1)))
-        self.model.addConstrs((self.y[i+1] == (self.y[i] + self.dt*self.vy[i]) for i in range(self.steps-1)))
-        self.model.addConstrs((self.vx[i+1] == (self.vx[i] + self.fx[i]*self.dt/self.m) for i in range(self.steps-1)))
-        self.model.addConstrs((self.vy[i+1] == (self.vy[i] + self.fy[i]*self.dt/self.m) for i in range(self.steps-1)))
+        print("x_i: ", self.x[0])
+        print("y_i: ", self.y[0])
+        print("v_i: ", self.x[0])
+        print("th_i: ", self.th[0])
+        print("steps: ", self.steps)
+        self.model.addConstrs((self.x[i+1] == (self.x[i] + self.dt*self.v[i]*1.0*(self.th[i])) for i in range(self.steps-1)))
+        self.model.addConstrs((self.y[i+1] == (self.y[i] + self.dt*self.v[i]*1.0*(self.th[i])) for i in range(self.steps-1)))
+        self.model.addConstrs((self.th[i+1] == (self.th[i] +(self.phi[i])*self.dt) for i in range(self.steps-1)))
+
+        # self.model.addConstrs((self.x[i+1] == (self.x[i] + self.dt*self.v[i]*cos(self.th[i])) for i in range(self.steps-1)))
+        # self.model.addConstrs((self.y[i+1] == (self.y[i] + self.dt*self.v[i]*sin(self.th[i])) for i in range(self.steps-1)))
+        # self.model.addConstrs((self.th[i+1] == (self.th[i] + sin(self.phi[i])*self.dt) for i in range(self.steps-1)))
+        self.model.addConstrs((self.v[i+1] == (self.v[i] + self.a[i]*self.dt) for i in range(self.steps-1)))
 
         # Initial velocity constraint
-        self.model.addConstr(self.vx[0] == vx_init)
-        self.model.addConstr(self.vy[0] == vy_init)
+        self.model.addConstr(self.v[0] == v_init)
+        self.model.addConstr(self.a[0] == 0.0)
+        self.model.addConstr(self.phi[0] ==0.0)
 
         # Maximum velocity constrains making use of the sine and cosines
-        for m_small in range(1,self.M+1):
-            self.model.addConstrs((self.fx[i] * np.cos(2*np.pi * m_small / self.M) + self.fy[i] * np.sin(2*np.pi*m_small/self.M) <= self.fm[i] for i in range(self.steps)), name=("fm_cons_" + str(m_small)) )
-        for m_small in range(1,self.M+1):
-            self.model.addConstrs((self.vx[i] * np.cos(2*np.pi * m_small / self.M) + self.vy[i] * np.sin(2*np.pi*m_small/self.M) <= self.v_max for i in range(self.steps)), name=("vmax_cons_" + str(m_small)) )
-        for m_small in range(1,self.M+1):
-            self.model.addConstrs((self.fx[i] * np.cos(2*np.pi * m_small / self.M) + self.fy[i] * np.sin(2*np.pi*m_small/self.M) <= self.f_max for i in range(self.steps)), name=("fmax_cons_" + str(m_small)) )
+        # for m_small in range(1,self.M+1):
+            # self.model.addConstrs((self.fx[i] * np.cos(2*np.pi * m_small / self.M) + self.fy[i] * np.sin(2*np.pi*m_small/self.M) <= self.fm[i] for i in range(self.steps)), name=("fm_cons_" + str(m_small)) )
+        # for m_small in range(1,self.M+1):
+            # self.model.addConstrs((self.vx[i] * np.cos(2*np.pi * m_small / self.M) + self.vy[i] * np.sin(2*np.pi*m_small/self.M) <= self.v_max for i in range(self.steps)), name=("vmax_cons_" + str(m_small)) )
+        # for m_small in range(1,self.M+1):
+            # self.model.addConstrs((self.fx[i] * np.cos(2*np.pi * m_small / self.M) + self.fy[i] * np.sin(2*np.pi*m_small/self.M) <= self.f_max for i in range(self.steps)), name=("fmax_cons_" + str(m_small)) )
 
     def constrain_positions(self):
         # Initial position constraint
         self.model.addConstr(self.x[0] == self.x0)
         self.model.addConstr(self.y[0] == self.y0)
+        self.model.addConstr(self.th[0] == self.th0)
+        self.model.addConstr(self.v[0] == self.v0)
 
+        print("x0:", self.x[0])
+        print("y0:", self.y[0])
+        input()
 
         R = 100000 
         # Final position constraint (used in the objective function) --> Do we need this for coverage planning?
@@ -86,7 +139,7 @@ class Vehicle:
 
 
     def constrain_multiple_vehicles(self, vehicles, d_veh):
-        # Vehicle collision constraints
+        # UAV collision constraints
         new_vehicles = vehicles[0:self.id]+vehicles[self.id+1:len(vehicles)]  # list of vehicles excluding current object
         R = 100000
         for veh in new_vehicles:
