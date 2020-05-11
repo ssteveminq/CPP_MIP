@@ -258,6 +258,7 @@ def Update_phi(state, goal):
     return err_phi
 
 #dyanmics
+'''
 def motion(state, goal, params):
     # state = [x(m), y(m), yaw(rad), v(m/s), omega(rad/s)]
     dx = goal[0] - state[0]
@@ -278,6 +279,7 @@ def motion(state, goal, params):
     state[1] += dv*np.sin(state[2]) # y(m)
 
     return state
+'''
 
 #Define two windows: 
 # axes[0] : robot, obstacle, waypoints, trajectory
