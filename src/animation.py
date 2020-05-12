@@ -202,6 +202,55 @@ def plot_robot(pose, params):
              # np.array(sensor_outline[1, :]).flatten(),'y', alpha=0.25)
 
 
+def plot_human(pose, params):
+    r = params.sensor_range_m
+
+    axes[0].plot([pose[0]-r*np.cos(pose[2]), pose[0]+r*np.cos(pose[2])],
+                [pose[1]-r*np.sin(pose[2]), pose[1]+r*np.sin(pose[2])], '--', color='r')
+    axes[0].plot([pose[0]-r*np.cos(pose[2]+np.pi/2), pose[0]+r*np.cos(pose[2]+np.pi/2)],
+                [pose[1]-r*np.sin(pose[2]+np.pi/2), pose[1]+r*np.sin(pose[2]+np.pi/2)], '--', color='r')
+
+    # axes[0.plot(pose[0], pose[1], 'ro', markersize=5)
+    # circle= Circle((pose[0], pose[1]),r,linewidth=1,edgecolor='k',facecolor='k',alpha=0.3 )
+    # ax.add_patch(circle)
+    # axes[0.plot(pose[0], pose[1], 'ro', markersize=40, alpha=0.1)
+    # print("plot_circle")
+    # ax.arrow(pose[0], pose[1], 0.05 * np.cos(pose[2]), 0.05 * np.sin(pose[2]),
+    # head_length=0.1, head_width=0.1)
+    axes[0].arrow(pose[0], pose[1], 0.05 * np.cos(pose[2]), 0.05 * np.sin(pose[2]),
+                head_length=0.1, head_width=0.1)
+
+    FOV_ANGLE=math.pi/4
+    LENGTH = 0.4  # [m]
+    WIDTH = 0.25  # [m]
+    HALF_LENGTH = LENGTH/2.0  # [m]
+    SENSOR_LENGTH = 1.5  # [m]
+    WHEEL_LEN = 0.2  # [m]
+    WHEEL_WIDTH = 0.2  # [m]
+
+    sensor_outline = np.matrix([[0.0, SENSOR_LENGTH , SENSOR_LENGTH, 0.0],                          #sensor center
+                         [0.0,SENSOR_LENGTH*math.tan(FOV_ANGLE),  -SENSOR_LENGTH*math.tan(FOV_ANGLE), 0.0]])
+
+    outline = np.matrix([[-HALF_LENGTH, HALF_LENGTH, HALF_LENGTH, -HALF_LENGTH, -HALF_LENGTH],
+                         [WIDTH / 2, WIDTH / 2, - WIDTH / 2, -WIDTH / 2, WIDTH / 2]])
+    yaw = pose[2]
+
+    Rot1 = np.matrix([[math.cos(yaw), math.sin(yaw)],
+                      [-math.sin(yaw), math.cos(yaw)]])
+
+    outline = (outline.T * Rot1).T
+    outline[0, :] += pose[0]
+    outline[1, :] += pose[1]
+
+    sensor_outline = (sensor_outline.T * Rot1).T
+    sensor_outline[0, :] += pose[0]
+    sensor_outline[1, :] += pose[1]
+ 
+    #DRAW an agent_body
+    axes[0].plot(np.array(outline[0, :]).flatten(),
+             np.array(outline[1, :]).flatten(),'r')
+
+
 def plot_map(pos_x,pos_y,way_x, way_y, waytimes):
     axes[0].scatter(pos_x[0], pos_y[0], facecolor='blue',edgecolor='blue')      #initial point
     axes[0].scatter(pos_x[-1], pos_y[-1], facecolor='red',edgecolor='red')      #final point
@@ -237,6 +286,16 @@ def visualize(traj, pose, obstacles,params):
     axes[0].plot(traj[:,0], traj[:,1], 'k')
     # plt.legend()
 
+def visualize_human(traj, pose, obstacles,params):
+    # ax = plt.gca()
+    # plt.plot(traj[:,0], traj[:,1], 'g')
+    plot_human(pose, params)
+    plot_obstacles(obstacles)
+
+    axes[0].set_xlim([-params.area_size, params.area_size])   # limit the plot space
+    axes[0].set_ylim([-params.area_size, params.area_size])   # limit the plot space
+    axes[0].plot(traj[:,0], traj[:,1], 'c', ':')
+    # plt.legend()
 
 #dyanmics
 def simple_motion(state, goal, params):
@@ -448,6 +507,8 @@ for _ in range(params.numiters):
     goal_dist = sqrt((goal[0] - state[0])**2+(goal[1] - state[1])**2) # robot distance to goal
     human_goal_dist = sqrt((human_goal[0] - human_state[0])**2+(human_goal[1] - human_state[1])**2) # human distance to goal
 
+    human_robot_dist = sqrt((state[0] - human_state[0])**2+(state[1] - human_state[1])**2)
+
     simtime = simtime + dt
     # print("simtime" , simtime)
     t_current = time.time()
@@ -490,7 +551,7 @@ for _ in range(params.numiters):
         traj = np.vstack([traj, state[:2]])
         human_traj = np.vstack([human_traj, human_state[:2]])
         visualize(traj, state, obstacles, params)
-        visualize(human_traj, human_state, obstacles, params)
+        visualize_human(human_traj, human_state, obstacles, params)
 
         #figure2- local sensor window
         axes[1].cla()
