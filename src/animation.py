@@ -56,6 +56,19 @@ class Params:
         # self.time_to_switch_goal = 5.0 # sec #inactive for now
         # self.sweep_resolution = 0.4 # m
 
+class humanParams:
+    def __init__(self):
+        self.numiters = 2000
+        self.dt = 0.2
+        self.goal_tol = 0.25
+        self.max_vel = 0.5 # m/s
+        self.min_vel = 0.0 # m/s
+        # self.sensor_range_m = 0.5 # m
+        self.animate = 1
+        self.area_size = 5
+        # self.time_to_switch_goal = 5.0 # sec #inactive for now
+        # self.sweep_resolution = 0.4 # m
+
 # class State:
     # def __init__(self, x=0.0, y=0.0, yaw=0.0, v=0.0):
         # self.x = x
@@ -192,6 +205,12 @@ def plot_robot(pose, params):
 def plot_map(pos_x,pos_y,way_x, way_y, waytimes):
     axes[0].scatter(pos_x[0], pos_y[0], facecolor='blue',edgecolor='blue')      #initial point
     axes[0].scatter(pos_x[-1], pos_y[-1], facecolor='red',edgecolor='red')      #final point
+    # Plot the vertices of the human path
+    axes[0].scatter(-2.0, 2.0, facecolor='green',edgecolor='green')
+    axes[0].scatter(-2.0, -2.0, facecolor='green',edgecolor='green')
+    axes[0].scatter(-4.0, 2.0, facecolor='green',edgecolor='green')
+    axes[0].scatter(-4.0, -2.0, facecolor='green',edgecolor='green')
+
     # axes[0].plot(pos_x, pos_y, 'o', markersize = 20, fillstyle='none',color='black')             #trajectory point
     axes[0].plot(way_x, way_y, '*', markersize= 10, fillstyle='none',color='red')             #trajectory point
     axes[0].set_xlabel("x[m]")
@@ -257,29 +276,29 @@ def Update_phi(state, goal):
 
     return err_phi
 
-#dyanmics
-'''
-def motion(state, goal, params):
-    # state = [x(m), y(m), yaw(rad), v(m/s), omega(rad/s)]
-    dx = goal[0] - state[0]
-    dy = goal[1] - state[1]
+#human model of motion
+def human_motion(human_state, human_goal, human_params):
+    # human_state = [x(m), y(m), yaw(rad), v(m/s), omega(rad/s)]
+    dx = human_goal[0] - human_state[0]
+    dy = human_goal[1] - human_state[1]
     goal_yaw = atan2(dy, dx)
     K_theta = 2.0
-    state[4] = K_theta*math.sin(goal_yaw - state[2]) # omega(rad/s)
-    state[2] += params.dt*state[4] # yaw(rad)
+    # human_state[4] = K_theta*math.sin(goal_yaw - human_state[2]) # omega(rad/s)
+    gamma = Update_phi(human_state, human_goal)
+    human_state[2] +=  0.75*math.sin(gamma) * dt # yaw(rad)
 
-    dist_to_goal = np.linalg.norm(goal - state[:2])
+    dist_to_goal = np.linalg.norm(human_goal - human_state[:2])
     K_v = 0.1
-    state[3] += K_v*dist_to_goal
-    if state[3] >= params.max_vel: state[3] = params.max_vel
-    if state[3] <= params.min_vel: state[3] = params.min_vel
+    human_state[3] += K_v*dist_to_goal
+    if human_state[3] >= human_params.max_vel: human_state[3] = human_params.max_vel
+    if human_state[3] <= human_params.min_vel: human_state[3] = human_params.min_vel
 
-    dv = params.dt*state[3]
-    state[0] += dv*np.cos(state[2]) # x(m)
-    state[1] += dv*np.sin(state[2]) # y(m)
+    dv = human_params.dt*human_state[3]
+    human_state[0] += dv*np.cos(human_state[2]) # x(m)
+    human_state[1] += dv*np.sin(human_state[2]) # y(m)
 
-    return state
-'''
+    return human_state
+
 
 #Define two windows: 
 # axes[0] : robot, obstacle, waypoints, trajectory
@@ -287,11 +306,12 @@ def motion(state, goal, params):
 fig,axes=plt.subplots(nrows=3,ncols=1,figsize=(10,30))
 
 params = Params()
+human_params = humanParams()
 params_globalmap =  map_params()
 params_localmap =  map_params()
 
 timeindex = "04171450"
-# timeindex = "04021858"
+
 # Open the desired file for reading
 dir_path = os.path.dirname(os.path.realpath(__file__))
 dir_path=dir_path[:-4]
@@ -358,12 +378,15 @@ for i in range(len(obstacle_coords)):
         obstacles.append(obs)                                   # attach obstacle to obstacle list
 # print("num ofobstacles:", len(obstacles))
 
-
-
 #plot figures 
 # fig,axes=plt.figure(figsize=(10,20))
 axes[0].scatter(pos_x[0], pos_y[0], facecolor='blue',edgecolor='blue')      #initial point
 axes[0].scatter(pos_x[-1], pos_y[-1], facecolor='red',edgecolor='red')      #final point
+# Plot the vertices of the human path
+axes[0].scatter(-2.0, 2.0, facecolor='green',edgecolor='green')
+axes[0].scatter(-2.0, -2.0, facecolor='green',edgecolor='green')
+axes[0].scatter(-4.0, 2.0, facecolor='green',edgecolor='green')
+axes[0].scatter(-4.0, -2.0, facecolor='green',edgecolor='green')
 axes[0].plot(pos_x, pos_y, 'o', markersize = 20, fillstyle='none',color='black')             #trajectory point
 axes[0].plot(way_x, way_y, '*', markersize= 10, fillstyle='none',color='green')             #trajectory point
 for i in range(len(waytimes)):
@@ -390,19 +413,27 @@ goal_tol=0.2
 
 goali = 0                           #define goal from waypoints set
 goal = [way_x[goali], way_y[goali]]
+
+human_goali = 0
 	
 
 # initial state = [x(m), y(m), yaw(rad), v(m/s), omega(rad/s)]
 # state = np.array([pos_x[0],pos_y[0], 0.0, np.pi/2, 0.0, 0.0])
 state = np.array([pos_x[0],pos_y[0],np.pi/2, 0.0])
-print("initial state: ",state)
 traj = state[:2]
 iter=0
 simtime=0.0
 
-#Checking initial and final goal
-print("initial state: ",state)
-print("goal : ",goal)
+human_state = np.array([-2.0, 2.0, -np.pi/2, 0.0]) #aqui
+human_goal = [-2.0, -2.0]
+
+# Checking initial position and first goal
+print("robot initial state: ", state)
+print("robot initial goal : ", goal)
+
+# Checking the human intial position and first goal 
+print("human initial state: ", human_state)
+print("human initial goal : ", human_goal)
 
 t_prev_goal = time.time()
 pmap_global = initialize_global_occ_grid_map(params_globalmap)
@@ -411,13 +442,18 @@ print("initial entropy: ", initial_entropy )
 
 # for i in range(ntimestep):
 for _ in range(params.numiters):
-    state = simple_motion(state, goal, params)                        #dynamics
-    goal_dist = sqrt((goal[0] - state[0])**2+(goal[1] - state[1])**2) #distance to gaol
+    state = simple_motion(state, goal, params)                        # robot dynamics
+    human_state = human_motion(human_state, human_goal, human_params) # human motion model
+    goal_dist = sqrt((goal[0] - state[0])**2+(goal[1] - state[1])**2) # robot distance to goal
+    human_goal_dist = sqrt((human_goal[0] - human_state[0])**2+(human_goal[1] - human_state[1])**2) # human distance to goal
+
     simtime = simtime + dt
     # print("simtime" , simtime)
     t_current = time.time()
-    if goal_dist < goal_tol:                                          # goal is reached
-        print('Time from the previous reached goal:', t_current - t_prev_goal)
+
+    # robot goal is reached
+    if goal_dist < goal_tol:                                          
+        print('Time from the previous reached goal (robot):', t_current - t_prev_goal)
         # if goali < len(goal_x) - 1:
         if goali < len(way_x) - 1:
             goali += 1
@@ -425,6 +461,23 @@ for _ in range(params.numiters):
             break
         t_prev_goal = time.time()
         goal = [way_x[goali], way_y[goali]]
+
+    # human goal is reached
+    if human_goal_dist < goal_tol:
+        print('Time from the previous reached goal (human):', t_current - t_prev_goal)
+        if human_goali == 0: 
+            human_goali += 1
+            human_goal = [-4, -2]
+        elif human_goali == 1:
+            human_goali += 1
+            human_goal = [-4, 2]
+        elif human_goali == 2:
+            human_goali += 1
+            human_goal = [-2, 2]
+        else:
+            human_goali = 0
+            human_goal = [-2, -2]
+        t_prev_goal = time.time()
 
     #plot
     if params.animate:
