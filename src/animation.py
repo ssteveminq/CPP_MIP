@@ -205,13 +205,13 @@ def plot_robot(pose, params):
 def plot_map(pos_x,pos_y,way_x, way_y, waytimes):
     axes[0].scatter(pos_x[0], pos_y[0], facecolor='blue',edgecolor='blue')      #initial point
     axes[0].scatter(pos_x[-1], pos_y[-1], facecolor='red',edgecolor='red')      #final point
+    
     # Plot the vertices of the human path
     axes[0].scatter(-2.0, 2.0, facecolor='green',edgecolor='green')
     axes[0].scatter(-2.0, -2.0, facecolor='green',edgecolor='green')
     axes[0].scatter(-4.0, 2.0, facecolor='green',edgecolor='green')
     axes[0].scatter(-4.0, -2.0, facecolor='green',edgecolor='green')
 
-    # axes[0].plot(pos_x, pos_y, 'o', markersize = 20, fillstyle='none',color='black')             #trajectory point
     axes[0].plot(way_x, way_y, '*', markersize= 10, fillstyle='none',color='red')             #trajectory point
     axes[0].set_xlabel("x[m]")
     axes[0].set_ylabel("y[m]")
@@ -413,6 +413,7 @@ goal_tol=0.2
 
 goali = 0                           #define goal from waypoints set
 goal = [way_x[goali], way_y[goali]]
+human_goal = [-2.0, -2.0]           # pre defined human goal
 
 human_goali = 0
 	
@@ -420,12 +421,12 @@ human_goali = 0
 # initial state = [x(m), y(m), yaw(rad), v(m/s), omega(rad/s)]
 # state = np.array([pos_x[0],pos_y[0], 0.0, np.pi/2, 0.0, 0.0])
 state = np.array([pos_x[0],pos_y[0],np.pi/2, 0.0])
+human_state = np.array([-2.0, 2.0, -np.pi/2, 0.0]) 
+
 traj = state[:2]
+human_traj = human_state[:2]
 iter=0
 simtime=0.0
-
-human_state = np.array([-2.0, 2.0, -np.pi/2, 0.0]) #aqui
-human_goal = [-2.0, -2.0]
 
 # Checking initial position and first goal
 print("robot initial state: ", state)
@@ -482,12 +483,14 @@ for _ in range(params.numiters):
     #plot
     if params.animate:
         #figure1
-        axes[0].cla()
+        axes[0].cla() # cla() clears an axes
         # plt.plot(goal[0], goal[1])
-        plot_map(pos_x,pos_y,way_x,way_y,waytimes)
+        plot_map(pos_x,pos_y,way_x,way_y,waytimes) # plots the static points
         axes[0].plot(goal[0], goal[1])
         traj = np.vstack([traj, state[:2]])
+        human_traj = np.vstack([human_traj, human_state[:2]])
         visualize(traj, state, obstacles, params)
+        visualize(human_traj, human_state, obstacles, params)
 
         #figure2- local sensor window
         axes[1].cla()
