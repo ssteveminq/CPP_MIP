@@ -1,6 +1,7 @@
 # !/usr/bin/env python3
 from numpy import genfromtxt
 import numpy as np
+from numpy import linalg as LA
 from math import *
 import math
 import argparse
@@ -358,6 +359,71 @@ def human_motion(human_state, human_goal, human_params):
 
     return human_state
 
+class Point:
+    def __init__(self):
+        self.x = 0.0
+        self.y = 0.0
+
+def human_goal_update(human_goal, human_state, state, params, t_current, t_prev_goal, human_goali):
+    '''
+    Here we need to call a function for checking if the human either  
+    a) is at the goal
+    b) has the robot in FOV
+         i) first step probably just if within some distance
+        ii) need to find some policy for moving away
+            a) start with moving along the vector pointing from robot to human 
+            b) will need to consider if we are near a wall/obstacle
+    '''
+    human_goal_dist = sqrt((human_goal[0] - human_state[0])**2+(human_goal[1] - human_state[1])**2)
+
+    human_robot_dist = sqrt((state[0] - human_state[0])**2+(state[1] - human_state[1])**2) 
+
+
+    if human_robot_dist < 1.5:  # robot and human too close
+        print("Robot is too close, human needs to move away")
+        init = Point()
+        final = Point()
+
+        # Initial human point 
+        init.x = human_state[0]
+        init.y = human_state[1]
+        # Get human robot relative info
+        dx = human_state[0] - state[0]
+        dy = human_state[1] - state[1]
+        slope = dy/dx
+
+        if slope == 0:
+            final.x = init.x + 0.5
+            final.y = init.y
+        else:
+            deltax = (0.5 / sqrt(1 + (slope*slope)))
+            deltay = slope * deltax
+            final.x = init.x - deltax
+            final.y = init.y - deltay
+
+        human_goal = [final.x, final.y]
+        print("human current state = ", human_state[0], ", ", human_state[1])
+        print("human new goal = ", human_goal[0], ", ", human_goal[1])
+        
+    else:                       # human reaches goal
+        if human_goal_dist < goal_tol:
+            #TODO FIX THE TIME 
+            print('Time from the previous reached goal (human):', t_current - t_prev_goal)
+            if human_goali == 0: 
+                human_goali += 1
+                human_goal = [-4, -2]
+            elif human_goali == 1:
+                human_goali += 1
+                human_goal = [-4, 2]
+            elif human_goali == 2:
+                human_goali += 1
+                human_goal = [-2, 2]
+            else:
+                human_goali = 0
+                human_goal = [-2, -2]
+            t_prev_goal = time.time()
+
+    return human_goal, human_goali
 
 #Define two windows: 
 # axes[0] : robot, obstacle, waypoints, trajectory
@@ -524,22 +590,9 @@ for _ in range(params.numiters):
         t_prev_goal = time.time()
         goal = [way_x[goali], way_y[goali]]
 
-    # human goal is reached
-    if human_goal_dist < goal_tol:
-        print('Time from the previous reached goal (human):', t_current - t_prev_goal)
-        if human_goali == 0: 
-            human_goali += 1
-            human_goal = [-4, -2]
-        elif human_goali == 1:
-            human_goali += 1
-            human_goal = [-4, 2]
-        elif human_goali == 2:
-            human_goali += 1
-            human_goal = [-2, 2]
-        else:
-            human_goali = 0
-            human_goal = [-2, -2]
-        t_prev_goal = time.time()
+
+    # New goal for the human: either continue on square or travel away from human
+    human_goal, human_goali = human_goal_update(human_goal, human_state, state, params, t_current, t_prev_goal, human_goali)
 
     #plot
     if params.animate:
