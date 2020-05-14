@@ -7,9 +7,13 @@ from collections import defaultdict
 from utils.uniform_cost_search import Search
 from utils.graph_utils import *
 
+AlphabetSet=['a','b','c','d','e','f','g','h','i','j','k','l','m', 
+                'n','o','p','q','r']
+
 class VerticalCellDecomposition:
     def __init__(self,cspace):
         self.cspace = cspace
+        self.agent_pose= cspace.start_state
 
         self.polygon_vertices = [item for sublist in cspace.polygons for item in sublist]
         print("self.polygon_vertices")
@@ -336,6 +340,7 @@ class VerticalCellDecomposition:
                 x_mean =self.average(x_sets)
                 y_mean =self.average(y_sets)
                 waypoints.append([x_mean,y_mean])
+            self.waypoints = waypoints
 
         return waypoints
 
@@ -387,6 +392,20 @@ class VerticalCellDecomposition:
 
         ax.set_xlim([-12.5, 12.5])   # limit the plot space
         ax.set_ylim([-12.5, 12.5])   # limit the plot space
+
+        ax.scatter(self.agent_pose[0], self.agent_pose[1], facecolor='black',edgecolor='black')      #initial point
+        way_x=[]
+        way_y=[]
+
+        for point in self.waypoints:
+            # print("x: ", point[0])
+            # print("y: ", point[1])
+            way_x.append(point[0])
+            way_y.append(point[1])
+        
+        ax.plot(way_x, way_y, '*', markersize= 10, fillstyle='none',color='green')             #trajectory point
+        for i in range(len(way_x)):
+            ax.text(way_x[i]+0.5, way_y[i]-0.5,AlphabetSet[i], color='g')
 
 
 

@@ -75,12 +75,6 @@ def check_polygon_visible(min_angle,max_angle,fov_anglelist):
         else:
             print("case-16-un-visible")
     # input()
-
-
-
-
-
-
 def calc_grid_map_config(xyreso, agent_x,agent_y, sensor_range):
     minx = agent_x - sensor_range
     maxx = agent_x + sensor_range
@@ -118,6 +112,10 @@ def get_raycast_to_line(origin,obstacle, obs_points,yawreso):
     #ouput = dictonary ={anlge: intersecton pointt}
     #check if nn_angle is same as the first or second elment 
     #if they are same, we can chek only one points
+    agentleftcenter=False
+    if origin[0]< min(obstacle.vertices[obs_points[0]][0], obstacle.vertices[obs_points[1]][0]):
+        # print("agent left center")
+        agentleftcenter =True
 
     if obs_points[0] == obs_points[2]:
         point3_x = None
@@ -152,6 +150,8 @@ def get_raycast_to_line(origin,obstacle, obs_points,yawreso):
         min_angle = angle_pt2
         max_angle = angle_pt
 
+
+
         point1_x = obstacle.vertices[obs_points[1]][0]
         point1_y = obstacle.vertices[obs_points[1]][1]
         point2_x = obstacle.vertices[obs_points[0]][0]
@@ -161,9 +161,15 @@ def get_raycast_to_line(origin,obstacle, obs_points,yawreso):
     # print("max_angle",max_angle)
 
     if point3_x == None:
+        if agentleftcenter:
+           tmp=min_angle 
+           min_angle = max_angle
+           max_angle = tmp+2*math.pi
         num_angle =math.ceil((max_angle-min_angle)/yawreso)
         for i in range(num_angle):
             cur_angle = min_angle + i*yawreso
+            if cur_angle>2*math.pi:
+                cur_angle-=2*math.pi
             slope = math.tan(cur_angle)
             # if abs(slope)==0:
                 # print("slope is zero")
@@ -222,8 +228,8 @@ def get_raycast_to_line(origin,obstacle, obs_points,yawreso):
                     print("obs is not rectangle")
                     # print("point1 : ", point1_x, ", ", point1_y)
                     # print("point2 : ", point2_x, ", ", point2_y)
-                    print("previous_x:" , previous_x)
-                    print("previous_y:" , previous_y)
+                    # print("previous_x:" , previous_x)
+                    # print("previous_y:" , previous_y)
                     print("next_x:" , next_x)
                     print("next_y:" , next_y)
                 if i ==(num_angle-1):
@@ -276,12 +282,12 @@ def precasting(minx, miny, xw, yw, xyreso, yawreso,agent_x,agent_y):
 
 def generate_ray_casting_grid_map(obstacles,params, agent_x=0.0, agent_y=0.0,  agent_yaw=0.0):
 
-
     yawreso= params.yawreso
     xyreso = params.xyreso
     sensor_range =params.sensor_range
 
     updated_gridlist=[]
+    #obtain the local map boundaries
     minx, miny, maxx, maxy, xw, yw = calc_grid_map_config(xyreso, agent_x, agent_y, sensor_range)
     #make grid map with xw, yw (initialize)
     pmap = [[l_free for i in range(yw)] for i in range(xw)]
@@ -355,7 +361,7 @@ def generate_ray_casting_grid_map(obstacles,params, agent_x=0.0, agent_y=0.0,  a
             # for i in range(len(visible_vertices)):
                 # obs_angle = math.atan2(visible_vertices[i][1]-sensor_pose[1],visible_vertices[i][0]-sensor_pose[0])
             if len(visible_vertices)>0:
-                print("visible vertices: ",visible_vertices )
+                # print("visible vertices: ",visible_vertices )
                 for vid, vcoord in visible_vertices.items():
                     obs_angle = atan_zero_to_twopi(vcoord[1]-sensor_pose[1],vcoord[0]-sensor_pose[0])
                     # obs_angle-=agent_yaw
@@ -367,6 +373,11 @@ def generate_ray_casting_grid_map(obstacles,params, agent_x=0.0, agent_y=0.0,  a
                 if min_angle <0 and max_angle <0:
                     min_angle+=2*math.pi
                     max_angle+=2*math.pi
+
+                if min_angle< math.pi/2 and max_angle > math.pi*3/2:
+                    tmp = min_angle
+                    min_angle = max_angle
+                    max_angle = tmp
 
                 if min_angle<-math.pi/2 and max_angle >math.pi/2:
                     min_angle+=2*math.pi
