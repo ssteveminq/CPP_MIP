@@ -301,7 +301,7 @@ def visualize_human(traj, pose, obstacles,params):
 #dyanmics
 def simple_motion(state, goal, params):
     # state = [x(m), y(m), yaw(rad) ,velocity(m/s)]
-    # input = [a(m/s**2), steering(rad) ]
+    # input = [a(m/s**2), steering angle(rad) ]
     a =Update_a(state,goal)
     delta = Update_phi(state,goal)
     # print("a:", a, ", delta: ", delta)
@@ -311,6 +311,7 @@ def simple_motion(state, goal, params):
     state[1] +=  state[3] * math.sin(state[2]) * dt
     # state[2] +=  state[3] / L * math.tan(delta) * dt
     state[2] +=  0.75*math.sin(delta) * dt
+    # state[2] +=  (delta) * dt
     state[3] +=  a * dt
 
     # print("pre-state[2]:", state[2])
@@ -566,6 +567,8 @@ pmap_global = initialize_global_occ_grid_map(params_globalmap)
 initial_entropy = get_map_entropy(pmap_global,params_globalmap)
 print("initial entropy: ", initial_entropy )
 
+
+#main simulation
 # for i in range(ntimestep):
 for _ in range(params.numiters):
     state = simple_motion(state, goal, params)                        # robot dynamics

@@ -4,6 +4,8 @@
 !_TAG_PROGRAM_NAME	Exuberant Ctags	//
 !_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
 !_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+AlphabetSet	src/VCD.py	/^AlphabetSet=['a','b','c','d','e','f','g','h','i','j','k','l','m', $/;"	v
+AlphabetSet	src/simulation.py	/^AlphabetSet=['a','b','c','d','e','f','g','h','i','j','k','l','m', $/;"	v
 DOWN	src/grid_based_sweep_coverage_path_planner.py	/^        DOWN = -1$/;"	v	class:SweepSearcher.SweepDirection
 EXTEND_AREA	src/raycasting_grid_map.py	/^EXTEND_AREA = 15.0$/;"	v
 GridMap	src/grid_map.py	/^class GridMap:$/;"	c
@@ -347,12 +349,13 @@ goal	src/backup_animation.py	/^        goal = [way_x[goali], way_y[goali]]$/;"	v
 goal	src/backup_animation.py	/^goal = [way_x[goali], way_y[goali]]$/;"	v
 goal	src/simulation.py	/^            goal = [way_x[goali], way_y[goali]]$/;"	v
 goal	src/simulation.py	/^    goal = [way_x[goali], way_y[goali]]$/;"	v
+goal	src/simulation.py	/^    goal=[4,-6]$/;"	v
 goal_dist	src/animation.py	/^    goal_dist = sqrt((goal[0] - state[0])**2+(goal[1] - state[1])**2) #distance to gaol$/;"	v
 goal_dist	src/backup_animation.py	/^    goal_dist = sqrt(dx**2+dy**2)$/;"	v
 goal_dist	src/simulation.py	/^        goal_dist = sqrt((goal[0] - state[0])**2+(goal[1] - state[1])**2) #distance to gaol$/;"	v
 goal_pos	src/main.py	/^    goal_pos=cspace.goal_state $/;"	v
 goal_pos	src/pyo_main.py	/^    goal_pos=cspace.goal_state $/;"	v
-goal_pos	src/simulation.py	/^    goal_pos=[-5, -8]$/;"	v
+goal_pos	src/simulation.py	/^    goal_pos=[5, -8]$/;"	v
 goal_tol	src/animation.py	/^goal_tol=0.2$/;"	v
 goal_tol	src/backup_animation.py	/^goal_tol=0.2$/;"	v
 goal_tol	src/simulation.py	/^    goal_tol=0.2$/;"	v
@@ -364,7 +367,7 @@ gridmap	src/test.py	/^    gridmap = GridMap(flight_area_vertices, initial_pose)$
 gridobstacles	src/test.py	/^    gridobstacles = [$/;"	v
 init_pos	src/main.py	/^    init_pos=cspace.start_state $/;"	v
 init_pos	src/pyo_main.py	/^    init_pos=cspace.start_state $/;"	v
-init_pos	src/simulation.py	/^    init_pos=[5, 4]$/;"	v
+init_pos	src/simulation.py	/^    init_pos=[3, 4]$/;"	v
 initial_entropy	src/animation.py	/^initial_entropy = get_map_entropy(pmap_global,params_globalmap)$/;"	v
 initial_entropy	src/simulation.py	/^    initial_entropy = get_map_entropy(pmap_global,params_globalmap)$/;"	v
 initial_pose	src/test.py	/^    initial_pose=[]$/;"	v
@@ -431,7 +434,6 @@ meters2grid	src/grid_map.py	/^    def meters2grid(self, pose_m,):$/;"	m	class:Gr
 minKey	src/utils/priority_queue.py	/^  def minKey(self):$/;"	m	class:priority_queue
 minheapify_ins	src/utils/priority_queue.py	/^  def minheapify_ins(self,index):$/;"	m	class:priority_queue
 minheapify_pop	src/utils/priority_queue.py	/^  def minheapify_pop(self,index):$/;"	m	class:priority_queue
-motion	src/animation.py	/^def motion(state, goal, params):$/;"	f
 motion	src/backup_animation.py	/^def motion(state, goal, params):$/;"	f
 motion	src/main.py	/^def motion(state, goal, params):$/;"	f
 motion	src/pyo_main.py	/^def motion(state, goal, params):$/;"	f
@@ -648,7 +650,7 @@ state	src/animation.py	/^state = np.array([pos_x[0],pos_y[0],np.pi\/2, 0.0])$/;"
 state	src/backup_animation.py	/^    state = simple_motion(state, goal, params)$/;"	v
 state	src/backup_animation.py	/^state = np.array([pos_x[0],pos_y[0],np.pi\/2, 0.0])$/;"	v
 state	src/simulation.py	/^        state = simple_motion(state, goal, params)                        #dynamics$/;"	v
-state	src/simulation.py	/^    state = np.array([pos_x[0],pos_y[0],np.pi\/2, 0.0])$/;"	v
+state	src/simulation.py	/^    state = np.array([init_pos[0],init_pos[1],np.pi\/2, 0.0])$/;"	v
 steps	src/main.py	/^        steps = int(T \/ dt)                             # number of steps$/;"	v
 steps	src/pyo_main.py	/^        steps = int(T \/ dt)                             # number of steps$/;"	v
 steps	src/test.py	/^    steps = int(T \/ dt)                             # number of steps$/;"	v

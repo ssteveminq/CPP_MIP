@@ -32,6 +32,8 @@ Kv = 0.15  # speed propotional gain
 ktheta = 0.5
 dt = 0.2  # [s]
 L = 1.0  # [m] wheel base of vehicle
+AlphabetSet=['a','b','c','d','e','f','g','h','i','j','k','l','m', 
+                'n','o','p','q','r']
 
 class map_params:
     def __init__(self):
@@ -52,14 +54,14 @@ class map_params:
 
 class Params:
     def __init__(self):
-        self.numiters = 2000
+        self.numiters = 4000
         self.dt = 0.2
         self.goal_tol = 0.25
         self.max_vel = 0.25 # m/s
         self.min_vel = 0.0 # m/s
         self.sensor_range_m = 0.5 # m
         self.animate = 1
-        self.area_size=10
+        self.area_size=13
         # self.time_to_switch_goal = 5.0 # sec #inactive for now
         # self.sweep_resolution = 0.4 # m
 
@@ -77,12 +79,20 @@ def draw_occmap(data, params_map,agent_x, agent_y, ax):
     maxx=params_map.xmax
     maxy=params_map.ymax
     xyreso=params_map.xyreso
+    # print("min x, min y:", minx, ", ", miny)
+    # print("max x, max y:", maxx, ", ", maxy)
 
     x, y = np.mgrid[slice(minx - xyreso / 2.0, maxx + xyreso / 2.0, xyreso),
                     slice(miny - xyreso / 2.0, maxy + xyreso / 2.0, xyreso)]
+    # print("(x)", x)
+    # print("(y)", y)
     ax.pcolor(x+agent_x, y+agent_y, data, vmax=1.0, cmap=plt.cm.Blues)
-    ax.set_xlim([agent_x-params_map.sensor_range, agent_x+params_map.sensor_range])   # limit the plot space
-    ax.set_ylim([agent_y-params_map.sensor_range, agent_y+params_map.sensor_range])   # limit the plot space
+    # ax.pcolor(x, y, data, vmax=1.0, cmap=plt.cm.Blues)
+    # ax.set_xlim([-params_map.sensor_range+agent_x, agent_x+params_map.sensor_range])   # limit the plot space
+    # ax.set_ylim([agent_y-params_map.sensor_range, agent_y+params_map.sensor_range])   # limit the plot space
+    # ax.set_ylim([-params_map.sensor_range, params_map.sensor_range])   # limit the plot space
+    # ax.set_xlim([agent_x-params_map.sensor_range, agent_x+params_map.sensor_range])   # limit the plot space
+    # ax.set_ylim([agent_y-params_map.sensor_range, agent_y+params_map.sensor_range])   # limit the plot space
 
 def draw_occmap_global(data,parmas_globalmap, ax):
 
@@ -123,6 +133,10 @@ def update_occ_grid_map(state, local_map, params_local, global_map, params_globa
         for iy_local in range(params_local.yw-1):
             px = params_local.xmin+ix_local*params_local.xyreso
             py = params_local.ymin+iy_local*params_local.xyreso
+            if px > params_global.xmax or px < params_global.xmin:
+                continue
+            if py > params_global.ymax or py < params_global.ymin:
+                continue
 
             ix_global= math.floor((px-params_global.xmin)/params_global.xyreso)
             iy_global= math.floor((py-params_global.ymin)/params_global.xyreso)
@@ -228,18 +242,18 @@ def simple_motion(state, goal, params):
     # input = [a(m/s**2), steering(rad) ]
     a =Update_a(state,goal)
     delta = Update_phi(state,goal)
-    # print("a:", a, ", delta: ", delta)
-    print("delta:", delta)
-    print("pre-state[2]:", state[2])
-    print("goal:", goal)
+
+    # print("delta:", delta)
+    # print("pre-state[2]:", state[2])
+    # print("goal:", goal)
 
     state[0] +=  state[3] * math.cos(state[2]) * dt
     state[1] +=  state[3] * math.sin(state[2]) * dt
-    state[2] +=  state[3] * math.tan(delta) * dt
-    # state[2] +=  0.75*math.sin(delta) * dt
+    state[2] +=   delta * dt
+    # state[2] +=  math.sin(delta) * dt
     state[3] +=  a * dt
 
-    print("post-state[2]:", state[2])
+    # print("post-state[2]:", state[2])
 
     if state[3] >= params.max_vel: state[3] = params.max_vel
     if state[3] <= params.min_vel: state[3] = params.min_vel
@@ -261,7 +275,7 @@ def Update_phi(state, goal):
     # des_phi = math.atan2(goal[1] - state[1], goal[0] - state[0])
     des_phi = atan_zero_to_twopi(goal[1] - state[1], goal[0] - state[0])
     cur_yaw = state[2]
-    print("des_phi:, ", des_phi, "cur_yaw: ", state[2] )
+    # print("des_phi:, ", des_phi, "cur_yaw: ", state[2] )
     err_phi = 0.5*(des_phi-cur_yaw)
     # err_phi = des_phi
 
@@ -289,12 +303,7 @@ def motion(state, goal, params):
 
     return state
 
-# def load_files(timeindex)
-
-
-
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser()
     parser.add_argument("-in",help="input file (default: input.txt)",default="input2.txt")
     parser.add_argument("-load",help="load saved data? [y/n] (default: n)",default="n")
@@ -302,7 +311,7 @@ if __name__ == "__main__":
     #Define two windows: 
     # axes[0] : robot, obstacle, waypoints, trajectory
     # axes[1] : sensor_map,occ_grid
-    fig,axes=plt.subplots(nrows=3,ncols=1,figsize=(10,30))
+    fig,axes=plt.subplots(nrows=4,ncols=1,figsize=(10,40))
 
     params = Params()
     params_globalmap =  map_params()
@@ -373,8 +382,8 @@ if __name__ == "__main__":
 
     #create cspace
     # init_pos=[pos_x[0],pos_y[0]]
-    init_pos=[5, 4]
-    goal_pos=[-5, -8]
+    init_pos=[3, 4]
+    goal_pos=[5, -8]
     # cspace = configuration_space(args['in'])
     cspace=configuration_space()
     cspace.reset_cspace(params_globalmap.boundaries,init_pos,goal_pos, obstacles)
@@ -383,7 +392,7 @@ if __name__ == "__main__":
     planner.construct_graph()
     # path, path_idx = planner.search(True)
     waypoint_vcd = planner.generate_waypoint(params_localmap)
-    # planner.plot_regions(axes[2])
+    planner.plot_regions(axes[3])
 
     #waypoint from vcd
     way_x=[]
@@ -432,7 +441,8 @@ if __name__ == "__main__":
 
     # initial state = [x(m), y(m), yaw(rad), v(m/s), omega(rad/s)]
     # state = np.array([pos_x[0],pos_y[0], 0.0, np.pi/2, 0.0, 0.0])
-    state = np.array([pos_x[0],pos_y[0],np.pi/2, 0.0])
+    # state = np.array([pos_x[0],pos_y[0],np.pi/2, 0.0])
+    state = np.array([init_pos[0],init_pos[1],np.pi/2, 0.0])
     print("initial state: ",state)
     traj = state[:2]
     iter=0
@@ -441,6 +451,7 @@ if __name__ == "__main__":
     #Checking initial and final goal
     print("initial state: ",state)
     print("goal : ",goal)
+    goal=[4,-6]
 
     t_prev_goal = time.time()
     pmap_global = initialize_global_occ_grid_map(params_globalmap)
