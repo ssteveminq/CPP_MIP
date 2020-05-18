@@ -10,7 +10,16 @@ class Search:
             self.g[key] = float("inf")
             self.parents[key] = -1
 
-    def perform_search(self):
+    def perform_search(self, goalpos):
+        #default goal pose is set to the goal state of the cspace
+        if goalpos ==None:
+            goalpos = self.roadmap.vertices_dict[1]
+        else:
+           # print("self.vertices", self.roadmap.vertices_dict[1])
+           self.roadmap.vertices_dict[1]=goalpos
+
+
+
         self.g[0] = 0 # Since 0 is the start state
         closed_list = []
         pq = priority_queue()
@@ -19,7 +28,8 @@ class Search:
         while not pq.isEmpty():
             temp = pq.pop()
 
-            if [temp.x,temp.y] == self.roadmap.vertices_dict[1]:
+            # if [temp.x,temp.y] == self.roadmap.vertices_dict[1]:
+            if [temp.x,temp.y] == goalpos:
                 final_path, final_path_idx = [list(reversed(item)) for item in self.get_final_path()]
                 return final_path, final_path_idx, self.g[1]
 
@@ -50,6 +60,7 @@ class Search:
 
     def get_final_path(self):
         final_path = [self.roadmap.vertices_dict[1]]
+        # final_path = [self.roadmap.goal_pose]
         final_path_idx = [1]
         while True:
             idx = final_path_idx[-1]
