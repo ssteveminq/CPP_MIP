@@ -11,9 +11,14 @@ AlphabetSet=['a','b','c','d','e','f','g','h','i','j','k','l','m',
                 'n','o','p','q','r']
 
 class VerticalCellDecomposition:
-    def __init__(self,cspace):
+    def __init__(self,cspace, goalpose=None):
         self.cspace = cspace
         self.agent_pose= cspace.start_state
+        if goalpose ==None:
+            self.goal_pose = cspace.goal_state
+        else:
+            self.goal_pose=goalpose
+
 
         self.polygon_vertices = [item for sublist in cspace.polygons for item in sublist]
         print("self.polygon_vertices")
@@ -32,6 +37,26 @@ class VerticalCellDecomposition:
         self.decomposition_lines_map = defaultdict(list)
         self.regions = []
         self.roadmap = Roadmap()
+
+    def reset_cspace(self,cspace):
+        self.cspace = cspace
+        self.goal_pose = cspace.goal_state
+        self.polygon_vertices = [item for sublist in cspace.polygons for item in sublist]
+
+        self.polygon_edges = []
+
+        for polygon in cspace.polygons:
+            for i in range(len(polygon)):
+                self.polygon_edges.append([polygon[i%len(polygon)],polygon[(i+1)%len(polygon)]])
+
+        self.decomposition_lines = []
+        self.decomposition_lines_midpts = []
+        self.decomposition_lines_map = defaultdict(list)
+        self.regions = []
+        self.roadmap = Roadmap()
+
+
+
 
     def construct_decomposition_lines(self,vertex,verticalLine,pointList,top):
         # print("top", top)
@@ -162,15 +187,13 @@ class VerticalCellDecomposition:
 
 
 
-    def region_disection(self):
+    def region_disection(self, goalpos=None):
         maxY = self.cspace.boundary[2][1]
         minY = self.cspace.boundary[0][1]
-        print("boundary:", self.cspace.boundary)
 
         self.original_vertices = self.polygon_vertices
         self.polygon_vertices = sorted(self.polygon_vertices, key=lambda x: x[0])
         if self.polygon_vertices[0][0]==self.polygon_vertices[1][0]:
-            print("connect both line")
             first = (self.decomposition_lines_map[self.polygon_vertices[0]])
             first2= (self.decomposition_lines_map[self.polygon_vertices[1]])
             firstCell= [self.cspace.boundary[0],self.cspace.boundary[3],first[0][1],first2[0][1]]
@@ -227,7 +250,11 @@ class VerticalCellDecomposition:
                         # print(self.decomposition_lines_map[vertex][j]+lst)
 
         self.roadmap.vertices_dict[0] = list(self.cspace.start_state)
-        self.roadmap.vertices_dict[1] = list(self.cspace.goal_state)
+        if goalpos!=None:
+            self.roadmap.vertices_dict[1] = list(goalpos)
+        else:
+            self.roadmap.vertices_dict[1] = list(self.cspace.goal_state)
+
 
         self.roadmap.vertices_dict_noedge[0] = list(self.cspace.start_state)
 
@@ -245,10 +272,12 @@ class VerticalCellDecomposition:
     def construct_graph(self):
         self.vertical_lines()
         self.region_disection()
+        self.construct_graph_main()
 
+    def construct_graph_main(self):
         max_key = list(self.roadmap.vertices_dict.keys())[-1]
 
-        for i,point in enumerate([self.cspace.start_state, self.cspace.goal_state]):
+        for i,point in enumerate([self.cspace.start_state, self.goal_pose]):
             for j,centroid in enumerate(list(self.roadmap.vertices_dict.values())[2:]):
                 skip = False
                 graph_line = [centroid, point]
@@ -388,12 +417,12 @@ class VerticalCellDecomposition:
                 y_sets[3]=y_sets[2]
                 y_sets[2]=tmp
 
-            ax.fill(x_sets,y_sets, color=col,alpha=0.3)
+            ax.fill(x_sets,y_sets, color=col,alpha=0.2)
 
         ax.set_xlim([-12.5, 12.5])   # limit the plot space
         ax.set_ylim([-12.5, 12.5])   # limit the plot space
 
-        ax.scatter(self.agent_pose[0], self.agent_pose[1], facecolor='black',edgecolor='black')      #initial point
+        # ax.scatter(self.agent_pose[0], self.agent_pose[1], facecolor='black',edgecolor='black')      #initial point
         way_x=[]
         way_y=[]
 
@@ -403,28 +432,43 @@ class VerticalCellDecomposition:
             way_x.append(point[0])
             way_y.append(point[1])
         
-        ax.plot(way_x, way_y, '*', markersize= 10, fillstyle='none',color='green')             #trajectory point
-        for i in range(len(way_x)):
-            ax.text(way_x[i]+0.5, way_y[i]-0.5,AlphabetSet[i], color='g')
+        ax.plot(way_x, way_y, '*', markersize= 5, fillstyle='none',color='green')             #trajectory point
+        # for i in range(len(way_x)):
+            # ax.text(way_x[i]+0.5, way_y[i]-0.5,AlphabetSet[i], color='g')
 
 
 
-    def search(self,showPlot=False):
+    def search(self,showPlot=False, goalpos=None):
+        if goalpos !=None:
+            #should reconstruct the graph
+            # self.decomposition_lines = []
+            # self.decomposition_lines_midpts = []
+            # self.decomposition_lines_map = defaultdict(list)
+            # self.regions = []
+            # self.roadmap = Roadmap()
+            self.vertical_lines()
+            self.region_disection(goalpos)
+            self.construct_graph_main()
+
+
         ucs = Search(self.roadmap)
-        searchResult = ucs.perform_search()
+        searchResult = ucs.perform_search(goalpos)
 
         if searchResult is None:
             print("Path could not be found!")
+            return None,None
             sys.exit()
 
         final_path, final_path_idx, path_cost = searchResult
 
-        self.plot_vcd()
-
-        for i in range(1,len(final_path)):
-            plt.plot([elem[0] for elem in final_path[i-1:i+1]],[elem[1] for elem in final_path[i-1:i+1]],color='brown')
+        # for i in range(1,len(final_path)):
+            # plt.plot([elem[0] for elem in final_path[i-1:i+1]],[elem[1] for elem in final_path[i-1:i+1]],color='brown')
 
         if showPlot:
+
+            for i in range(1,len(final_path)):
+                plt.plot([elem[0] for elem in final_path[i-1:i+1]],[elem[1] for elem in final_path[i-1:i+1]],color='brown')
+            self.plot_vcd()
             plt.show()
 
         return final_path, final_path_idx

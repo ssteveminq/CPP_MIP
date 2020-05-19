@@ -3,13 +3,16 @@ import argparse
 from numpy import genfromtxt
 import numpy as np
 from math import *
+import random
 import math
 import argparse
 import csv
 import matplotlib.pyplot as plt
 from obstacle import Obstacle
 from raycasting_grid_map import generate_ray_casting_grid_map, calc_grid_map_config, atan_zero_to_twopi
+from state_lattice_planner import uniform_terminal_state_sampling_test1
 from utils.configuration_space import configuration_space
+from cubic_spline_planner import Spline2D 
 from  VCD import VerticalCellDecomposition
 import pandas as pd
 import os
@@ -71,6 +74,57 @@ class Params:
         # self.y = y
         # self.yaw = yaw
         # self.v = v
+
+def random_sampling(params, nums):
+    #nums = the number of sample we need
+
+    reso= (2*params.area_size)/(nums+1)
+    x = np.arange(-0.75*params.area_size, 0.75*params.area_size, reso)
+    # y = np.arange(params.area_size, 0.75*params.area_size, reso)
+    sample_xy=[]
+    for i in range(len(x)-1):
+        temp_x= random.uniform(x[i],x[i+1])
+        temp_y= random.uniform(-0.8*params.area_size,0.8*params.area_size)
+        sample_xy.append([temp_x,temp_y])
+        
+    # print(sample_xy)
+    return sample_xy
+
+
+def generating_globaltrjs(cur_state, cspace, obstacles,goals, params_global):
+
+    trjs=[]
+    for goal_pos in goals:
+        init_pos = [cur_state[0], cur_state[1]]
+        cspace.reset_cspace(params_global.boundaries,init_pos,goal_pos, obstacles)
+        planner.reset_cspace(cspace)
+        path, path_idx = planner.search(False, goal_pos)
+        if path!=None:
+            xs=[]
+            ys=[]
+            for i in range(len(path)):
+                xs.append(path[i][0])
+                ys.append(path[i][1])
+            # for x_c, y_c in path:
+                # xs.append(x_c)
+                # ys.append(y_c)
+            sp=Spline2D(xs,ys)
+            trjs.append(sp)
+
+    print("num_trjs", len(trjs))
+
+        #plot spline
+        # ds = 0.2  # [m] distance of each intepolated points
+        # s = np.arange(0, sp.s[-1], ds)
+        # rx, ry, ryaw, rk = [], [], [], []
+        # for i_s in s:
+            # ix, iy = sp.calc_position(i_s)
+            # rx.append(ix)
+            # ry.append(iy)
+        # plt.plot(rx, ry, "-r", label="spline")
+
+    return trjs
+
 
 def draw_occmap(data, params_map,agent_x, agent_y, ax):
 
@@ -154,9 +208,9 @@ def initialize_global_occ_grid_map(params_map):
 def plot_robot(pose, params):
     r = params.sensor_range_m
     # ax = plt.gca()
-    axes[0].plot([pose[0]-r*np.cos(pose[2]), pose[0]+r*np.cos(pose[2])],
+    axes[0,0].plot([pose[0]-r*np.cos(pose[2]), pose[0]+r*np.cos(pose[2])],
                 [pose[1]-r*np.sin(pose[2]), pose[1]+r*np.sin(pose[2])], '--', color='b')
-    axes[0].plot([pose[0]-r*np.cos(pose[2]+np.pi/2), pose[0]+r*np.cos(pose[2]+np.pi/2)],
+    axes[0,0].plot([pose[0]-r*np.cos(pose[2]+np.pi/2), pose[0]+r*np.cos(pose[2]+np.pi/2)],
                 [pose[1]-r*np.sin(pose[2]+np.pi/2), pose[1]+r*np.sin(pose[2]+np.pi/2)], '--', color='b')
 
     # axes[0.plot(pose[0], pose[1], 'ro', markersize=5)
@@ -166,7 +220,7 @@ def plot_robot(pose, params):
     # print("plot_circle")
     # ax.arrow(pose[0], pose[1], 0.05 * np.cos(pose[2]), 0.05 * np.sin(pose[2]),
     # head_length=0.1, head_width=0.1)
-    axes[0].arrow(pose[0], pose[1], 0.05 * np.cos(pose[2]), 0.05 * np.sin(pose[2]),
+    axes[0,0].arrow(pose[0], pose[1], 0.05 * np.cos(pose[2]), 0.05 * np.sin(pose[2]),
                 head_length=0.1, head_width=0.1)
 
     FOV_ANGLE=math.pi/4
@@ -196,7 +250,7 @@ def plot_robot(pose, params):
     sensor_outline[1, :] += pose[1]
  
     #DRAW an agent_body
-    axes[0].plot(np.array(outline[0, :]).flatten(),
+    axes[0,0].plot(np.array(outline[0, :]).flatten(),
              np.array(outline[1, :]).flatten(),'b')
 
     #DRAW SENSOR FOV
@@ -207,13 +261,13 @@ def plot_robot(pose, params):
 
 
 def plot_map(pos_x,pos_y,way_x, way_y, waytimes):
-    axes[0].scatter(pos_x[0], pos_y[0], facecolor='blue',edgecolor='blue')      #initial point
-    axes[0].scatter(pos_x[-1], pos_y[-1], facecolor='red',edgecolor='red')      #final point
-    # axes[0].plot(pos_x, pos_y, 'o', markersize = 20, fillstyle='none',color='black')             #trajectory point
-    axes[0].plot(way_x, way_y, '*', markersize= 10, fillstyle='none',color='red')             #trajectory point
-    axes[0].set_xlabel("x[m]")
-    axes[0].set_ylabel("y[m]")
-    axes[0].grid(True)
+    axes[0,0].scatter(pos_x[0], pos_y[0], facecolor='blue',edgecolor='blue')      #initial point
+    axes[0,0].scatter(pos_x[-1], pos_y[-1], facecolor='red',edgecolor='red')      #final point
+    # axes[0,0].plot(pos_x, pos_y, 'o', markersize = 20, fillstyle='none',color='black')             #trajectory point
+    axes[0,0].plot(way_x, way_y, '*', markersize= 10, fillstyle='none',color='red')             #trajectory point
+    axes[0,0].set_xlabel("x[m]")
+    axes[0,0].set_ylabel("y[m]")
+    axes[0,0].grid(True)
     # for i in range(len(waytimes)):
         # axes[0].text(way_x[i], way_y[i]-1,str(waytimes[i]), color='r')
 
@@ -221,7 +275,7 @@ def plot_map(pos_x,pos_y,way_x, way_y, waytimes):
 #obstacles
 def plot_obstacles(obstacles):
     for obs in obstacles:
-        obs.draw(axes[0])
+        obs.draw(axes[0,0])
 
 
 def visualize(traj, pose, obstacles,params):
@@ -230,9 +284,9 @@ def visualize(traj, pose, obstacles,params):
     plot_robot(pose, params)
     plot_obstacles(obstacles)
 
-    axes[0].set_xlim([-params.area_size, params.area_size])   # limit the plot space
-    axes[0].set_ylim([-params.area_size, params.area_size])   # limit the plot space
-    axes[0].plot(traj[:,0], traj[:,1], 'k')
+    axes[0,0].set_xlim([-params.area_size, params.area_size])   # limit the plot space
+    axes[0,0].set_ylim([-params.area_size, params.area_size])   # limit the plot space
+    axes[0,0].plot(traj[:,0], traj[:,1], 'k')
     # plt.legend()
 
 
@@ -311,7 +365,7 @@ if __name__ == "__main__":
     #Define two windows: 
     # axes[0] : robot, obstacle, waypoints, trajectory
     # axes[1] : sensor_map,occ_grid
-    fig,axes=plt.subplots(nrows=4,ncols=1,figsize=(10,40))
+    fig,axes=plt.subplots(nrows=2,ncols=2,figsize=(30,30))
 
     params = Params()
     params_globalmap =  map_params()
@@ -381,18 +435,43 @@ if __name__ == "__main__":
         print("---load completed")
 
     #create cspace
-    # init_pos=[pos_x[0],pos_y[0]]
-    init_pos=[3, 4]
-    goal_pos=[5, -8]
+    init_pos=[pos_x[0],pos_y[0]]
+    # init_pos=[3, 4]
+    goal_pos=[-5, 9]
     # cspace = configuration_space(args['in'])
     cspace=configuration_space()
     cspace.reset_cspace(params_globalmap.boundaries,init_pos,goal_pos, obstacles)
     # cspace.plot_config_space()
     planner = VerticalCellDecomposition(cspace)
     planner.construct_graph()
-    # path, path_idx = planner.search(True)
+    # path, path_idx = planner.search(False)
+
+    '''
+    new_goal_pos=[8,7]
+    cspace.reset_cspace(params_globalmap.boundaries,init_pos,new_goal_pos, obstacles)
+    planner.reset_cspace(cspace)
+    path, path_idx = planner.search(False, new_goal_pos)
+    print("path", path)
+    xs=[]
+    ys=[]
+    for x_c, y_c in path:
+        xs.append(x_c)
+        ys.append(y_c)
+    sp=Spline2D(xs,ys)
+    ds = 0.1  # [m] distance of each intepolated points
+    s = np.arange(0, sp.s[-1], ds)
+    rx, ry, ryaw, rk = [], [], [], []
+    for i_s in s:
+        ix, iy = sp.calc_position(i_s)
+        rx.append(ix)
+        ry.append(iy)
+        ryaw.append(sp.calc_yaw(i_s))
+        rk.append(sp.calc_curvature(i_s))
+
+    axes[4].plot(rx, ry, "-r", label="spline")
+    '''
     waypoint_vcd = planner.generate_waypoint(params_localmap)
-    planner.plot_regions(axes[3])
+    planner.plot_regions(axes[1,0])
 
     #waypoint from vcd
     way_x=[]
@@ -408,10 +487,10 @@ if __name__ == "__main__":
 
     #plot figures 
     # fig,axes=plt.figure(figsize=(10,20))
-    axes[0].scatter(pos_x[0], pos_y[0], facecolor='blue',edgecolor='blue')      #initial point
-    axes[0].scatter(pos_x[-1], pos_y[-1], facecolor='red',edgecolor='red')      #final point
-    axes[0].plot(pos_x, pos_y, 'o', markersize = 20, fillstyle='none',color='black')             #trajectory point
-    axes[2].plot(way_x, way_y, '*', markersize= 10, fillstyle='none',color='green')             #trajectory point
+    axes[0,0].scatter(pos_x[0], pos_y[0], facecolor='blue',edgecolor='blue')      #initial point
+    # axes[0].scatter(pos_x[-1], pos_y[-1], facecolor='red',edgecolor='red')      #final point
+    axes[0,0].plot(pos_x, pos_y, 'o', markersize = 20, fillstyle='none',color='black')             #trajectory point
+    axes[1,0].plot(way_x, way_y, '*', markersize= 10, fillstyle='none',color='green')             #trajectory point
     # for i in range(len(waytimes)):
         # axes[0].text(way_x[i], way_y[i]-1,str(waytimes[i]), color='g')
 
@@ -423,12 +502,12 @@ if __name__ == "__main__":
     # axes[0].yticks(np.arange(-area_size,area_size,1.0))
     # ax = plt.axes()
 
-    axes[0].set_xlabel('x')
-    axes[0].set_ylabel('y')
-    axes[0].set_xlim([-area_size, area_size])   # limit the plot space
-    axes[0].set_ylim([-area_size, area_size])   # limit the plot space
-    axes[0].grid(True)
-    # axes[0].tight_layout()
+    axes[0,0].set_xlabel('x')
+    axes[0,0].set_ylabel('y')
+    axes[0,0].set_xlim([-area_size, area_size])   # limit the plot space
+    axes[0,0].set_ylim([-area_size, area_size])   # limit the plot space
+    axes[0,0].grid(True)
+    # axes[0,0.tight_layout()
 
     #simulation settings
     ntimestep = len(pos_x)
@@ -442,7 +521,7 @@ if __name__ == "__main__":
     # initial state = [x(m), y(m), yaw(rad), v(m/s), omega(rad/s)]
     # state = np.array([pos_x[0],pos_y[0], 0.0, np.pi/2, 0.0, 0.0])
     # state = np.array([pos_x[0],pos_y[0],np.pi/2, 0.0])
-    state = np.array([init_pos[0],init_pos[1],np.pi/2, 0.0])
+    state = np.array([init_pos[0],init_pos[1],0.0, 0.0])
     print("initial state: ",state)
     traj = state[:2]
     iter=0
@@ -451,7 +530,7 @@ if __name__ == "__main__":
     #Checking initial and final goal
     print("initial state: ",state)
     print("goal : ",goal)
-    goal=[4,-6]
+    goal=[7,6]
 
     t_prev_goal = time.time()
     pmap_global = initialize_global_occ_grid_map(params_globalmap)
@@ -478,17 +557,18 @@ if __name__ == "__main__":
         #plot
         if params.animate:
             #figure1
-            axes[0].cla()
+            axes[0,0].cla()
             # plt.plot(goal[0], goal[1])
             plot_map(pos_x,pos_y,way_x,way_y,waytimes)
-            axes[0].plot(goal[0], goal[1])
+            axes[0,0].plot(goal[0], goal[1])
             traj = np.vstack([traj, state[:2]])
             visualize(traj, state, obstacles, params)
 
             #figure2- local sensor window
-            axes[1].cla()
+            axes[0,1].cla()
+            axes[0,1].set_title('local sesnor grid')
             pmap_local, updated_grids, intersect_dic, obs_verticeid, closest_vertexid, params_localmap.xmin, params_localmap.xmax, params_localmap.ymin, params_localmap.ymax, params_localmap.xyreso, params_localmap.xw, params_localmap.yw= generate_ray_casting_grid_map(obstacles, params_localmap, state[0],state[1], state[2])
-            draw_occmap(pmap_local, params_localmap, state[0],state[1], axes[1])
+            draw_occmap(pmap_local, params_localmap, state[0],state[1], axes[0,1])
             #draw sensor ray to obstacles
             # for i in range(len(obstacles)):
                 # axes[0].plot([state[0], obstacles[i].vertices[obs_verticeid[i][0]][0]], [state[1], obstacles[i].vertices[obs_verticeid[i][0]][1]], color='orange')
@@ -498,13 +578,14 @@ if __name__ == "__main__":
             # for angle,inter_point in intersect_dic.items():
                 # axes[0].plot(inter_point[0], inter_point[1], '*', markersize= 5, fillstyle='none',color='green')
 
-            # axes[1].plot(ox, oy, "xr")
+            # axes[0,1.plot(ox, oy, "xr")
 
 
             #figure3- global occupancy grid
-            axes[2].cla()
+            axes[1,1].cla()
+            axes[1,1].set_title('global occupancy grid')
             pmap_global = update_occ_grid_map(state, pmap_local,params_localmap, pmap_global,params_globalmap)
-            draw_occmap_global(pmap_global,params_globalmap, axes[2])
+            draw_occmap_global(pmap_global,params_globalmap, axes[1,1])
             entropy = get_map_entropy(pmap_global, params_globalmap)
             # print("----entropy : ", entropy)
 
@@ -512,8 +593,35 @@ if __name__ == "__main__":
             # plt.show()
 
         iter=iter+1
-        # if iter%50==1:
-            # input()
+
+        #middle frequency
+        if iter%20==1:
+            
+            if iter%40==1:
+                axes[1,0].cla()
+                axes[1,0].set_title('global & Local motion primitives')
+                # uniform_terminal_state_sampling_test1(state,axes[4])
+                sample_goals = random_sampling(params,9)
+                trjs= generating_globaltrjs(state, cspace,obstacles,sample_goals,params_globalmap)
+                num_colors = len(trjs)
+                cm =plt.get_cmap('gist_rainbow')
+                for i, sp in enumerate(trjs):
+                    col = cm(1.*i/num_colors)
+                    ds = 0.1  # [m] distance of each intepolated points
+                    s = np.arange(0, sp.s[-1], ds)
+                    rx, ry, ryaw, rk = [], [], [], []
+                    for i_s in s:
+                        ix, iy = sp.calc_position(i_s)
+                        rx.append(ix)
+                        ry.append(iy)
+                    axes[1,0].plot(rx, ry, color='g', label="spline")
+                planner.plot_regions(axes[1,0])
+
+            # uniform_terminal_state_sampling_test1(state,axes[1,0])
+            # axes[1,0].set_xlim([-1.2*params.area_size, 1.2*params.area_size])   # limit the plot space
+            # axes[1,0].set_ylim([-1.2*params.area_size, 1.2*params.area_size])   # limit the plot space
+            # planner.plot_regions(axes[1,0])
+
 
     plt.show()
 
