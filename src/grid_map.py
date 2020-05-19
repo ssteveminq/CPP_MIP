@@ -21,6 +21,10 @@ class GridMap:
         self.map_length_m = 10.0
         # self.width = 10
         # self.height = 10
+        # self.map_width_m = 15.0 #5.0
+        # self.map_length_m = 15.0 #5.0
+        # self.width = 15
+        # self.height = 15
         self.map_resolution_m = 0.5 # [m]
         self.flight_area_vertices = polygon_vertices
         print("polygon_vertices = ",polygon_vertices)
@@ -38,7 +42,8 @@ class GridMap:
         gmap = np.ones([self.width, self.height])
         points = self.meters2grid(self.flight_area_vertices).tolist()
         points.append(points[0])
-        print("points = ", points)
+        print("points = ", points) 
+
         for i in range(len(points)-1):
             print("points[",i,"] = ",points[i])
             print("points[",i+1,"] = ",points[i+1])
@@ -63,19 +68,25 @@ class GridMap:
             self.gmap[x1:x2, y1:y2] = 1
         return self.gmap
 
-    def meters2grid(self, pose_m,):
+    def meters2grid(self, pose_m):
         # [0, 0](m) -> [100, 100]
         # [1, 0](m) -> [100+100, 100]
         # [0,-1](m) -> [100, 100-100]
         nrows = int(self.map_width_m / self.map_resolution_m)
         ncols = int(self.map_length_m / self.map_resolution_m)
+        print("nrows, ncols = ",nrows, ", ", ncols) # correct
+        print("pose_m = ", pose_m) # correct
+
         if np.isscalar(pose_m):
             pose_on_grid = int( pose_m/self.map_resolution_m + ncols/2 )
         else:
             pose_on_grid = np.array( np.array(pose_m)/self.map_resolution_m +\
                                      np.array([ncols/2, nrows/2]) -\
                                      self.map_center/self.map_resolution_m, dtype=int )
+        
+        print("pose_on_grid", pose_on_grid)
         return pose_on_grid
+
     def grid2meters(self, pose_grid):
         # [100, 100] -> [0, 0](m)
         # [100+100, 100] -> [1, 0](m)
