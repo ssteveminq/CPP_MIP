@@ -662,7 +662,7 @@ flight_area_vertices = [ [-5.0, 5.0],
                                   [-5.0, -5.0] ]
 
 gridmap = GridMap(flight_area_vertices, state[:2])
-gridmap.add_obstacles_to_grid_map(obstacles)
+# gridmap.add_obstacles_to_grid_map(obstacles)
 
 
 #main simulation
