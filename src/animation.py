@@ -15,6 +15,8 @@ import re
 import time
 from matplotlib.patches import Polygon, Rectangle, Circle
 import matplotlib as mpl
+from grid_map import GridMap
+
 #import numpy as np
 f_max=0.3
 v_max=0.4
@@ -64,7 +66,7 @@ class humanParams:
         self.goal_tol = 0.25
         self.max_vel = 0.5 # m/s
         self.min_vel = 0.0 # m/s
-        # self.sensor_range_m = 0.5 # m
+        self.sensor_range_m = 0.5 # m
         self.animate = 1
         self.area_size = 5
         # self.time_to_switch_goal = 5.0 # sec #inactive for now
@@ -426,6 +428,93 @@ def human_goal_update(human_goal, human_state, state, params, t_current, t_prev_
 
     return human_goal, human_goali
 
+
+def obstacle_check(pose, gridmap, params):
+    gmap = gridmap
+    r = int(100*params.sensor_range_m)
+    back = [pose[0]-r*np.cos(pose[2]), pose[1]-r*np.sin(pose[2])]
+    front = [pose[0]+r*np.cos(pose[2]), pose[1]+r*np.sin(pose[2])]
+    right = [pose[0]+r*np.cos(pose[2]+np.pi/2), pose[1]+r*np.sin(pose[2]+np.pi/2)]
+    left = [pose[0]-r*np.cos(pose[2]+np.pi/2), pose[1]-r*np.sin(pose[2]+np.pi/2)]
+
+    pi = np.array(pose[:2], dtype=int)
+    backi = np.array(back, dtype=int)
+    fronti = np.array(front, dtype=int)
+    lefti = np.array(left, dtype=int)
+    righti = np.array(right, dtype=int)
+
+    obstacle = {
+        'front': 0,
+        'back':  0,
+        'right': 0,
+        'left':  0,
+                }
+
+    for i in np.arange(min(pi[0], fronti[0]), max(pi[0], fronti[0])+1):
+        for j in np.arange(min(pi[1], fronti[1]), max(pi[1], fronti[1])+1):
+            m = min(j, gmap.shape[0]-1); n = min(i, gmap.shape[1]-1)
+            if gmap[m,n]:
+                # print('FRONT collision')
+                obstacle['front'] = 1
+
+    for i in np.arange(min(pi[0], backi[0]), max(pi[0], backi[0])+1):
+        for j in np.arange(min(pi[1], backi[1]), max(pi[1], backi[1])+1):
+            m = min(j, gmap.shape[0]-1); n = min(i, gmap.shape[1]-1)
+            if gmap[m,n]:
+                # print('BACK collision')
+                obstacle['back'] = 1
+
+    for i in np.arange(min(pi[0], lefti[0]), max(pi[0], lefti[0])+1):
+        for j in np.arange(min(pi[1], lefti[1]), max(pi[1], lefti[1])+1):
+            m = min(j, gmap.shape[0]-1); n = min(i, gmap.shape[1]-1)
+            if gmap[m,n]:
+                # print('LEFT collision')
+                obstacle['left'] = 1
+
+    for i in np.arange(min(pi[0], righti[0]), max(pi[0], righti[0])+1):
+        for j in np.arange(min(pi[1], righti[1]), max(pi[1], righti[1])+1):
+            m = min(j, gmap.shape[0]-1); n = min(i, gmap.shape[1]-1)
+            if gmap[m,n]:
+                # print('RIGHT collision')
+                obstacle['right'] = 1
+
+    return obstacle
+
+def collision_avoidance(human_state, gridmap, params):
+    pose_grid = gridmap.meters2grid(human_state[:2])
+    boundary = obstacle_check([pose_grid[0], pose_grid[1], human_state[2]], gridmap.gmap, params)
+
+    if boundary['right'] or boundary['front']:
+        # human_state = back_shift(human_state, 0.03)
+        human_state = slow_down(human_state, params)
+        human_state = turn_left(human_state, np.radians(40))
+        # human_state = forward_shift(human_state, 0.02)
+    elif boundary['left']:
+        # human_state = back_shift(human_state, 0.03)
+        human_state = slow_down(human_state, params)
+        human_state = turn_right(human_state, np.radians(40))
+        # human_state = forward_shift(human_state, 0.02)
+
+    return human_state
+
+# def define_flight_area(initial_pose):
+#     plt.grid()
+#     while True:
+#         try:
+#             num_pts = int( input('Enter number of polygonal vertixes: ') )
+#             break
+#         except:
+#             print('\nPlease, enter an integer number.')
+#     while True:
+#         flight_area_vertices = define_polygon(num_pts)
+#         if polygon_contains_point(initial_pose, flight_area_vertices):
+#             break
+#         plt.clf()
+#         plt.grid()
+#         print('The robot is not inside the flight area. Define again.')
+#     return flight_area_vertices
+
+
 #Define two windows: 
 # axes[0] : robot, obstacle, waypoints, trajectory
 # axes[1] : sensor_map,occ_grid
@@ -567,12 +656,21 @@ pmap_global = initialize_global_occ_grid_map(params_globalmap)
 initial_entropy = get_map_entropy(pmap_global,params_globalmap)
 print("initial entropy: ", initial_entropy )
 
+flight_area_vertices = [ [-5.0, 5.0],
+                                  [5.0, 5.0],
+                                  [5.0, -5.0],
+                                  [-5.0, -5.0] ]
+
+gridmap = GridMap(flight_area_vertices, state[:2])
+gridmap.add_obstacles_to_grid_map(obstacles)
+
 
 #main simulation
 # for i in range(ntimestep):
 for _ in range(params.numiters):
     state = simple_motion(state, goal, params)                        # robot dynamics
     human_state = human_motion(human_state, human_goal, human_params) # human motion model
+    human_state = collision_avoidance(human_state, gridmap, human_params)
     goal_dist = sqrt((goal[0] - state[0])**2+(goal[1] - state[1])**2) # robot distance to goal
     human_goal_dist = sqrt((human_goal[0] - human_state[0])**2+(human_goal[1] - human_state[1])**2) # human distance to goal
 
