@@ -488,7 +488,7 @@ marker_styles	src/main.py	/^        marker_styles = ['None', 'None', 'None', 'x'
 marker_styles	src/pyo_main.py	/^        marker_styles = ['None', 'None', 'None', 'x', 'None']$/;"	v
 marker_styles	src/test.py	/^        marker_styles = ['None', 'None', 'None', 'x', 'None']$/;"	v
 max_iter	src/model_predictive_trajectory_generator.py	/^max_iter = 50$/;"	v
-meters2grid	src/grid_map.py	/^    def meters2grid(self, pose_m,):$/;"	m	class:GridMap
+meters2grid	src/grid_map.py	/^    def meters2grid(self, pose_m):$/;"	m	class:GridMap
 minKey	src/utils/priority_queue.py	/^  def minKey(self):$/;"	m	class:priority_queue
 minheapify_ins	src/utils/priority_queue.py	/^  def minheapify_ins(self,index):$/;"	m	class:priority_queue
 minheapify_pop	src/utils/priority_queue.py	/^  def minheapify_pop(self,index):$/;"	m	class:priority_queue
