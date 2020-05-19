@@ -17,10 +17,10 @@ from matplotlib.patches import Polygon
 class GridMap:
     def __init__(self, polygon_vertices, point_inside_polygon=[0,0]):
         self.map_center = np.array([0.0, 0.0])
-        self.map_width_m = 5.0
-        self.map_length_m = 5.0
-        self.width = 5
-        self.height = 5
+        self.map_width_m = 10.0
+        self.map_length_m = 10.0
+        # self.width = 10
+        # self.height = 10
         self.map_resolution_m = 0.5 # [m]
         self.flight_area_vertices = polygon_vertices
         print("polygon_vertices = ",polygon_vertices)
@@ -30,11 +30,12 @@ class GridMap:
     def create_borders_grid_map(self, polygon_center):
         WIDTH = int((self.map_width_m) / self.map_resolution_m)
         LENGTH = int((self.map_length_m) / self.map_resolution_m)
-        self.width=WIDTH
-        self.height=LENGTH
+
+        self.width=WIDTH+1
+        self.height=LENGTH+1
         print("width", WIDTH)
         print("height", LENGTH)
-        gmap = np.ones([WIDTH, LENGTH])
+        gmap = np.ones([self.width, self.height])
         points = self.meters2grid(self.flight_area_vertices).tolist()
         points.append(points[0])
         print("points = ", points)
@@ -42,8 +43,10 @@ class GridMap:
             print("points[",i,"] = ",points[i])
             print("points[",i+1,"] = ",points[i+1])
             line = bresenham(points[i], points[i+1])
-            print("line = ", line)
+            # print("line = ", line)
             for l in line:
+                # print("l",l)
+                # input()
                 gmap[l[1]][l[0]] = 0
         polygon_center_grid = np.array( self.meters2grid(polygon_center), dtype=int )
         gmap = flood_fill(polygon_center_grid, gmap)

@@ -14,7 +14,6 @@ Kp	src/animation.py	/^Kp = 1.0  # speed propotional gain$/;"	v
 Kp	src/backup_animation.py	/^Kp = 1.0  # speed propotional gain$/;"	v
 Kp	src/main.py	/^Kp = 1.0  # speed propotional gain$/;"	v
 Kp	src/pyo_main.py	/^Kp = 1.0  # speed propotional gain$/;"	v
-Kp	src/simulation.py	/^Kp = 1.0  # speed propotional gain$/;"	v
 Kv	src/animation.py	/^Kv = 0.05  # speed propotional gain$/;"	v
 Kv	src/backup_animation.py	/^Kv = 0.05  # speed propotional gain$/;"	v
 Kv	src/main.py	/^Kv = 0.15  # speed propotional gain$/;"	v
@@ -32,7 +31,6 @@ Lfc	src/animation.py	/^Lfc = 1.0  # look-ahead distance$/;"	v
 Lfc	src/backup_animation.py	/^Lfc = 1.0  # look-ahead distance$/;"	v
 Lfc	src/main.py	/^Lfc = 1.0  # look-ahead distance$/;"	v
 Lfc	src/pyo_main.py	/^Lfc = 1.0  # look-ahead distance$/;"	v
-Lfc	src/simulation.py	/^Lfc = 1.0  # look-ahead distance$/;"	v
 M	src/main.py	/^        M = 75              # number of constraints in order to approximate the force and velocity magnitudes$/;"	v
 M	src/pyo_main.py	/^        M = 75              # number of constraints in order to approximate the force and velocity magnitudes$/;"	v
 M	src/test.py	/^        M = 75              # number of constraints in order to approximate the force and velocity magnitudes$/;"	v
@@ -44,6 +42,7 @@ Params	src/backup_animation.py	/^class Params:$/;"	c
 Params	src/main.py	/^class Params:$/;"	c
 Params	src/pyo_main.py	/^class Params:$/;"	c
 Params	src/simulation.py	/^class Params:$/;"	c
+Point	src/animation.py	/^class Point:$/;"	c
 RIGHT	src/grid_based_sweep_coverage_path_planner.py	/^        RIGHT = 1$/;"	v	class:SweepSearcher.MovingDirection
 Roadmap	src/utils/configuration_space.py	/^class Roadmap:$/;"	c
 Search	src/utils/uniform_cost_search.py	/^class Search:$/;"	c
@@ -80,6 +79,8 @@ __calc_B	src/cubic_spline_planner.py	/^    def __calc_B(self, h):$/;"	m	class:Sp
 __calc_s	src/cubic_spline_planner.py	/^    def __calc_s(self, x, y):$/;"	m	class:Spline2D	file:
 __init__	src/VCD.py	/^    def __init__(self,cspace, goalpose=None):$/;"	m	class:VerticalCellDecomposition
 __init__	src/animation.py	/^    def __init__(self):$/;"	m	class:Params
+__init__	src/animation.py	/^    def __init__(self):$/;"	m	class:Point
+__init__	src/animation.py	/^    def __init__(self):$/;"	m	class:humanParams
 __init__	src/animation.py	/^    def __init__(self):$/;"	m	class:map_params
 __init__	src/backup_animation.py	/^    def __init__(self):$/;"	m	class:Params
 __init__	src/backup_animation.py	/^    def __init__(self):$/;"	m	class:map_params
@@ -156,6 +157,7 @@ check_occupied_from_xy_index	src/grid_map_lib.py	/^    def check_occupied_from_x
 check_polygon_visible	src/raycasting_grid_map.py	/^def check_polygon_visible(min_angle,max_angle,fov_anglelist):$/;"	f
 cm	src/simulation.py	/^                cm =plt.get_cmap('gist_rainbow')$/;"	v
 col	src/simulation.py	/^                    col = cm(1.*i\/num_colors)$/;"	v
+collision_avoidance	src/animation.py	/^def collision_avoidance(human_state, gridmap, params):$/;"	f
 configuration_space	src/utils/configuration_space.py	/^class configuration_space:$/;"	c
 constrain_dynamics	src/uav.py	/^    def constrain_dynamics(self, v_init):$/;"	m	class:UAV
 constrain_dynamics	src/vehicle.py	/^    def constrain_dynamics(self, vx_init, vy_init):$/;"	m	class:Vehicle
@@ -332,6 +334,7 @@ filename_waypoint	src/test.py	/^    filename_waypoint =datafolder+filename_waypo
 find_region_line	src/VCD.py	/^    def find_region_line(self, line_type, i, vertex, current_vertex):$/;"	m	class:VerticalCellDecomposition
 find_safe_turning_grid	src/grid_based_sweep_coverage_path_planner.py	/^    def find_safe_turning_grid(self, cxind, cyind, gmap):$/;"	m	class:SweepSearcher
 find_sweep_direction_and_start_posi	src/grid_based_sweep_coverage_path_planner.py	/^def find_sweep_direction_and_start_posi(ox, oy):$/;"	f
+flight_area_vertices	src/animation.py	/^flight_area_vertices = [ [-5.0, 5.0],$/;"	v
 flight_area_vertices	src/test.py	/^    flight_area_vertices = define_flight_area(initial_pose)$/;"	v
 floatregex	src/animation.py	/^floatregex =re.compile('[-+]?\\d*\\.\\d+|[-+]?\\d+') $/;"	v
 floatregex	src/backup_animation.py	/^floatregex =re.compile('[-+]?\\d*\\.\\d+|[-+]?\\d+') $/;"	v
@@ -386,7 +389,7 @@ goal	src/backup_animation.py	/^goal = [way_x[goali], way_y[goali]]$/;"	v
 goal	src/simulation.py	/^            goal = [way_x[goali], way_y[goali]]$/;"	v
 goal	src/simulation.py	/^    goal = [way_x[goali], way_y[goali]]$/;"	v
 goal	src/simulation.py	/^    goal=[7,6]$/;"	v
-goal_dist	src/animation.py	/^    goal_dist = sqrt((goal[0] - state[0])**2+(goal[1] - state[1])**2) #distance to gaol$/;"	v
+goal_dist	src/animation.py	/^    goal_dist = sqrt((goal[0] - state[0])**2+(goal[1] - state[1])**2) # robot distance to goal$/;"	v
 goal_dist	src/backup_animation.py	/^    goal_dist = sqrt(dx**2+dy**2)$/;"	v
 goal_dist	src/simulation.py	/^        goal_dist = sqrt((goal[0] - state[0])**2+(goal[1] - state[1])**2) #distance to gaol$/;"	v
 goal_pos	src/main.py	/^    goal_pos=cspace.goal_state $/;"	v
@@ -399,9 +402,23 @@ goali	src/animation.py	/^goali = 0                           #define goal from w
 goali	src/backup_animation.py	/^goali = 0                           #define goal from waypoints set$/;"	v
 goali	src/simulation.py	/^    goali = 0                           #define goal from waypoints set$/;"	v
 grid2meters	src/grid_map.py	/^    def grid2meters(self, pose_grid):$/;"	m	class:GridMap
+gridmap	src/animation.py	/^gridmap = GridMap(flight_area_vertices, state[:2])$/;"	v
 gridmap	src/test.py	/^    gridmap = GridMap(flight_area_vertices, initial_pose)$/;"	v
 gridobstacles	src/test.py	/^    gridobstacles = [$/;"	v
 h	src/model_predictive_trajectory_generator.py	/^h = np.matrix([0.4, 0.02, 0.02]).T  # parameter sampling distanse$/;"	v
+humanParams	src/animation.py	/^class humanParams:$/;"	c
+human_goal	src/animation.py	/^human_goal = [-2.0, -2.0]           # pre defined human goal$/;"	v
+human_goal_dist	src/animation.py	/^    human_goal_dist = sqrt((human_goal[0] - human_state[0])**2+(human_goal[1] - human_state[1])**2) # human distance to goal$/;"	v
+human_goal_update	src/animation.py	/^def human_goal_update(human_goal, human_state, state, params, t_current, t_prev_goal, human_goali):$/;"	f
+human_goali	src/animation.py	/^human_goali = 0$/;"	v
+human_motion	src/animation.py	/^def human_motion(human_state, human_goal, human_params):$/;"	f
+human_params	src/animation.py	/^human_params = humanParams()$/;"	v
+human_robot_dist	src/animation.py	/^    human_robot_dist = sqrt((state[0] - human_state[0])**2+(state[1] - human_state[1])**2)$/;"	v
+human_state	src/animation.py	/^    human_state = collision_avoidance(human_state, gridmap, human_params)$/;"	v
+human_state	src/animation.py	/^    human_state = human_motion(human_state, human_goal, human_params) # human motion model$/;"	v
+human_state	src/animation.py	/^human_state = np.array([-2.0, 2.0, -np.pi\/2, 0.0]) $/;"	v
+human_traj	src/animation.py	/^        human_traj = np.vstack([human_traj, human_state[:2]])$/;"	v
+human_traj	src/animation.py	/^human_traj = human_state[:2]$/;"	v
 init_pos	src/main.py	/^    init_pos=cspace.start_state $/;"	v
 init_pos	src/pyo_main.py	/^    init_pos=cspace.start_state $/;"	v
 init_pos	src/simulation.py	/^    init_pos=[pos_x[0],pos_y[0]]$/;"	v
@@ -435,7 +452,6 @@ ktheta	src/animation.py	/^ktheta = 0.5$/;"	v
 ktheta	src/backup_animation.py	/^ktheta = 0.5$/;"	v
 ktheta	src/main.py	/^ktheta = 0.5$/;"	v
 ktheta	src/pyo_main.py	/^ktheta = 0.5$/;"	v
-ktheta	src/simulation.py	/^ktheta = 0.5$/;"	v
 l_free	src/animation.py	/^l_free=np.log(0.2\/0.8)$/;"	v
 l_free	src/main.py	/^l_free=np.log(0.2\/0.8)$/;"	v
 l_free	src/pyo_main.py	/^l_free=np.log(0.2\/0.8)$/;"	v
@@ -545,6 +561,7 @@ obsfile_name	src/dataplot.py	/^obsfile_name =dir_path + "\/results\/data\/obstac
 obsfile_name	src/main.py	/^        obsfile_name =dir_path + "\/results\/data\/obstacles2_"+timeindex+"_.csv"$/;"	v
 obsfile_name	src/pyo_main.py	/^        obsfile_name =dir_path + "\/results\/data\/obstacles2_"+timeindex+"_.csv"$/;"	v
 obsfile_name	src/simulation.py	/^        obsfile_name =dir_path + "\/results\/data\/obstacles2_"+timeindex+"_.csv"$/;"	v
+obstacle_check	src/animation.py	/^def obstacle_check(pose, gridmap, params):$/;"	f
 obstacle_coords	src/animation.py	/^obstacle_coords = np.asarray(obsdf['obstacle'][0:])$/;"	v
 obstacle_coords	src/backup_animation.py	/^obstacle_coords = np.asarray(obsdf['obstacle'][0:])$/;"	v
 obstacle_coords	src/dataplot.py	/^obstacle_coords = np.asarray(obsdf['obstacle'][0:])$/;"	v
@@ -601,6 +618,7 @@ planning	src/grid_based_sweep_coverage_path_planner.py	/^def planning(ox, oy, re
 plot_arrow	src/model_predictive_trajectory_generator.py	/^def plot_arrow(x, y, yaw, length=1.0, width=0.5, fc="r", ec="k"):$/;"	f
 plot_config_space	src/utils/configuration_space.py	/^    def plot_config_space(self,showPlot=True):$/;"	m	class:configuration_space
 plot_grid_map	src/grid_map_lib.py	/^    def plot_grid_map(self, ax=None):$/;"	m	class:GridMap
+plot_human	src/animation.py	/^def plot_human(pose, params):$/;"	f
 plot_map	src/animation.py	/^def plot_map(pos_x,pos_y,way_x, way_y, waytimes):$/;"	f
 plot_map	src/backup_animation.py	/^def plot_map(pos_x,pos_y,way_x, way_y, waytimes):$/;"	f
 plot_map	src/main.py	/^def plot_map(pos_x,pos_y,way_x, way_y, waytimes):$/;"	f
@@ -701,7 +719,7 @@ simtime	src/backup_animation.py	/^    simtime = simtime + dt$/;"	v
 simtime	src/backup_animation.py	/^simtime=0.0$/;"	v
 simtime	src/simulation.py	/^        simtime = simtime + dt$/;"	v
 simtime	src/simulation.py	/^    simtime=0.0$/;"	v
-state	src/animation.py	/^    state = simple_motion(state, goal, params)                        #dynamics$/;"	v
+state	src/animation.py	/^    state = simple_motion(state, goal, params)                        # robot dynamics$/;"	v
 state	src/animation.py	/^state = np.array([pos_x[0],pos_y[0],np.pi\/2, 0.0])$/;"	v
 state	src/backup_animation.py	/^    state = simple_motion(state, goal, params)$/;"	v
 state	src/backup_animation.py	/^state = np.array([pos_x[0],pos_y[0],np.pi\/2, 0.0])$/;"	v
@@ -737,7 +755,7 @@ timeindex	src/backup_animation.py	/^timeindex = "04171450"$/;"	v
 timeindex	src/dataplot.py	/^timeindex = "04302233"$/;"	v
 timeindex	src/main.py	/^        timeindex = "04171450"$/;"	v
 timeindex	src/pyo_main.py	/^        timeindex = "04171450"$/;"	v
-timeindex	src/simulation.py	/^        timeindex = "04171450"$/;"	v
+timeindex	src/simulation.py	/^        timeindex = "04171450"              #log time index for input $/;"	v
 timestamp	src/main.py	/^    timestamp =time.strftime('%m%d%H%M_', t)$/;"	v
 timestamp	src/pyo_main.py	/^    timestamp =time.strftime('%m%d%H%M_', t)$/;"	v
 timestamp	src/test.py	/^    timestamp =time.strftime('%m%d%H%M_', t)$/;"	v
@@ -848,6 +866,7 @@ visualize	src/backup_animation.py	/^def visualize(traj, pose, obstacles,params):
 visualize	src/main.py	/^def visualize(traj, pose, obstacles,params):$/;"	f
 visualize	src/pyo_main.py	/^def visualize(traj, pose, obstacles,params):$/;"	f
 visualize	src/simulation.py	/^def visualize(traj, pose, obstacles,params):$/;"	f
+visualize_human	src/animation.py	/^def visualize_human(traj, pose, obstacles,params):$/;"	f
 vx_init	src/main.py	/^        vx_init = [0.0]   # initial x-component velocity$/;"	v
 vx_init	src/main.py	/^    vx_init = [0]           # initial x-component velocity$/;"	v
 vx_init	src/pyo_main.py	/^        vx_init = [0.0]   # initial x-component velocity$/;"	v

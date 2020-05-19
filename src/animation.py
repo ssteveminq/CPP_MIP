@@ -430,8 +430,12 @@ def human_goal_update(human_goal, human_state, state, params, t_current, t_prev_
 
 
 def obstacle_check(pose, gridmap, params):
+    print("pose", pose)
     gmap = gridmap
-    r = int(100*params.sensor_range_m)
+    # r = int(100*params.sensor_range_m)
+    r=2
+    print("r", r)
+    
     back = [pose[0]-r*np.cos(pose[2]), pose[1]-r*np.sin(pose[2])]
     front = [pose[0]+r*np.cos(pose[2]), pose[1]+r*np.sin(pose[2])]
     right = [pose[0]+r*np.cos(pose[2]+np.pi/2), pose[1]+r*np.sin(pose[2]+np.pi/2)]
@@ -453,6 +457,7 @@ def obstacle_check(pose, gridmap, params):
     for i in np.arange(min(pi[0], fronti[0]), max(pi[0], fronti[0])+1):
         for j in np.arange(min(pi[1], fronti[1]), max(pi[1], fronti[1])+1):
             m = min(j, gmap.shape[0]-1); n = min(i, gmap.shape[1]-1)
+            print("(m, n):", m, n)
             if gmap[m,n]:
                 # print('FRONT collision')
                 obstacle['front'] = 1
@@ -662,7 +667,7 @@ flight_area_vertices = [ [-5.0, 5.0],
                                   [-5.0, -5.0] ]
 
 gridmap = GridMap(flight_area_vertices, state[:2])
-gridmap.add_obstacles_to_grid_map(obstacles)
+# gridmap.add_obstacles_to_grid_map(obstacles)
 
 
 #main simulation

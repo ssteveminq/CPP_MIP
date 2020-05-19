@@ -23,16 +23,13 @@ import matplotlib as mpl
 #import numpy as np
 f_max=0.3
 v_max=0.4
-#probability
+#probability constant for log odd(occupancy grid )
 l_occ=np.log(0.8/0.2)
 l_free=np.log(0.2/0.8)
 
 #pp control 
 k = 0.1  # look forward gain
-Lfc = 1.0  # look-ahead distance
-Kp = 1.0  # speed propotional gain
 Kv = 0.15  # speed propotional gain
-ktheta = 0.5
 dt = 0.2  # [s]
 L = 1.0  # [m] wheel base of vehicle
 AlphabetSet=['a','b','c','d','e','f','g','h','i','j','k','l','m', 
@@ -40,12 +37,12 @@ AlphabetSet=['a','b','c','d','e','f','g','h','i','j','k','l','m',
 
 class map_params:
     def __init__(self):
-        self.xyreso = 0.25  # x-y grid resolution [m]
+        self.xyreso = 0.25              # x-y grid resolution [m]
         self.yawreso = math.radians(6)  # yaw angle resolution [rad]
-        self.xmin=-12.5
-        self.xmax=12.5
-        self.ymin=-12.5
-        self.ymax=12.5
+        self.xmin=-12.5                 # search region (xmin)
+        self.xmax=12.5                  # search region (xmax)
+        self.ymin=-12.5                 # search region (ymin)
+        self.ymax=12.5                  # search region (xmax)
         self.xw = int(round((self.xmax - self.xmin) / self.xyreso))
         self.yw = int(round((self.ymax - self.ymin) / self.xyreso))
         self.boundaries=[]
@@ -65,8 +62,6 @@ class Params:
         self.sensor_range_m = 0.5 # m
         self.animate = 1
         self.area_size=13
-        # self.time_to_switch_goal = 5.0 # sec #inactive for now
-        # self.sweep_resolution = 0.4 # m
 
 # class State:
     # def __init__(self, x=0.0, y=0.0, yaw=0.0, v=0.0):
@@ -332,7 +327,6 @@ def Update_phi(state, goal):
     # print("des_phi:, ", des_phi, "cur_yaw: ", state[2] )
     err_phi = 0.5*(des_phi-cur_yaw)
     # err_phi = des_phi
-
     return err_phi
 
 #dyanmics
@@ -362,9 +356,12 @@ if __name__ == "__main__":
     parser.add_argument("-in",help="input file (default: input.txt)",default="input2.txt")
     parser.add_argument("-load",help="load saved data? [y/n] (default: n)",default="n")
     args = vars(parser.parse_args())
-    #Define two windows: 
-    # axes[0] : robot, obstacle, waypoints, trajectory
-    # axes[1] : sensor_map,occ_grid
+
+    #Define four windows: 
+    # axes[0,0] : robot, obstacle, waypoints, trajectory
+    # axes[0,1] : local sensor map
+    # axes[1,0] : Sensor Candidates, VCD regions
+    # axes[1,1] : global sensor map
     fig,axes=plt.subplots(nrows=2,ncols=2,figsize=(30,30))
 
     params = Params()
@@ -372,9 +369,7 @@ if __name__ == "__main__":
     params_localmap =  map_params()
 
     if args['load']=='y':
-
-        timeindex = "04171450"
-        # timeindex = "04021858"
+        timeindex = "04171450"              #log time index for input 
         # Open the desired file for reading
         dir_path = os.path.dirname(os.path.realpath(__file__))
         dir_path=dir_path[:-4]
