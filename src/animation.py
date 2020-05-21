@@ -399,16 +399,26 @@ def human_goal_update(human_goal, human_state, state, params, t_current, t_prev_
         if slope == 0:
             final.x = init.x + 0.5
             final.y = init.y
-        elif slope > 0:
+        elif slope > 0 and dy < 0:
             deltax = (0.5 / sqrt(1 + (slope*slope)))
             deltay = slope * deltax
             final.x = init.x - deltax
             final.y = init.y - deltay
-        else:
+        elif slope > 0 and dy > 0:
             deltax = (0.5 / sqrt(1 + (slope*slope)))
             deltay = slope * deltax
             final.x = init.x + deltax
             final.y = init.y + deltay
+        elif slope < 0 and dx > 0:
+            deltax = (0.5 / sqrt(1 + (slope*slope)))
+            deltay = slope * deltax
+            final.x = init.x + deltax
+            final.y = init.y + deltay
+        elif slope < 0 and dx < 0:
+            deltax = (0.5 / sqrt(1 + (slope*slope)))
+            deltay = slope * deltax
+            final.x = init.x - deltax
+            final.y = init.y - deltay
 
         human_goal = [final.x, final.y]
         print("human current state = ", human_state[0], ", ", human_state[1])
@@ -462,13 +472,11 @@ def obstacle_check(pose, gridmap, params):
         'left':  0,
                 }
 
-    print("human_pose obstacle_check: ", pose) # Could be an issue here
-                                               # pose does not reset at 2Pi, it keeps growing 
-                                               # More likely, the issue is with the setting of the goals
+    print("human_pose obstacle_check: ", pose)
     for i in np.arange(min(pi[0], fronti[0]), max(pi[0], fronti[0])+1):
         for j in np.arange(min(pi[1], fronti[1]), max(pi[1], fronti[1])+1):
             m = min(j, gmap.shape[0]-1); n = min(i, gmap.shape[1]-1)
-            print("front (m, n):", m, n)
+            # print("front (m, n):", m, n)
             if gmap[m,n]:
                 # print('FRONT collision')
                 obstacle['front'] = 1
@@ -476,7 +484,7 @@ def obstacle_check(pose, gridmap, params):
     for i in np.arange(min(pi[0], backi[0]), max(pi[0], backi[0])+1):
         for j in np.arange(min(pi[1], backi[1]), max(pi[1], backi[1])+1):
             m = min(j, gmap.shape[0]-1); n = min(i, gmap.shape[1]-1)
-            print("back (m, n):", m, n)
+            # print("back (m, n):", m, n)
             if gmap[m,n]:
                 # print('BACK collision')
                 obstacle['back'] = 1
@@ -484,7 +492,7 @@ def obstacle_check(pose, gridmap, params):
     for i in np.arange(min(pi[0], lefti[0]), max(pi[0], lefti[0])+1):
         for j in np.arange(min(pi[1], lefti[1]), max(pi[1], lefti[1])+1):
             m = min(j, gmap.shape[0]-1); n = min(i, gmap.shape[1]-1)
-            print("left (m, n):", m, n)
+            # print("left (m, n):", m, n)
             if gmap[m,n]:
                 # print('LEFT collision')
                 obstacle['left'] = 1
@@ -492,7 +500,7 @@ def obstacle_check(pose, gridmap, params):
     for i in np.arange(min(pi[0], righti[0]), max(pi[0], righti[0])+1):
         for j in np.arange(min(pi[1], righti[1]), max(pi[1], righti[1])+1):
             m = min(j, gmap.shape[0]-1); n = min(i, gmap.shape[1]-1)
-            print("right (m, n):", m, n)
+            # print("right (m, n):", m, n)
             if gmap[m,n]:
                 # print('RIGHT collision')
                 obstacle['right'] = 1
@@ -541,6 +549,12 @@ def collision_avoidance(human_state, gridmap, params):
         print("Collision_avoidance left")
         # human_state = forward_shift(human_state, 0.02)
 
+    # Additionally need to avoid leaving the area
+    if abs(human_state[0]) > 4.7 or abs(human_state[1]) > 4.7:
+        human_state = slow_down(human_state, params)
+        human_state = turn_left(human_state, np.radians(60))
+        human_state = forward_shift(human_state, 0.2)
+    
     return human_state
 
 # def define_flight_area(initial_pose):
