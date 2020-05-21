@@ -399,15 +399,20 @@ def human_goal_update(human_goal, human_state, state, params, t_current, t_prev_
         if slope == 0:
             final.x = init.x + 0.5
             final.y = init.y
-        else:
+        elif slope > 0:
             deltax = (0.5 / sqrt(1 + (slope*slope)))
             deltay = slope * deltax
             final.x = init.x - deltax
             final.y = init.y - deltay
+        else:
+            deltax = (0.5 / sqrt(1 + (slope*slope)))
+            deltay = slope * deltax
+            final.x = init.x + deltax
+            final.y = init.y + deltay
 
         human_goal = [final.x, final.y]
         print("human current state = ", human_state[0], ", ", human_state[1])
-        print("human new goal = ", human_goal[0], ", ", human_goal[1])
+        print("human new goal(avoid trajectory) = ", human_goal[0], ", ", human_goal[1])
         
     else:                       # human reaches goal
         if human_goal_dist < goal_tol:
@@ -426,6 +431,7 @@ def human_goal_update(human_goal, human_state, state, params, t_current, t_prev_
                 human_goali = 0
                 human_goal = [-2, -2]
             t_prev_goal = time.time()
+            print("human new goal(loop trajectory): ", human_goal)
 
     return human_goal, human_goali
 
@@ -787,6 +793,10 @@ for _ in range(params.numiters):
     iter=iter+1
     # if iter%50==1:
         # input()
+
+    if human_robot_dist < 0.25:
+        print("human has been captured")
+        break
 
 plt.show()
      
