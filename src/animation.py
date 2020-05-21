@@ -66,7 +66,7 @@ class humanParams:
         self.goal_tol = 0.25
         self.max_vel = 0.5 # m/s
         self.min_vel = 0.0 # m/s
-        self.sensor_range_m = 0.5 # m
+        self.sensor_range_m = 1.0 # m
         self.animate = 1
         self.area_size = 5
         # self.time_to_switch_goal = 5.0 # sec #inactive for now
@@ -151,6 +151,7 @@ def initialize_global_occ_grid_map(params_map):
 def plot_robot(pose, params):
     # print("robot")
     r = params.sensor_range_m
+
     # plt.axis("equal")
     # ax = plt.gca()
     axes[0].plot([pose[0]-r*np.cos(pose[2]), pose[0]+r*np.cos(pose[2])],
@@ -430,10 +431,11 @@ def human_goal_update(human_goal, human_state, state, params, t_current, t_prev_
 
 
 def obstacle_check(pose, gridmap, params):
-    print("pose", pose)
+    print("obstacle_check pose", pose)
     gmap = gridmap
     # r = int(100*params.sensor_range_m)
-    r=2
+    # r = int(params.sensor_range_m)
+    r = int(1)
     print("r", r)
     
     back = [pose[0]-r*np.cos(pose[2]), pose[1]-r*np.sin(pose[2])]
@@ -457,7 +459,7 @@ def obstacle_check(pose, gridmap, params):
     for i in np.arange(min(pi[0], fronti[0]), max(pi[0], fronti[0])+1):
         for j in np.arange(min(pi[1], fronti[1]), max(pi[1], fronti[1])+1):
             m = min(j, gmap.shape[0]-1); n = min(i, gmap.shape[1]-1)
-            print("(m, n):", m, n)
+            # print("(m, n):", m, n)
             if gmap[m,n]:
                 # print('FRONT collision')
                 obstacle['front'] = 1
@@ -485,6 +487,31 @@ def obstacle_check(pose, gridmap, params):
 
     return obstacle
 
+def left_shift(pose, r):
+    left = [pose[0]+r*np.cos(pose[2]+np.pi/2), pose[1]+r*np.sin(pose[2]+np.pi/2)]
+    return left
+def right_shift(pose, r):
+    right = [pose[0]-r*np.cos(pose[2]+np.pi/2), pose[1]-r*np.sin(pose[2]+np.pi/2)]
+    return right
+def back_shift(pose, r):
+    back = pose
+    back[:2] = [pose[0]-r*np.cos(pose[2]), pose[1]-r*np.sin(pose[2])]
+    return back
+def forward_shift(pose, r):
+    forward = pose
+    forward[:2] = [pose[0]+r*np.cos(pose[2]), pose[1]+r*np.sin(pose[2])]
+    return forward
+def turn_left(pose, yaw=np.pi/2*np.random.uniform(0.2, 0.6)):
+    pose[2] -= yaw
+    return pose
+def turn_right(pose, yaw=np.pi/2*np.random.uniform(0.2, 0.6)):
+    pose[2] += yaw
+    return pose
+def slow_down(state, params, dv=0.1):
+    if state[3]>params.min_vel:
+        state[3] -= dv
+    return state
+
 def collision_avoidance(human_state, gridmap, params):
     pose_grid = gridmap.meters2grid(human_state[:2])
     boundary = obstacle_check([pose_grid[0], pose_grid[1], human_state[2]], gridmap.gmap, params)
@@ -493,11 +520,13 @@ def collision_avoidance(human_state, gridmap, params):
         # human_state = back_shift(human_state, 0.03)
         human_state = slow_down(human_state, params)
         human_state = turn_left(human_state, np.radians(40))
+        print("Collision_avoidance front/right")
         # human_state = forward_shift(human_state, 0.02)
     elif boundary['left']:
         # human_state = back_shift(human_state, 0.03)
         human_state = slow_down(human_state, params)
         human_state = turn_right(human_state, np.radians(40))
+        print("Collision_avoidance left")
         # human_state = forward_shift(human_state, 0.02)
 
     return human_state
@@ -633,7 +662,7 @@ goal_tol=0.2
 
 goali = 0                           #define goal from waypoints set
 goal = [way_x[goali], way_y[goali]]
-human_goal = [-2.0, -2.0]           # pre defined human goal
+human_goal = [-2., -2.0]           # pre defined human goal
 
 human_goali = 0
 	
@@ -662,12 +691,22 @@ initial_entropy = get_map_entropy(pmap_global,params_globalmap)
 print("initial entropy: ", initial_entropy )
 
 flight_area_vertices = [ [-5.0, 5.0],
-                                  [5.0, 5.0],
-                                  [5.0, -5.0],
-                                  [-5.0, -5.0] ]
+                         [5.0, 5.0],
+                         [5.0, -5.0],
+                         [-5.0, -5.0] ]
 
 gridmap = GridMap(flight_area_vertices, state[:2])
-# gridmap.add_obstacles_to_grid_map(obstacles)
+
+obstacles_array = []
+for i in range(len(obstacles)):
+    
+    tmp = np.array([ obstacles[i].vertices[0], 
+                     obstacles[i].vertices[1], 
+                     obstacles[i].vertices[2], 
+                     obstacles[i].vertices[2] ])
+    obstacles_array.append(tmp)
+                   
+gridmap.add_obstacles_to_grid_map(obstacles_array)
 
 
 #main simulation
@@ -734,7 +773,7 @@ for _ in range(params.numiters):
         pmap_global = update_occ_grid_map(state, pmap_local,params_localmap, pmap_global,params_globalmap)
         draw_occmap_global(pmap_global,params_globalmap, axes[2])
         entropy = get_map_entropy(pmap_global, params_globalmap)
-        print("----entropy : ", entropy)
+        # print("----entropy : ", entropy)
 
         plt.pause(0.001)
         # plt.show()
