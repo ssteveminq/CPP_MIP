@@ -431,11 +431,11 @@ def human_goal_update(human_goal, human_state, state, params, t_current, t_prev_
 
 
 def obstacle_check(pose, gridmap, params):
-    print("obstacle_check pose", pose)
+    # print("obstacle_check pose", pose)
     gmap = gridmap
     # r = int(100*params.sensor_range_m)
     # r = int(params.sensor_range_m)
-    r = int(1)
+    r = int(2)
     print("r", r)
     
     back = [pose[0]-r*np.cos(pose[2]), pose[1]-r*np.sin(pose[2])]
@@ -456,10 +456,13 @@ def obstacle_check(pose, gridmap, params):
         'left':  0,
                 }
 
+    print("human_pose obstacle_check: ", pose) # Could be an issue here
+                                               # pose does not reset at 2Pi, it keeps growing 
+                                               # More likely, the issue is with the setting of the goals
     for i in np.arange(min(pi[0], fronti[0]), max(pi[0], fronti[0])+1):
         for j in np.arange(min(pi[1], fronti[1]), max(pi[1], fronti[1])+1):
             m = min(j, gmap.shape[0]-1); n = min(i, gmap.shape[1]-1)
-            # print("(m, n):", m, n)
+            print("front (m, n):", m, n)
             if gmap[m,n]:
                 # print('FRONT collision')
                 obstacle['front'] = 1
@@ -467,6 +470,7 @@ def obstacle_check(pose, gridmap, params):
     for i in np.arange(min(pi[0], backi[0]), max(pi[0], backi[0])+1):
         for j in np.arange(min(pi[1], backi[1]), max(pi[1], backi[1])+1):
             m = min(j, gmap.shape[0]-1); n = min(i, gmap.shape[1]-1)
+            print("back (m, n):", m, n)
             if gmap[m,n]:
                 # print('BACK collision')
                 obstacle['back'] = 1
@@ -474,6 +478,7 @@ def obstacle_check(pose, gridmap, params):
     for i in np.arange(min(pi[0], lefti[0]), max(pi[0], lefti[0])+1):
         for j in np.arange(min(pi[1], lefti[1]), max(pi[1], lefti[1])+1):
             m = min(j, gmap.shape[0]-1); n = min(i, gmap.shape[1]-1)
+            print("left (m, n):", m, n)
             if gmap[m,n]:
                 # print('LEFT collision')
                 obstacle['left'] = 1
@@ -481,6 +486,7 @@ def obstacle_check(pose, gridmap, params):
     for i in np.arange(min(pi[0], righti[0]), max(pi[0], righti[0])+1):
         for j in np.arange(min(pi[1], righti[1]), max(pi[1], righti[1])+1):
             m = min(j, gmap.shape[0]-1); n = min(i, gmap.shape[1]-1)
+            print("right (m, n):", m, n)
             if gmap[m,n]:
                 # print('RIGHT collision')
                 obstacle['right'] = 1
