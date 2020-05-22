@@ -256,7 +256,8 @@ def plot_human(pose, params):
 
 
 def plot_map(pos_x,pos_y,way_x, way_y, waytimes):
-    axes[0].scatter(pos_x[0], pos_y[0], facecolor='blue',edgecolor='blue')      #initial point
+    axes[0].scatter(pos_x[0], pos_y[0], facecolor='blue',edgecolor='blue')      #initial robot point
+    axes[0].scatter(-3.0, 0.0, facecolor='red',edgecolor='red')      #initial human point
     axes[0].scatter(pos_x[-1], pos_y[-1], facecolor='red',edgecolor='red')      #final point
     
     # Plot the vertices of the human path
@@ -452,7 +453,7 @@ def obstacle_check(pose, gridmap, params):
     # r = int(100*params.sensor_range_m)
     # r = int(params.sensor_range_m)
     r = int(2)
-    print("r", r)
+    # print("r", r)
     
     back = [pose[0]-r*np.cos(pose[2]), pose[1]-r*np.sin(pose[2])]
     front = [pose[0]+r*np.cos(pose[2]), pose[1]+r*np.sin(pose[2])]
@@ -472,7 +473,7 @@ def obstacle_check(pose, gridmap, params):
         'left':  0,
                 }
 
-    print("human_pose obstacle_check: ", pose)
+    # print("human_pose obstacle_check: ", pose)
     for i in np.arange(min(pi[0], fronti[0]), max(pi[0], fronti[0])+1):
         for j in np.arange(min(pi[1], fronti[1]), max(pi[1], fronti[1])+1):
             m = min(j, gmap.shape[0]-1); n = min(i, gmap.shape[1]-1)
@@ -578,7 +579,7 @@ def collision_avoidance(human_state, gridmap, params):
 #Define two windows: 
 # axes[0] : robot, obstacle, waypoints, trajectory
 # axes[1] : sensor_map,occ_grid
-fig,axes=plt.subplots(nrows=3,ncols=1,figsize=(10,30))
+fig,axes=plt.subplots(nrows=4,ncols=1,figsize=(10,30))
 
 params = Params()
 human_params = humanParams()
@@ -655,7 +656,8 @@ for i in range(len(obstacle_coords)):
 
 #plot figures 
 # fig,axes=plt.figure(figsize=(10,20))
-axes[0].scatter(pos_x[0], pos_y[0], facecolor='blue',edgecolor='blue')      #initial point
+axes[0].scatter(pos_x[0], pos_y[0], facecolor='blue',edgecolor='blue')      #initial robot point
+axes[0].scatter(-3.0, 0.0, facecolor='red',edgecolor='red')      #initial human point
 axes[0].scatter(pos_x[-1], pos_y[-1], facecolor='red',edgecolor='red')      #final point
 # Plot the vertices of the human path
 axes[0].scatter(-2.0, 2.0, facecolor='green',edgecolor='green')
@@ -696,7 +698,7 @@ human_goali = 0
 # initial state = [x(m), y(m), yaw(rad), v(m/s), omega(rad/s)]
 # state = np.array([pos_x[0],pos_y[0], 0.0, np.pi/2, 0.0, 0.0])
 state = np.array([pos_x[0],pos_y[0],np.pi/2, 0.0])
-human_state = np.array([-2.0, 2.0, -np.pi/2, 0.0]) 
+human_state = np.array([-3.0, 0.0, -np.pi/2, 0.0]) 
 
 traj = state[:2]
 human_traj = human_state[:2]
@@ -777,7 +779,7 @@ for _ in range(params.numiters):
         visualize(traj, state, obstacles, params)
         visualize_human(human_traj, human_state, obstacles, params)
 
-        #figure2- local sensor window
+        #figure2- robot local sensor window
         axes[1].cla()
         pmap_local, updated_grids, intersect_dic, obs_verticeid, closest_vertexid, params_localmap.xmin, params_localmap.xmax, params_localmap.ymin, params_localmap.ymax, params_localmap.xyreso, params_localmap.xw, params_localmap.yw= generate_ray_casting_grid_map(obstacles, params_localmap, state[0],state[1], state[2])
         draw_occmap(pmap_local, params_localmap, state[0],state[1], axes[1])
@@ -790,6 +792,20 @@ for _ in range(params.numiters):
         for angle,inter_point in intersect_dic.items():
             axes[0].plot(inter_point[0], inter_point[1], '*', markersize= 5, fillstyle='none',color='green')
 
+        ##################################################################
+        # figure 4- human local sensor window
+        axes[3].cla() #clear axes
+        human_pmap_local, human_updated_grids, human_intersect_dic, human_obs_verticeid, human_closest_vertexid, params_localmap.xmin, params_localmap.xmax, params_localmap.ymin, params_localmap.ymax, params_localmap.xyreso, params_localmap.xw, params_localmap.yw= generate_ray_casting_grid_map(obstacles, params_localmap, human_state[0],human_state[1], human_state[2])
+        draw_occmap(human_pmap_local, params_localmap, human_state[0],human_state[1], axes[3])
+        # draw sensor ray to obstacles
+        for i in range(len(obstacles)):
+            axes[0].plot([human_state[0], obstacles[i].vertices[human_obs_verticeid[i][0]][0]], [human_state[1], obstacles[i].vertices[human_obs_verticeid[i][0]][1]], color='orange')
+            axes[0].plot([human_state[0], obstacles[i].vertices[human_obs_verticeid[i][1]][0]], [human_state[1], obstacles[i].vertices[human_obs_verticeid[i][1]][1]], color='orange')
+            axes[0].plot([human_state[0], obstacles[i].vertices[human_closest_vertexid[i]][0]], [human_state[1], obstacles[i].vertices[human_closest_vertexid[i]][1]], color='orange')
+        # TODO: Intersection is broken  
+        # for angle,inter_point in intersect_dic.items():
+        #     axes[0].plot(inter_point[0], inter_point[1], '*', markersize= 5, fillstyle='none',color='red')
+        ##################################################################3
 
         # axes[1].plot(ox, oy, "xr")
 
