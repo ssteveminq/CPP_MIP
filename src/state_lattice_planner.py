@@ -14,7 +14,7 @@ import pandas as pd
 import model_predictive_trajectory_generator as planner
 import motion_model
 
-table_path = "./lookuptable_cpp2.csv"
+table_path = "./lookuptables.csv"
 
 show_animation = True
 
@@ -42,7 +42,7 @@ def get_lookup_table():
     return np.array(data)
 
 
-def generate_path(target_states, k0):
+def generate_path(cur_states, target_states, k0):
     # x, y, yaw, s, km, kf
     lookup_table = get_lookup_table()
     result = []
@@ -54,14 +54,17 @@ def generate_path(target_states, k0):
 
         target = motion_model.State(x=state[0], y=state[1], yaw=state[2])
         init_p = np.matrix(
-            [math.sqrt(state[0] ** 2 + state[1] ** 2), bestp[4], bestp[5]]).T
+            [math.sqrt((state[0]) ** 2 + (state[1]) ** 2), bestp[4], bestp[5]]).T
+        if init_p[0]>50:
+            print("cur states: ", cur_states)
+            print("target states: ", state)
 
-        x, y, yaw, p = planner.optimize_trajectory(target, k0, init_p)
+        x, y, yaw, p = planner.optimize_trajectory(cur_states, target, k0, init_p)
 
         if x is not None:
             print("find good path")
             result.append(
-                [x[-1], y[-1], yaw[-1], float(p[0]), float(p[1]), float(p[2])])
+                [x[-1], y[-1],yaw[-1], float(p[0]), float(p[1]), float(p[2])])
 
     print("finish path generation")
     return result
@@ -145,18 +148,45 @@ def calc_lane_states(l_center, l_heading, l_width, v_width, d, nxy):
     :return: state list
     """
     xc = math.cos(l_heading) * d + math.sin(l_heading) * l_center
-    yc = math.sin(l_heading) * d + math.cos(l_heading) * l_center
+    # yc = math.sin(l_heading) * d - math.cos(l_heading) * l_center
+    yc = math.sin(l_heading) * d - math.cos(l_heading) * l_center
 
     states = []
     for i in range(nxy):
         delta = -0.5 * (l_width - v_width) + \
             (l_width - v_width) * i / (nxy - 1)
+        # print("delta", delta)
         xf = xc - delta * math.sin(l_heading)
         yf = yc + delta * math.cos(l_heading)
         yawf = l_heading
         states.append([xf, yf, yawf])
 
     return states
+
+
+def calc_lane_states_linear(l_center, l_heading, l_width, v_width, d, nxy):
+    """
+
+    calc lane states
+
+    :param l_center: lane lateral position
+    :param l_heading:  lane heading
+    :param l_width:  lane width
+    :param v_width: vehicle width
+    :param d: longitudinal position
+    :param nxy: sampling number
+    :return: state list
+    """
+    xc = math.cos(l_heading) * d*1.1
+    yc = math.sin(l_heading) * d*1.1
+
+    yawc = l_heading
+    states = []
+    states.append([xc, yc, yawc])
+
+    return states
+
+
 
 
 def sample_states(cur_states, angle_samples, a_min, a_max, d, p_max, p_min, nh):
@@ -183,7 +213,7 @@ def sample_states(cur_states, angle_samples, a_min, a_max, d, p_max, p_min, nh):
 def uniform_terminal_state_sampling_test1(cur_states, ax=None):
 
     k0 = 0.0
-    nxy = 4
+    nxy = 3
     nh = 2
     d = 2
     a_min = - math.radians(45.0)
@@ -194,8 +224,8 @@ def uniform_terminal_state_sampling_test1(cur_states, ax=None):
     # a_max = math.radians(45.0)
     # p_min = - math.radians(45.0)
     # p_max = math.radians(45.0)
-    states = calc_uniform_polar_states(cur_states, nxy, nh, d, a_min, a_max, p_min, p_max)
-    result = generate_path(states, k0)
+    target_states = calc_uniform_polar_states(cur_states, nxy, nh, d, a_min, a_max, p_min, p_max)
+    result = generate_path(cur_states,target_states, k0)
 
     for table in result:
         print("table", table)
@@ -210,11 +240,11 @@ def uniform_terminal_state_sampling_test1(cur_states, ax=None):
                 
 
     # if show_animation:
-        # ax.grid(True)
+        # plt.grid(True)
         # plt.axis("equal")
         # plt.show()
 
-    print("Done")
+    # print("Done")
 
 
 def uniform_terminal_state_sampling_test2():
@@ -299,38 +329,164 @@ def biased_terminal_state_sampling_test2():
         plt.show()
 
 
-def lane_state_sampling_test1():
+def lane_state_sampling_test1(cur_states, ax=None):
     k0 = 0.0
 
-    l_center = 10.0
-    l_heading = math.radians(90.0)
-    l_width = 3.0
-    v_width = 1.0
-    d = 10
-    nxy = 5
-    states = calc_lane_states(l_center, l_heading, l_width, v_width, d, nxy)
-    result = generate_path(states, k0)
+    l_center = 1.0
+    l_center2 = -1.0
+    l_center3 = 1.0
+    l_center4 = -1.0
+    # cur_states[2]=1.0
+    # l_heading = cur_states[2]+math.radians(10.0)
+    # l_heading2 = cur_states[2]+math.radians(-10.0)
+    # l_heading = math.radians(10.0)
+    l_heading = cur_states[2]
+    if l_heading<0.0:
+        l_heading=abs(l_heading)
+    if l_heading>np.pi/4:
+        l_heading=np.pi/4
+
+    # print("l_heading", l_heading*180/np.pi)
+
+    l_width = 1.0
+    v_width = 0.0
+    d = 3.0
+    d2 = 3.5
+    nxy = 4
+
+    targetstates0 = calc_lane_states_linear(l_center, l_heading, l_width, v_width, d, nxy)
+    targetstates = calc_lane_states(l_center, l_heading, l_width, v_width, d, nxy)
+    targetstates2 = calc_lane_states( l_center2, l_heading, l_width, v_width, d, nxy)
+    '''
+    for tstates in targetstates0:
+        if ax==None:
+            plt.scatter(tstates[0], tstates[1], facecolor='black',edgecolor='black')      #final point
+        else:
+            ax.scatter(tstates[0], tstates[1], facecolor='black',edgecolor='black')      #final point
+
+    for tstates in targetstates:
+        if ax==None:
+            plt.scatter(tstates[0], tstates[1], facecolor='red',edgecolor='red')      #final point
+        else:
+            ax.scatter(tstates[0], tstates[1], facecolor='red',edgecolor='red')      #final point
+
+    for tstates in targetstates2:
+        if ax==None:
+            plt.scatter(tstates[0], tstates[1], facecolor='blue',edgecolor='blue')      #final point
+    '''
+    
+    cur_states_mod=[0,0,np.pi/4,0]
+    result0 = generate_path(cur_states_mod,targetstates0, k0)
+    result = generate_path(cur_states_mod,targetstates, k0)
+    result2 = generate_path(cur_states_mod,targetstates2, k0)
+    # result3 = generate_path(cur_states,targetstates3, k0)
+    # result4 = generate_path(cur_states,targetstates4, k0)
+
+    # print("cur_states[0]", cur_states[0])
+
+    for table in result0:
+        xc, yc, yawc = motion_model.generate_trajectory(cur_states_mod,
+            table[3], table[4], table[5], k0)
+
+        for i in range(len(xc)):
+            if cur_states[2]>np.pi/2:
+                xc[i]=-xc[i]
+            xc[i]+=cur_states[0]
+
+        for j in range(len(yc)):
+            if cur_states[2]>np.pi:
+                yc[j]=-yc[j]
+            yc[j]+=cur_states[1]
+
+        if show_animation:
+            if ax==None:
+                plt.plot(xc, yc, "-r")
+            else:
+                ax.plot(xc, yc, "-r")
+
 
     for table in result:
-        xc, yc, yawc = motion_model.generate_trajectory(
+        xc, yc, yawc = motion_model.generate_trajectory(cur_states_mod,
+            table[3], table[4], table[5], k0)
+        for i in range(len(xc)):
+            if cur_states[2]>np.pi/2:
+                xc[i]=-xc[i]
+            xc[i]+=cur_states[0]
+
+        for j in range(len(yc)):
+            if cur_states[2]>np.pi:
+                yc[j]=-yc[j]
+            yc[j]+=cur_states[1]
+
+        if show_animation:
+            if ax==None:
+                plt.plot(xc, yc, "-r")
+            else:
+                ax.plot(xc, yc, "-r")
+
+    for table in result2:
+        xc, yc, yawc = motion_model.generate_trajectory(cur_states_mod,
+            table[3], table[4], table[5], k0)
+        for i in range(len(xc)):
+            if cur_states[2]>np.pi/2:
+                xc[i]=-xc[i]
+            xc[i]+=cur_states[0]
+
+        for j in range(len(yc)):
+            if cur_states[2]>np.pi:
+                yc[j]=-yc[j]
+                
+            yc[j]+=cur_states[1]
+
+
+        if show_animation:
+            if ax==None:
+                plt.plot(xc, yc, "-r")
+            else:
+                ax.plot(xc, yc, "-r")
+
+    '''
+
+    for table in result3:
+        xc, yc, yawc = motion_model.generate_trajectory(cur_states,
+            table[3], table[4], table[5], k0)
+        print("xc, yc", xc,yc)
+
+        if show_animation:
+            plt.plot(xc, yc, "-b")
+            # if ax==None:
+                # plt.plot(xc, yc, "-r")
+            # else:
+                # ax.plot(xc, yc, "-r")
+
+    for table in result4:
+        xc, yc, yawc = motion_model.generate_trajectory(cur_states,
             table[3], table[4], table[5], k0)
 
         if show_animation:
-            plt.plot(xc, yc, "-r")
+            plt.plot(xc, yc, "-y")
+            # if ax==None:
+                # plt.plot(xc, yc, "-r")
+            # else:
+                # ax.plot(xc, yc, "-r")
 
+
+    '''
     if show_animation:
         plt.grid(True)
-        plt.axis("equal")
-        plt.show()
+        # plt.axis("equal")
+        # plt.show()
 
 
 def main():
-    cur_states=[1,1, np.pi/3,0]
-    uniform_terminal_state_sampling_test1(cur_states)
+    # cur_states=[1,1, np.pi/3,0]
+    cur_states=[2.0,0.0, np.pi/4,0]
+    # uniform_terminal_state_sampling_test1(cur_states)
     # uniform_terminal_state_sampling_test2()
     # biased_terminal_state_sampling_test1()
     # biased_terminal_state_sampling_test2()
-    # lane_state_sampling_test1()
+    lane_state_sampling_test1(cur_states)
+
 
 
 if __name__ == '__main__':

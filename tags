@@ -135,6 +135,7 @@ biased_terminal_state_sampling_test1	src/state_lattice_planner.py	/^def biased_t
 biased_terminal_state_sampling_test2	src/state_lattice_planner.py	/^def biased_terminal_state_sampling_test2():$/;"	f
 bresenham	src/grid_map.py	/^def bresenham(start, end):$/;"	f
 calc	src/cubic_spline_planner.py	/^    def calc(self, t):$/;"	m	class:Spline
+calc_IG_trjs	src/simulation.py	/^def calc_IG_trjs(trajectory, horizon, gmap ,params_global):$/;"	f
 calc_J	src/model_predictive_trajectory_generator.py	/^def calc_J(target, p, h, k0):$/;"	f
 calc_biased_polar_states	src/state_lattice_planner.py	/^def calc_biased_polar_states(goal_angle, ns, nxy, nh, d, a_min, a_max, p_min, p_max):$/;"	f
 calc_curvature	src/cubic_spline_planner.py	/^    def calc_curvature(self, s):$/;"	m	class:Spline2D
@@ -144,8 +145,10 @@ calc_grid_central_xy_position_from_xy_index	src/grid_map_lib.py	/^    def calc_g
 calc_grid_index_from_xy_index	src/grid_map_lib.py	/^    def calc_grid_index_from_xy_index(self, x_ind, y_ind):$/;"	m	class:GridMap
 calc_grid_map_config	src/raycasting_grid_map.py	/^def calc_grid_map_config(xyreso, agent_x,agent_y, sensor_range):$/;"	f
 calc_lane_states	src/state_lattice_planner.py	/^def calc_lane_states(l_center, l_heading, l_width, v_width, d, nxy):$/;"	f
+calc_lane_states_linear	src/state_lattice_planner.py	/^def calc_lane_states_linear(l_center, l_heading, l_width, v_width, d, nxy):$/;"	f
 calc_position	src/cubic_spline_planner.py	/^    def calc_position(self, s):$/;"	m	class:Spline2D
 calc_spline_course	src/cubic_spline_planner.py	/^def calc_spline_course(x, y, ds=0.1):$/;"	f
+calc_states_list	src/lookuptable_generator.py	/^def calc_states_list():$/;"	f
 calc_uniform_polar_states	src/state_lattice_planner.py	/^def calc_uniform_polar_states(cur_states,nxy, nh, d, a_min, a_max, p_min, p_max):$/;"	f
 calc_xy_index_from_position	src/grid_map_lib.py	/^    def calc_xy_index_from_position(self, pos, lower_pos, max_index):$/;"	m	class:GridMap
 calc_yaw	src/cubic_spline_planner.py	/^    def calc_yaw(self, s):$/;"	m	class:Spline2D
@@ -154,8 +157,8 @@ calcdd	src/cubic_spline_planner.py	/^    def calcdd(self, t):$/;"	m	class:Spline
 check_inside_polygon	src/grid_map_lib.py	/^    def check_inside_polygon(iox, ioy, x, y):$/;"	m	class:GridMap
 check_occupied_from_xy_index	src/grid_map_lib.py	/^    def check_occupied_from_xy_index(self, xind, yind, occupied_val=1.0):$/;"	m	class:GridMap
 check_polygon_visible	src/raycasting_grid_map.py	/^def check_polygon_visible(min_angle,max_angle,fov_anglelist):$/;"	f
-cm	src/simulation.py	/^                cm =plt.get_cmap('gist_rainbow')$/;"	v
-col	src/simulation.py	/^                    col = cm(1.*i\/num_colors)$/;"	v
+cm	src/simulation.py	/^            cm =plt.get_cmap('gist_rainbow')$/;"	v
+col	src/simulation.py	/^                col = cm(1.*i\/num_colors)$/;"	v
 configuration_space	src/utils/configuration_space.py	/^class configuration_space:$/;"	c
 constrain_dynamics	src/uav.py	/^    def constrain_dynamics(self, v_init):$/;"	m	class:UAV
 constrain_dynamics	src/vehicle.py	/^    def constrain_dynamics(self, vx_init, vy_init):$/;"	m	class:Vehicle
@@ -185,7 +188,7 @@ convert_grid_coordinate	src/grid_based_sweep_coverage_path_planner.py	/^def conv
 coords	src/main.py	/^        coords = np.zeros([z,2])$/;"	v
 coords	src/pyo_main.py	/^        coords = np.zeros([z,2])$/;"	v
 coords	src/test.py	/^        coords = np.zeros([z,2])$/;"	v
-cost_th	src/model_predictive_trajectory_generator.py	/^cost_th = 0.25$/;"	v
+cost_th	src/model_predictive_trajectory_generator.py	/^cost_th = 0.2$/;"	v
 create_borders_grid_map	src/grid_map.py	/^    def create_borders_grid_map(self, polygon_center):$/;"	m	class:GridMap
 cspace	src/main.py	/^    cspace = configuration_space(args['in'])$/;"	v
 cspace	src/pyo_main.py	/^    cspace = configuration_space(args['in'])$/;"	v
@@ -229,6 +232,7 @@ displayHeap	src/utils/priority_queue.py	/^  def displayHeap(self):$/;"	m	class:p
 distance	src/utils/graph_utils.py	/^def distance(pt1,pt2):$/;"	f
 draw	src/obstacle.py	/^    def draw(self,axes=None):$/;"	m	class:Obstacle
 draw_car	src/original_trj.py	/^def draw_car(x=0, y=0, yaw=0, phi=0,axes=None):$/;"	f
+draw_entropymap_global	src/simulation.py	/^def draw_entropymap_global(data,parmas_globalmap, ax):$/;"	f
 draw_heatmap	src/raycasting_grid_map.py	/^def draw_heatmap(data, minx, maxx, miny, maxy, xyreso):$/;"	f
 draw_map	src/grid_map.py	/^    def draw_map(self, obstacles,ax=None):$/;"	m	class:GridMap
 draw_occmap	src/animation.py	/^def draw_occmap(data, params_map,agent_x, agent_y, ax):$/;"	f
@@ -241,8 +245,8 @@ draw_occmap_global	src/backup_animation.py	/^def draw_occmap_global(data, minx, 
 draw_occmap_global	src/main.py	/^def draw_occmap_global(data,parmas_globalmap, ax):$/;"	f
 draw_occmap_global	src/pyo_main.py	/^def draw_occmap_global(data,parmas_globalmap, ax):$/;"	f
 draw_occmap_global	src/simulation.py	/^def draw_occmap_global(data,parmas_globalmap, ax):$/;"	f
-ds	src/motion_model.py	/^ds = 0.1  # course distanse$/;"	v
-ds	src/simulation.py	/^                    ds = 0.1  # [m] distance of each intepolated points$/;"	v
+ds	src/motion_model.py	/^ds = 0.2  # course distanse$/;"	v
+ds	src/simulation.py	/^                ds = 0.2                    # [m] distance of each intepolated points$/;"	v
 dt	src/animation.py	/^dt = 0.2  # [s]$/;"	v
 dt	src/backup_animation.py	/^dt = 0.2  # [s]$/;"	v
 dt	src/main.py	/^        dt = 4.             # time step size$/;"	v
@@ -257,6 +261,7 @@ dy	src/backup_animation.py	/^    dy = goal[1] - state[1]$/;"	v
 elementInHeap	src/utils/priority_queue.py	/^  def elementInHeap(self,x,y):$/;"	m	class:priority_queue
 entropy	src/animation.py	/^        entropy = get_map_entropy(pmap_global, params_globalmap)$/;"	v
 entropy	src/simulation.py	/^            entropy = get_map_entropy(pmap_global, params_globalmap)$/;"	v
+entropymap	src/simulation.py	/^            entropymap = get_entropymap(pmap_global,params_globalmap)$/;"	v
 epsilon	src/main.py	/^    epsilon = 0.1                          # effect of the force on the objective function$/;"	v
 epsilon	src/pyo_main.py	/^    epsilon = 0.1                          # effect of the force on the objective function$/;"	v
 epsilon	src/test.py	/^    epsilon = 0.5                          # effect of the force on the objective function$/;"	v
@@ -358,7 +363,8 @@ force_y	src/dataplot.py	/^force_y = force_y.astype(np.float)$/;"	v
 force_y	src/dataplot.py	/^force_y = np.asarray(df['fy'][1:])             #robot pos_y$/;"	v
 generate_fov_angle	src/raycasting_grid_map.py	/^def generate_fov_angle(agent_yaw, fov_range):$/;"	f
 generate_last_state	src/motion_model.py	/^def generate_last_state(s, km, kf, k0):$/;"	f
-generate_path	src/state_lattice_planner.py	/^def generate_path(target_states, k0):$/;"	f
+generate_lookup_table	src/lookuptable_generator.py	/^def generate_lookup_table():$/;"	f
+generate_path	src/state_lattice_planner.py	/^def generate_path(cur_states, target_states, k0):$/;"	f
 generate_ray_casting_grid_map	src/raycasting_grid_map.py	/^def generate_ray_casting_grid_map(obstacles,params, agent_x=0.0, agent_y=0.0,  agent_yaw=0.0):$/;"	f
 generate_samples	src/obstacle.py	/^    def generate_samples(self, reso=0.2):$/;"	m	class:Obstacle
 generate_trajectory	src/motion_model.py	/^def generate_trajectory(cur_states, s, km, kf, k0):$/;"	f
@@ -366,6 +372,7 @@ generate_vertices	src/obstacle.py	/^    def generate_vertices(self):$/;"	m	class
 generate_waypoint	src/VCD.py	/^    def generate_waypoint(self, params_local):$/;"	m	class:VerticalCellDecomposition
 generating_globaltrjs	src/simulation.py	/^def generating_globaltrjs(cur_state, cspace, obstacles,goals, params_global):$/;"	f
 get_area_polygon	src/VCD.py	/^    def get_area_polygon(self, region):$/;"	m	class:VerticalCellDecomposition
+get_entropymap	src/simulation.py	/^def get_entropymap(pmap_global,params_map):$/;"	f
 get_final_path	src/utils/uniform_cost_search.py	/^    def get_final_path(self):$/;"	m	class:Search
 get_lookup_table	src/state_lattice_planner.py	/^def get_lookup_table():$/;"	f
 get_map_entropy	src/animation.py	/^def get_map_entropy(pmap_global,params_map):$/;"	f
@@ -401,7 +408,8 @@ goali	src/simulation.py	/^    goali = 0                           #define goal f
 grid2meters	src/grid_map.py	/^    def grid2meters(self, pose_grid):$/;"	m	class:GridMap
 gridmap	src/test.py	/^    gridmap = GridMap(flight_area_vertices, initial_pose)$/;"	v
 gridobstacles	src/test.py	/^    gridobstacles = [$/;"	v
-h	src/model_predictive_trajectory_generator.py	/^h = np.matrix([0.4, 0.02, 0.02]).T  # parameter sampling distanse$/;"	v
+gtrjs	src/simulation.py	/^            gtrjs= generating_globaltrjs(state, cspace,obstacles,sample_goals,params_globalmap)$/;"	v
+h	src/model_predictive_trajectory_generator.py	/^h = np.matrix([0.2, 0.02, 0.02]).T  # parameter sampling distanse$/;"	v
 init_pos	src/main.py	/^    init_pos=cspace.start_state $/;"	v
 init_pos	src/pyo_main.py	/^    init_pos=cspace.start_state $/;"	v
 init_pos	src/simulation.py	/^    init_pos=[pos_x[0],pos_y[0]]$/;"	v
@@ -440,16 +448,16 @@ l_free	src/animation.py	/^l_free=np.log(0.2\/0.8)$/;"	v
 l_free	src/main.py	/^l_free=np.log(0.2\/0.8)$/;"	v
 l_free	src/pyo_main.py	/^l_free=np.log(0.2\/0.8)$/;"	v
 l_free	src/raycasting_grid_map.py	/^l_free = np.log(0.3\/0.7)$/;"	v
-l_free	src/simulation.py	/^l_free=np.log(0.2\/0.8)$/;"	v
+l_free	src/simulation.py	/^l_free=np.log(0.15\/0.85)$/;"	v
 l_occ	src/animation.py	/^l_occ=np.log(0.8\/0.2)$/;"	v
 l_occ	src/main.py	/^l_occ=np.log(0.8\/0.2)$/;"	v
 l_occ	src/pyo_main.py	/^l_occ=np.log(0.8\/0.2)$/;"	v
 l_occ	src/raycasting_grid_map.py	/^l_occ = np.log(0.7\/0.3)$/;"	v
-l_occ	src/simulation.py	/^l_occ=np.log(0.8\/0.2)$/;"	v
+l_occ	src/simulation.py	/^l_occ=np.log(0.85\/0.15)$/;"	v
 labels	src/main.py	/^        labels = ['Turn rate 15 $\\degree$\/s', 'Turn rate 12 $\\degree$\/s']$/;"	v
 labels	src/pyo_main.py	/^        labels = ['Turn rate 15 $\\degree$\/s', 'Turn rate 12 $\\degree$\/s']$/;"	v
 labels	src/test.py	/^            labels = ['Turn rate 15 $\\degree$\/s', 'Turn rate 12 $\\degree$\/s']$/;"	v
-lane_state_sampling_test1	src/state_lattice_planner.py	/^def lane_state_sampling_test1():$/;"	f
+lane_state_sampling_test1	src/state_lattice_planner.py	/^def lane_state_sampling_test1(cur_states, ax=None):$/;"	f
 leftChild	src/utils/priority_queue.py	/^  def leftChild(self,parent):$/;"	m	class:priority_queue
 line_intersection	src/utils/graph_utils.py	/^def line_intersection(line1, line2):$/;"	f
 line_styles	src/main.py	/^        line_styles = ["--", ":", "-.", '-', '-']$/;"	v
@@ -460,6 +468,7 @@ m	src/original_trj.py	/^m = ConcreteModel()$/;"	v
 m	src/pyo_main.py	/^    m = Model("ppl")$/;"	v
 m	src/test.py	/^    m = Model("ppl")$/;"	v
 main	src/cubic_spline_planner.py	/^def main():$/;"	f
+main	src/lookuptable_generator.py	/^def main():$/;"	f
 main	src/model_predictive_trajectory_generator.py	/^def main():$/;"	f
 main	src/raycasting_grid_map.py	/^def main():$/;"	f
 main	src/state_lattice_planner.py	/^def main():$/;"	f
@@ -471,7 +480,7 @@ map_params	src/simulation.py	/^class map_params:$/;"	c
 marker_styles	src/main.py	/^        marker_styles = ['None', 'None', 'None', 'x', 'None']$/;"	v
 marker_styles	src/pyo_main.py	/^        marker_styles = ['None', 'None', 'None', 'x', 'None']$/;"	v
 marker_styles	src/test.py	/^        marker_styles = ['None', 'None', 'None', 'x', 'None']$/;"	v
-max_iter	src/model_predictive_trajectory_generator.py	/^max_iter = 50$/;"	v
+max_iter	src/model_predictive_trajectory_generator.py	/^max_iter = 60$/;"	v
 meters2grid	src/grid_map.py	/^    def meters2grid(self, pose_m,):$/;"	m	class:GridMap
 minKey	src/utils/priority_queue.py	/^  def minKey(self):$/;"	m	class:priority_queue
 minheapify_ins	src/utils/priority_queue.py	/^  def minheapify_ins(self,index):$/;"	m	class:priority_queue
@@ -497,7 +506,7 @@ name	src/test.py	/^    name=name+timestamp +".png"$/;"	v
 ntimestep	src/animation.py	/^ntimestep = len(pos_x)$/;"	v
 ntimestep	src/backup_animation.py	/^ntimestep = len(pos_x)$/;"	v
 ntimestep	src/simulation.py	/^    ntimestep = len(pos_x)$/;"	v
-num_colors	src/simulation.py	/^                num_colors = len(trjs)$/;"	v
+num_colors	src/simulation.py	/^            num_colors = len(gtrjs)$/;"	v
 num_vehicles	src/main.py	/^        num_vehicles = len(veh_coords)$/;"	v
 num_vehicles	src/pyo_main.py	/^        num_vehicles = len(veh_coords)$/;"	v
 num_vehicles	src/test.py	/^    num_vehicles = len(veh_coords)$/;"	v
@@ -561,7 +570,7 @@ obstacles	src/pyo_main.py	/^        obstacles=[]$/;"	v
 obstacles	src/simulation.py	/^        obstacles = []                                  # list which will contain all obstacles$/;"	v
 obstacles	src/test.py	/^    obstacles = []                                  # list which will contain all obstacles$/;"	v
 on_polygon	src/utils/graph_utils.py	/^def on_polygon(x,y,polygon):$/;"	f
-optimize_trajectory	src/model_predictive_trajectory_generator.py	/^def optimize_trajectory(target, k0, p):$/;"	f
+optimize_trajectory	src/model_predictive_trajectory_generator.py	/^def optimize_trajectory(cur_states, target, k0, p):$/;"	f
 ox	src/test.py	/^    ox = flight_area_vertices[:,0].tolist() + [flight_area_vertices[0,0]]$/;"	v
 oy	src/test.py	/^    oy = flight_area_vertices[:,1].tolist() + [flight_area_vertices[0,1]]$/;"	v
 p_free_given_zfree	src/backup_animation.py	/^p_free_given_zfree= 0.99$/;"	v
@@ -670,12 +679,15 @@ reset_cspace	src/VCD.py	/^    def reset_cspace(self,cspace):$/;"	m	class:Vertica
 reset_cspace	src/utils/configuration_space.py	/^    def reset_cspace(self, boundaries, init_pos,goal_pos, obstacles):$/;"	m	class:configuration_space
 reso	src/test.py	/^    reso = 2.0$/;"	v
 rightChild	src/utils/priority_queue.py	/^  def rightChild(self,parent):$/;"	m	class:priority_queue
-s	src/simulation.py	/^                    s = np.arange(0, sp.s[-1], ds)$/;"	v
-sample_goals	src/simulation.py	/^                sample_goals = random_sampling(params,9)$/;"	v
+s	src/simulation.py	/^                s = np.arange(0, sp.s[-1], ds)$/;"	v
+s_iter	src/simulation.py	/^                s_iter=0$/;"	v
+sample_goals	src/simulation.py	/^            sample_goals = random_sampling(params,9)$/;"	v
 sample_states	src/state_lattice_planner.py	/^def sample_states(cur_states, angle_samples, a_min, a_max, d, p_max, p_min, nh):$/;"	f
+save_lookup_table	src/lookuptable_generator.py	/^def save_lookup_table(fname, table):$/;"	f
 scl	src/original_trj.py	/^scl=0.2$/;"	v
 search	src/VCD.py	/^    def search(self,showPlot=False, goalpos=None):$/;"	m	class:VerticalCellDecomposition
 search_free_grid_index_at_edge_y	src/grid_based_sweep_coverage_path_planner.py	/^def search_free_grid_index_at_edge_y(grid_map, from_upper=False):$/;"	f
+search_nearest_one_from_lookuptable	src/lookuptable_generator.py	/^def search_nearest_one_from_lookuptable(tx, ty, tyaw, lookuptable):$/;"	f
 search_nearest_one_from_lookuptable	src/state_lattice_planner.py	/^def search_nearest_one_from_lookuptable(tx, ty, tyaw, lookup_table):$/;"	f
 search_start_grid	src/grid_based_sweep_coverage_path_planner.py	/^    def search_start_grid(self, grid_map):$/;"	m	class:SweepSearcher
 selection_learning_param	src/model_predictive_trajectory_generator.py	/^def selection_learning_param(dp, p, k0, target):$/;"	f
@@ -725,7 +737,7 @@ t_prev_goal	src/backup_animation.py	/^        t_prev_goal = time.time()$/;"	v
 t_prev_goal	src/backup_animation.py	/^t_prev_goal = time.time()$/;"	v
 t_prev_goal	src/simulation.py	/^            t_prev_goal = time.time()$/;"	v
 t_prev_goal	src/simulation.py	/^    t_prev_goal = time.time()$/;"	v
-table_path	src/state_lattice_planner.py	/^table_path = ".\/lookuptable_cpp2.csv"$/;"	v
+table_path	src/state_lattice_planner.py	/^table_path = ".\/lookuptable_cpp3.csv"$/;"	v
 tellme	src/tools.py	/^        def tellme(s):$/;"	f	function:define_polygon
 test_1	tests/test_vehicle.py	/^    def test_1(self):$/;"	m	class:TestStringMethods
 test_optimize_trajectory	src/model_predictive_trajectory_generator.py	/^def test_optimize_trajectory():$/;"	f
@@ -763,7 +775,6 @@ trajectories	src/backup_animation.py	/^trajectories = [pos_x, pos_y, vel_x, vel_
 trajectories	src/main.py	/^        trajectories = [pos_x, pos_y, vel_x, vel_y, ]$/;"	v
 trajectories	src/pyo_main.py	/^        trajectories = [pos_x, pos_y, vel_x, vel_y, ]$/;"	v
 trajectories	src/simulation.py	/^        trajectories = [pos_x, pos_y, vel_x, vel_y, ]$/;"	v
-trjs	src/simulation.py	/^                trjs= generating_globaltrjs(state, cspace,obstacles,sample_goals,params_globalmap)$/;"	v
 uniform_terminal_state_sampling_test1	src/state_lattice_planner.py	/^def uniform_terminal_state_sampling_test1(cur_states, ax=None):$/;"	f
 uniform_terminal_state_sampling_test2	src/state_lattice_planner.py	/^def uniform_terminal_state_sampling_test2():$/;"	f
 update	src/motion_model.py	/^def update(state, v, delta, dt,L):$/;"	f

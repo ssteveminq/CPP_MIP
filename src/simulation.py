@@ -10,7 +10,7 @@ import csv
 import matplotlib.pyplot as plt
 from obstacle import Obstacle
 from raycasting_grid_map import generate_ray_casting_grid_map, calc_grid_map_config, atan_zero_to_twopi
-from state_lattice_planner import uniform_terminal_state_sampling_test1
+from state_lattice_planner import uniform_terminal_state_sampling_test1, lane_state_sampling_test1
 from utils.configuration_space import configuration_space
 from cubic_spline_planner import Spline2D 
 from  VCD import VerticalCellDecomposition
@@ -24,8 +24,8 @@ import matplotlib as mpl
 f_max=0.3
 v_max=0.4
 #probability
-l_occ=np.log(0.8/0.2)
-l_free=np.log(0.2/0.8)
+l_occ=np.log(0.85/0.15)
+l_free=np.log(0.15/0.85)
 
 #pp control 
 k = 0.1  # look forward gain
@@ -68,12 +68,7 @@ class Params:
         # self.time_to_switch_goal = 5.0 # sec #inactive for now
         # self.sweep_resolution = 0.4 # m
 
-# class State:
-    # def __init__(self, x=0.0, y=0.0, yaw=0.0, v=0.0):
-        # self.x = x
-        # self.y = y
-        # self.yaw = yaw
-        # self.v = v
+
 
 def random_sampling(params, nums):
     #nums = the number of sample we need
@@ -90,6 +85,18 @@ def random_sampling(params, nums):
     # print(sample_xy)
     return sample_xy
 
+
+def calc_IG_trjs(trajectory, horizon, gmap ,params_global):
+    print("TODO")
+    #Calculating Information gain on trajectories
+    #1) calculating sampling point for time horizon 
+    #2) calculating FOV region over sampling points 
+    #3) Collecting IG gain for overlapped region
+    #Suppose we have maximum velocity/ arc length
+    #sampling points w.r.t distance 
+
+
+    
 
 def generating_globaltrjs(cur_state, cspace, obstacles,goals, params_global):
 
@@ -163,6 +170,23 @@ def draw_occmap_global(data,parmas_globalmap, ax):
     ax.set_xlim([1.1*minx, 1.1*maxx])   # limit the plot space
     ax.set_ylim([1.1*miny, 1.1*maxy])   # limit the plot space
 
+def draw_entropymap_global(data,parmas_globalmap, ax):
+
+    minx=params_globalmap.xmin
+    miny=params_globalmap.ymin
+    maxx=params_globalmap.xmax
+    maxy=params_globalmap.ymax
+    xyreso=params_globalmap.xyreso
+
+    x, y = np.mgrid[slice(minx - xyreso / 2.0, maxx + xyreso / 2.0, xyreso),
+                    slice(miny - xyreso / 2.0, maxy + xyreso / 2.0, xyreso)]
+    ax.pcolor(x, y, data, vmax=0.69315, cmap=plt.cm.Reds)
+    ax.set_xlim([1.1*minx, 1.1*maxx])   # limit the plot space
+    ax.set_ylim([1.1*miny, 1.1*maxy])   # limit the plot space
+
+
+
+
 def get_map_entropy(pmap_global,params_map):
     entropy_sum=0
     pmap= 1-1./(1.0+np.exp(pmap_global))
@@ -175,6 +199,24 @@ def get_map_entropy(pmap_global,params_map):
             # entropy_sum+=p*math.log(p)
 
     return -entropy_sum
+
+def get_entropymap(pmap_global,params_map):
+    entropy_sum=0
+    pmap= 1-1./(1.0+np.exp(pmap_global))
+
+    for ix in range(params_map.xw-1):
+        for iy in range(params_map.yw-1):
+            p =pmap[ix][iy]
+            if p>0.0 and p<1.0:
+                pmap[ix][iy]=-(p*math.log(p)+(1-p)*math.log(1-p))
+            elif p==0.0 or p==1.0:
+                 pmap[ix][iy]=0.0
+            else:
+                print("wrong probability value")
+
+    return pmap
+
+
 
 
 def update_occ_grid_map(state, local_map, params_local, global_map, params_global):
@@ -585,7 +627,9 @@ if __name__ == "__main__":
             axes[1,1].cla()
             axes[1,1].set_title('global occupancy grid')
             pmap_global = update_occ_grid_map(state, pmap_local,params_localmap, pmap_global,params_globalmap)
-            draw_occmap_global(pmap_global,params_globalmap, axes[1,1])
+            entropymap = get_entropymap(pmap_global,params_globalmap)
+            # draw_occmap_global(pmap_global,params_globalmap, axes[1,1])
+            draw_entropymap_global(pmap_global,params_globalmap, axes[1,1])
             entropy = get_map_entropy(pmap_global, params_globalmap)
             # print("----entropy : ", entropy)
 
@@ -595,35 +639,39 @@ if __name__ == "__main__":
         iter=iter+1
 
         #middle frequency
-        if iter%20==1:
+        # if iter%20==1:
             
-            if iter%40==1:
-                axes[1,0].cla()
-                axes[1,0].set_title('global & Local motion primitives')
-                # uniform_terminal_state_sampling_test1(state,axes[4])
-                sample_goals = random_sampling(params,9)
-                trjs= generating_globaltrjs(state, cspace,obstacles,sample_goals,params_globalmap)
-                num_colors = len(trjs)
-                cm =plt.get_cmap('gist_rainbow')
-                for i, sp in enumerate(trjs):
-                    col = cm(1.*i/num_colors)
-                    ds = 0.1  # [m] distance of each intepolated points
-                    s = np.arange(0, sp.s[-1], ds)
-                    rx, ry, ryaw, rk = [], [], [], []
-                    for i_s in s:
-                        ix, iy = sp.calc_position(i_s)
-                        rx.append(ix)
-                        ry.append(iy)
-                    axes[1,0].plot(rx, ry, color='g', label="spline")
-                planner.plot_regions(axes[1,0])
+        if iter%30==1:
+            axes[1,0].cla()
+            axes[1,0].set_title('global & Local motion primitives')
+            # uniform_terminal_state_sampling_test1(state,axes[4])
+            sample_goals = random_sampling(params,9)
+            gtrjs= generating_globaltrjs(state, cspace,obstacles,sample_goals,params_globalmap)
+            num_colors = len(gtrjs)
+            cm =plt.get_cmap('gist_rainbow')
+            for i, sp in enumerate(gtrjs):
+                col = cm(1.*i/num_colors)
+                ds = 0.2                    # [m] distance of each intepolated points
+                s = np.arange(0, sp.s[-1], ds)
+                rx, ry, ryaw, rk = [], [], [], []
+                s_iter=0
+                for i_s in s:
+                    ix, iy = sp.calc_position(i_s)
+                    rx.append(ix)
+                    ry.append(iy)
 
+                axes[1,0].plot(rx[1:50], ry[1:50], color='g', label="spline")
+            planner.plot_regions(axes[1,0])
+            lane_state_sampling_test1(state,axes[1,0])
+            # uniform_terminal_state_sampling_test1(state,axes[1,0])
+
+            # lane_state_sampling_test1(state,axes[1,0])
             # uniform_terminal_state_sampling_test1(state,axes[1,0])
             # axes[1,0].set_xlim([-1.2*params.area_size, 1.2*params.area_size])   # limit the plot space
             # axes[1,0].set_ylim([-1.2*params.area_size, 1.2*params.area_size])   # limit the plot space
             # planner.plot_regions(axes[1,0])
 
-
-    plt.show()
+    plt.show(aspect='auto')
 
 
 

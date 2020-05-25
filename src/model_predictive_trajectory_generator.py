@@ -10,15 +10,15 @@ import math
 import motion_model
 
 # optimization parameter
-max_iter = 50
-h = np.matrix([0.4, 0.02, 0.02]).T  # parameter sampling distanse
-cost_th = 0.25
+max_iter = 60
+h = np.matrix([0.2, 0.02, 0.02]).T  # parameter sampling distanse
+cost_th = 0.2
 
 show_animation = False
 
 
 def plot_arrow(x, y, yaw, length=1.0, width=0.5, fc="r", ec="k"):
-    u"""
+    """
     Plot arrow
     """
     plt.arrow(x, y, length * math.cos(yaw), length * math.sin(yaw),
@@ -100,10 +100,11 @@ def show_trajectory(target, xc, yc):
     plt.pause(0.1)
 
 
-def optimize_trajectory(target, k0, p):
-    cur_states=[0,0,0,0]
+def optimize_trajectory(cur_states, target, k0, p):
+    # cur_states=[0,0,0,0]
     for i in range(max_iter):
         xc, yc, yawc = motion_model.generate_trajectory(cur_states, p[0], p[1], p[2], k0)
+        print("xc: ", xc, ", yc: ", yc, ", yawc:",yawc )
         dc = np.matrix(calc_diff(target, xc, yc, yawc)).T
         #  print(dc.T)
 
@@ -128,8 +129,8 @@ def optimize_trajectory(target, k0, p):
 
         p += alpha * np.array(dp)
         #  print(p.T)
-        if show_animation:
-            show_trajectory(target, xc, yc)
+        # if show_animation:
+            # show_trajectory(target, xc, yc)
     else:
         xc, yc, yawc, p = None, None, None, None
         print("cannot calc path")
@@ -145,8 +146,10 @@ def test_optimize_trajectory():
     k0 = 0.0
 
     init_p = np.matrix([6.0, 0.0, 0.0]).T
+    
+    cur_states=[0,0,0,0]
 
-    x, y, yaw, p = optimize_trajectory(target, k0, init_p)
+    x, y, yaw, p = optimize_trajectory(cur_states,target, k0, init_p)
 
     show_trajectory(target, x, y)
     #  plt.plot(x, y, "-r")
