@@ -511,7 +511,7 @@ def obstacle_check(pose, gridmap, params):
     gmap = gridmap
     # r = int(100*params.sensor_range_m)
     # r = int(params.sensor_range_m)
-    r = int(1)
+    r = int(2)
     # print("r", r)
     
     back = [pose[0]-r*np.cos(pose[2]), pose[1]-r*np.sin(pose[2])]
@@ -885,9 +885,9 @@ for _ in range(params.numiters):
     # if iter%50==1:
         # input()
 
-    if human_robot_dist < 0.25:
-        print("human has been captured")
-        break
+    # if human_robot_dist < 0.25:
+    #     print("human has been captured")
+    #     break
 
 plt.show()
      
