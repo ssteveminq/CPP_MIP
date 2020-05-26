@@ -55,7 +55,7 @@ class human_map_params: # This is where to change the human FOV size, unsure how
         self.ymax=15
         self.xw = int(round((self.xmax - self.xmin) / self.xyreso))
         self.yw = int(round((self.ymax - self.ymin) / self.xyreso))
-        self.sensor_range=5
+        self.sensor_range=2
 
 
 class Params:
@@ -381,7 +381,53 @@ class Point:
         self.x = 0.0
         self.y = 0.0
 
-def human_goal_update(human_goal, human_state, state, params, t_current, t_prev_goal, human_goali):
+
+def check_robot_in_FOV(human_state, state, human_params_localmap, gridmap):
+    # find area covered by the human FOV
+    # print("human_state [m]: ", state[:2])
+
+    top_right = np.array([human_state[0] + human_params_localmap.sensor_range, human_state[1] + human_params_localmap.sensor_range, -np.pi/2, 0.0])
+    # print(" [m]: ", top_right[:2])
+    
+    lower_right = np.array([human_state[0] + human_params_localmap.sensor_range, human_state[1] - human_params_localmap.sensor_range, -np.pi/2, 0.0])
+    # print("lower_right [m]: ", lower_right[:2])
+    
+    top_left = np.array([human_state[0] - human_params_localmap.sensor_range, human_state[1] + human_params_localmap.sensor_range, -np.pi/2, 0.0])
+    # print("top_left [m]: ", top_left[:2])
+    
+    lower_left = np.array([human_state[0] - human_params_localmap.sensor_range, human_state[1] - human_params_localmap.sensor_range, -np.pi/2, 0.0])
+    # print("lower_left [m]: ", lower_left[:2]) 
+    
+    # print("-------------------------------------------------")
+    # convert the vertices to grid units
+    pose_human = gridmap.meters2grid(human_state[:2])
+    # print("pose_human check robot in FOV: ", pose_human)
+    pose_tr = gridmap.meters2grid(top_right[:2])
+    # print("top right corner of FOV check robot in FOV: ", pose_tr)
+    pose_lr = gridmap.meters2grid(lower_right[:2])
+    # print("lower right corner of FOV check robot in FOV: ", pose_lr)
+    pose_tl = gridmap.meters2grid(top_left[:2])
+    # print("top left corner of FOV check robot in FOV: ", pose_tl)
+    pose_ll = gridmap.meters2grid(lower_left[:2])
+    # print("lower left corner of FOV check robot in FOV: ", pose_ll)
+
+    # find the robot pose in grid
+    pose_robot = gridmap.meters2grid(state[:2])
+    # print("pose_robot check robot in FOV: ", pose_robot)
+
+
+    if pose_robot[0] <= pose_tr[0] and pose_robot[0] >= pose_tl[0]:
+        if pose_robot[1] <= pose_tr[1] and pose_robot[1] >= pose_lr[1]:
+            robot_in_FOV = True
+        else: robot_in_FOV = False
+    else: robot_in_FOV = False
+    # see if robot is in this
+    # return true/false
+
+    print("robot_in_FOV: ", robot_in_FOV)
+    return robot_in_FOV
+
+def human_goal_update(human_goal, human_state, state, params, t_current, t_prev_goal, human_goali, robot_in_FOV):
     '''
     Here we need to call a function for checking if the human either  
     a) is at the goal
@@ -395,8 +441,9 @@ def human_goal_update(human_goal, human_state, state, params, t_current, t_prev_
 
     human_robot_dist = sqrt((state[0] - human_state[0])**2+(state[1] - human_state[1])**2) 
 
+    if robot_in_FOV:
 
-    if human_robot_dist < 1.5:  # robot and human too close
+    # if human_robot_dist < 1.5:  # robot and human too close
         print("Robot is too close, human needs to move away")
         init = Point()
         final = Point()
@@ -776,9 +823,10 @@ for _ in range(params.numiters):
         t_prev_goal = time.time()
         goal = [way_x[goali], way_y[goali]]
 
+    robot_in_FOV = check_robot_in_FOV(human_state, state, human_params_localmap, gridmap)
 
     # New goal for the human: either continue on square or travel away from human
-    human_goal, human_goali = human_goal_update(human_goal, human_state, state, params, t_current, t_prev_goal, human_goali)
+    human_goal, human_goali = human_goal_update(human_goal, human_state, state, params, t_current, t_prev_goal, human_goali, robot_in_FOV)
 
     #plot
     if params.animate:
