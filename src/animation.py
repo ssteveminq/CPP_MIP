@@ -45,6 +45,18 @@ class map_params:
         self.yw = int(round((self.ymax - self.ymin) / self.xyreso))
         self.sensor_range=5
 
+class human_map_params: # This is where to change the human FOV size, unsure how to change shape...
+    def __init__(self):
+        self.xyreso = 0.25  # x-y grid resolution [m]
+        self.yawreso = math.radians(6)  # yaw angle resolution [rad]
+        self.xmin=-15
+        self.xmax=15
+        self.ymin=-15
+        self.ymax=15
+        self.xw = int(round((self.xmax - self.xmin) / self.xyreso))
+        self.yw = int(round((self.ymax - self.ymin) / self.xyreso))
+        self.sensor_range=5
+
 
 class Params:
     def __init__(self):
@@ -585,6 +597,7 @@ params = Params()
 human_params = humanParams()
 params_globalmap =  map_params()
 params_localmap =  map_params()
+human_params_localmap =  human_map_params()
 
 timeindex = "04171450"
 
@@ -795,8 +808,8 @@ for _ in range(params.numiters):
         ##################################################################
         # figure 4- human local sensor window
         axes[3].cla() #clear axes
-        human_pmap_local, human_updated_grids, human_intersect_dic, human_obs_verticeid, human_closest_vertexid, params_localmap.xmin, params_localmap.xmax, params_localmap.ymin, params_localmap.ymax, params_localmap.xyreso, params_localmap.xw, params_localmap.yw= generate_ray_casting_grid_map(obstacles, params_localmap, human_state[0],human_state[1], human_state[2])
-        draw_occmap(human_pmap_local, params_localmap, human_state[0],human_state[1], axes[3])
+        human_pmap_local, human_updated_grids, human_intersect_dic, human_obs_verticeid, human_closest_vertexid, human_params_localmap.xmin, human_params_localmap.xmax, human_params_localmap.ymin, human_params_localmap.ymax, human_params_localmap.xyreso, human_params_localmap.xw, human_params_localmap.yw= generate_ray_casting_grid_map(obstacles, human_params_localmap, human_state[0],human_state[1], human_state[2])
+        draw_occmap(human_pmap_local, human_params_localmap, human_state[0],human_state[1], axes[3])
         # draw sensor ray to obstacles
         for i in range(len(obstacles)):
             axes[0].plot([human_state[0], obstacles[i].vertices[human_obs_verticeid[i][0]][0]], [human_state[1], obstacles[i].vertices[human_obs_verticeid[i][0]][1]], color='orange')
