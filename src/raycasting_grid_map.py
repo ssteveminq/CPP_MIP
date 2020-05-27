@@ -280,7 +280,7 @@ def precasting(minx, miny, xw, yw, xyreso, yawreso,agent_x,agent_y):
 
     return precast
 
-def generate_ray_casting_grid_map(obstacles,params, agent_x=0.0, agent_y=0.0,  agent_yaw=0.0):
+def generate_ray_casting_grid_map(obstacles,walls, params, agent_x=0.0, agent_y=0.0,  agent_yaw=0.0):
 
     yawreso= params.yawreso
     xyreso = params.xyreso
@@ -406,7 +406,9 @@ def generate_ray_casting_grid_map(obstacles,params, agent_x=0.0, agent_y=0.0,  a
         # check_polygon_visible(min_angle,max_angle,fov_anglelist)
 
 
+
     #obtain min/max vertices of obstacles/ 
+    sensor_pose=[agent_x,agent_y]
     obs_angles=[]
     obs_vertices=[] 
     closest_vertices=[]
@@ -481,6 +483,44 @@ def generate_ray_casting_grid_map(obstacles,params, agent_x=0.0, agent_y=0.0,  a
             iterator+=1
         obs_iter+=1
 
+        
+    for wall in walls:
+        visible_vertices= wall.get_visible_vertices_wall(agent_x,agent_y,params)
+        if visible_vertices!=None:
+            for vertex in visible_vertices:
+                wall_angle = atan_zero_to_twopi(vertex[1]-sensor_pose[1],vertex[0]-sensor_pose[0])
+                angleid =  int(math.floor(wall_angle/ yawreso))
+                gridlist = precast[angleid]
+                ix = int((vertex[0] - minx) / xyreso)
+                iy = int((vertex[1] - miny) / xyreso)
+                d= math.sqrt((sensor_pose[0]-vertex[0])**2 + (sensor_pose[1]-vertex[1])**2)
+                min_d = 100
+                is_min_grid=False
+                for grid in gridlist:
+                    if grid.d > d:
+                        pmap[grid.ix][grid.iy] = 0  #log_unknown =0
+                        grid.value=0.5
+                        updated_gridlist.append(grid)
+                        if min_d>grid.d:
+                            min_d = grid.d
+                            min_grid = grid
+                            is_min_grid=True
+                if is_min_grid:
+                    pmap[min_grid.ix][min_grid.iy]=l_occ  #log_occ 
+                    min_grid.value=l_occ
+                    updated_gridlist.append(min_grid)
+
+
+
+
+        # print("visible_vertices", visible_vertices)
+       
+    # input()
+
+    
+
+
+
     return pmap, updated_gridlist, obsdict, obs_vertices, closest_vertices, minx, maxx, miny, maxy, xyreso, xw,yw
 
 #shoulde be written in terms of radian
@@ -521,6 +561,7 @@ def main():
     print(__file__ + " start!!")
 
     obstacles=[]
+    walls=[]
     xyreso = 0.25  # x-y grid resolution [m]
     yawreso = math.radians(5)  # yaw angle resolution [rad]
     agent_yaw= math.pi/2
@@ -536,7 +577,7 @@ def main():
         # print("oy")
         # print(oy)
     pmap, minx, maxx, miny, maxy, xyreso = generate_ray_casting_grid_map(obstacles,
-             xyreso, yawreso, 0.0,0.0,agent_yaw)
+             walls, xyreso, yawreso, 0.0,0.0,agent_yaw)
     if show_animation:
         plt.cla()
         draw_heatmap(pmap, minx, maxx, miny, maxy, xyreso)

@@ -104,7 +104,7 @@ def optimize_trajectory(cur_states, target, k0, p):
     # cur_states=[0,0,0,0]
     for i in range(max_iter):
         xc, yc, yawc = motion_model.generate_trajectory(cur_states, p[0], p[1], p[2], k0)
-        print("xc: ", xc, ", yc: ", yc, ", yawc:",yawc )
+        # print("xc: ", xc, ", yc: ", yc, ", yawc:",yawc )
         dc = np.matrix(calc_diff(target, xc, yc, yawc)).T
         #  print(dc.T)
 

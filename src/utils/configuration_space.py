@@ -49,12 +49,13 @@ class configuration_space:
             self.plot_polygon(self.polygons[i])
         if showPlot:
             plt.show()
-    def reset_cspace(self, boundaries, init_pos,goal_pos, obstacles):
+    def reset_environment(self, boundaries, init_pos,goal_pos, obstacles):
         # c-clockwise 
         self.boundary =boundaries
         self.polygons=[]
         for obs in obstacles:
-            self.polygons.append(obs.vertices)
+            if obs.isWall==None:
+                self.polygons.append(obs.vertices)
 
         self.start_state = init_pos
         self.goal_state = goal_pos

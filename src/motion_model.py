@@ -5,7 +5,8 @@ import scipy.interpolate
 # motion parameter
 L = 1.0  # wheel base
 ds = 0.2  # course distanse
-v = 10.0 / 3.6  # velocity [m/s]
+# v = 10.0 / 3.6  # velocity [m/s]
+v = 2.5  # velocity [m/s]
 
 
 class State:
@@ -75,8 +76,8 @@ def generate_last_state(s, km, kf, k0):
     tk = np.array([0.0, time / 2.0, time])
     kk = np.array([k0, km, kf])
     t = np.arange(0.0, time, time / n)
-    print("tk", tk)
-    print("kk", kk)
+    # print("tk", tk)
+    # print("kk", kk)
     state = State()
     if tk[-1]!=0.0:
         fkp = scipy.interpolate.interp1d(tk, kk, kind="quadratic")

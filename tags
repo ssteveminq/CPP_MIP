@@ -45,6 +45,7 @@ Params	src/main.py	/^class Params:$/;"	c
 Params	src/pyo_main.py	/^class Params:$/;"	c
 Params	src/simulation.py	/^class Params:$/;"	c
 RIGHT	src/grid_based_sweep_coverage_path_planner.py	/^        RIGHT = 1$/;"	v	class:SweepSearcher.MovingDirection
+Region_Boundary	src/simulation.py	/^Region_Boundary =12.5$/;"	v
 Roadmap	src/utils/configuration_space.py	/^class Roadmap:$/;"	c
 Search	src/utils/uniform_cost_search.py	/^class Search:$/;"	c
 Spline	src/cubic_spline_planner.py	/^class Spline:$/;"	c
@@ -91,7 +92,7 @@ __init__	src/grid_map_lib.py	/^    def __init__(self, width, height, resolution,
 __init__	src/main.py	/^    def __init__(self):$/;"	m	class:Params
 __init__	src/main.py	/^    def __init__(self):$/;"	m	class:map_params
 __init__	src/motion_model.py	/^    def __init__(self, x=0.0, y=0.0, yaw=0.0, v=0.0):$/;"	m	class:State
-__init__	src/obstacle.py	/^    def __init__(self,x_min,x_max,y_min,y_max):$/;"	m	class:Obstacle
+__init__	src/obstacle.py	/^    def __init__(self,x_min,x_max,y_min,y_max,wall=None):$/;"	m	class:Obstacle
 __init__	src/pyo_main.py	/^    def __init__(self):$/;"	m	class:Params
 __init__	src/pyo_main.py	/^    def __init__(self):$/;"	m	class:map_params
 __init__	src/raycasting_grid_map.py	/^    def __init__(self):$/;"	m	class:precastDB
@@ -135,7 +136,7 @@ biased_terminal_state_sampling_test1	src/state_lattice_planner.py	/^def biased_t
 biased_terminal_state_sampling_test2	src/state_lattice_planner.py	/^def biased_terminal_state_sampling_test2():$/;"	f
 bresenham	src/grid_map.py	/^def bresenham(start, end):$/;"	f
 calc	src/cubic_spline_planner.py	/^    def calc(self, t):$/;"	m	class:Spline
-calc_IG_trjs	src/simulation.py	/^def calc_IG_trjs(trajectory, horizon, gmap ,params_global):$/;"	f
+calc_IG_trjs	src/simulation.py	/^def calc_IG_trjs(trj_candidates, emap, params_local, params_global, horizon=15):$/;"	f
 calc_J	src/model_predictive_trajectory_generator.py	/^def calc_J(target, p, h, k0):$/;"	f
 calc_biased_polar_states	src/state_lattice_planner.py	/^def calc_biased_polar_states(goal_angle, ns, nxy, nh, d, a_min, a_max, p_min, p_max):$/;"	f
 calc_curvature	src/cubic_spline_planner.py	/^    def calc_curvature(self, s):$/;"	m	class:Spline2D
@@ -261,7 +262,7 @@ dy	src/backup_animation.py	/^    dy = goal[1] - state[1]$/;"	v
 elementInHeap	src/utils/priority_queue.py	/^  def elementInHeap(self,x,y):$/;"	m	class:priority_queue
 entropy	src/animation.py	/^        entropy = get_map_entropy(pmap_global, params_globalmap)$/;"	v
 entropy	src/simulation.py	/^            entropy = get_map_entropy(pmap_global, params_globalmap)$/;"	v
-entropymap	src/simulation.py	/^            entropymap = get_entropymap(pmap_global,params_globalmap)$/;"	v
+entropymap	src/simulation.py	/^            entropymap = get_global_entropymap(pmap_global,params_globalmap)$/;"	v
 epsilon	src/main.py	/^    epsilon = 0.1                          # effect of the force on the objective function$/;"	v
 epsilon	src/pyo_main.py	/^    epsilon = 0.1                          # effect of the force on the objective function$/;"	v
 epsilon	src/test.py	/^    epsilon = 0.5                          # effect of the force on the objective function$/;"	v
@@ -365,15 +366,17 @@ generate_fov_angle	src/raycasting_grid_map.py	/^def generate_fov_angle(agent_yaw
 generate_last_state	src/motion_model.py	/^def generate_last_state(s, km, kf, k0):$/;"	f
 generate_lookup_table	src/lookuptable_generator.py	/^def generate_lookup_table():$/;"	f
 generate_path	src/state_lattice_planner.py	/^def generate_path(cur_states, target_states, k0):$/;"	f
-generate_ray_casting_grid_map	src/raycasting_grid_map.py	/^def generate_ray_casting_grid_map(obstacles,params, agent_x=0.0, agent_y=0.0,  agent_yaw=0.0):$/;"	f
+generate_ray_casting_grid_map	src/raycasting_grid_map.py	/^def generate_ray_casting_grid_map(obstacles,walls, params, agent_x=0.0, agent_y=0.0,  agent_yaw=0.0):$/;"	f
 generate_samples	src/obstacle.py	/^    def generate_samples(self, reso=0.2):$/;"	m	class:Obstacle
 generate_trajectory	src/motion_model.py	/^def generate_trajectory(cur_states, s, km, kf, k0):$/;"	f
 generate_vertices	src/obstacle.py	/^    def generate_vertices(self):$/;"	m	class:Obstacle
 generate_waypoint	src/VCD.py	/^    def generate_waypoint(self, params_local):$/;"	m	class:VerticalCellDecomposition
 generating_globaltrjs	src/simulation.py	/^def generating_globaltrjs(cur_state, cspace, obstacles,goals, params_global):$/;"	f
 get_area_polygon	src/VCD.py	/^    def get_area_polygon(self, region):$/;"	m	class:VerticalCellDecomposition
-get_entropymap	src/simulation.py	/^def get_entropymap(pmap_global,params_map):$/;"	f
+get_entropy_infov	src/simulation.py	/^def get_entropy_infov(state,entropy_map,params_local,params_global):$/;"	f
 get_final_path	src/utils/uniform_cost_search.py	/^    def get_final_path(self):$/;"	m	class:Search
+get_global_entropymap	src/simulation.py	/^def get_global_entropymap(pmap_global,params_map):$/;"	f
+get_local_entropymap	src/simulation.py	/^def get_local_entropymap(pmap_local,params_map):$/;"	f
 get_lookup_table	src/state_lattice_planner.py	/^def get_lookup_table():$/;"	f
 get_map_entropy	src/animation.py	/^def get_map_entropy(pmap_global,params_map):$/;"	f
 get_map_entropy	src/main.py	/^def get_map_entropy(pmap_global,params_map):$/;"	f
@@ -385,6 +388,7 @@ get_raycast_to_line	src/raycasting_grid_map.py	/^def get_raycast_to_line(origin,
 get_value_from_xy_index	src/grid_map_lib.py	/^    def get_value_from_xy_index(self, x_ind, y_ind):$/;"	m	class:GridMap
 get_vcd_vertices	src/VCD.py	/^    def get_vcd_vertices(self):$/;"	m	class:VerticalCellDecomposition
 get_visible_vertices	src/obstacle.py	/^    def get_visible_vertices(self, agent_x, agent_y):$/;"	m	class:Obstacle
+get_visible_vertices_wall	src/obstacle.py	/^    def get_visible_vertices_wall(self, agent_x, agent_y,params):$/;"	m	class:Obstacle
 get_xy_index_from_xy_pos	src/grid_map_lib.py	/^    def get_xy_index_from_xy_pos(self, x_pos, y_pos):$/;"	m	class:GridMap
 goal	src/animation.py	/^        goal = [way_x[goali], way_y[goali]]$/;"	v
 goal	src/animation.py	/^goal = [way_x[goali], way_y[goali]]$/;"	v
@@ -412,7 +416,7 @@ gtrjs	src/simulation.py	/^            gtrjs= generating_globaltrjs(state, cspace
 h	src/model_predictive_trajectory_generator.py	/^h = np.matrix([0.2, 0.02, 0.02]).T  # parameter sampling distanse$/;"	v
 init_pos	src/main.py	/^    init_pos=cspace.start_state $/;"	v
 init_pos	src/pyo_main.py	/^    init_pos=cspace.start_state $/;"	v
-init_pos	src/simulation.py	/^    init_pos=[pos_x[0],pos_y[0]]$/;"	v
+init_pos	src/simulation.py	/^    init_pos=[-1.5, 8]$/;"	v
 initial_entropy	src/animation.py	/^initial_entropy = get_map_entropy(pmap_global,params_globalmap)$/;"	v
 initial_entropy	src/simulation.py	/^    initial_entropy = get_map_entropy(pmap_global,params_globalmap)$/;"	v
 initial_pose	src/test.py	/^    initial_pose=[]$/;"	v
@@ -463,6 +467,7 @@ line_intersection	src/utils/graph_utils.py	/^def line_intersection(line1, line2)
 line_styles	src/main.py	/^        line_styles = ["--", ":", "-.", '-', '-']$/;"	v
 line_styles	src/pyo_main.py	/^        line_styles = ["--", ":", "-.", '-', '-']$/;"	v
 line_styles	src/test.py	/^        line_styles = ["--", ":", "-.", '-', '-']$/;"	v
+local_trjs	src/simulation.py	/^            local_trjs = lane_state_sampling_test1(state,axes[1,0])$/;"	v
 m	src/main.py	/^    m = Model("ppl")$/;"	v
 m	src/original_trj.py	/^m = ConcreteModel()$/;"	v
 m	src/pyo_main.py	/^    m = Model("ppl")$/;"	v
@@ -530,6 +535,10 @@ obs	src/backup_animation.py	/^        obs = Obstacle(nums[0]-1, nums[1]-1, nums[
 obs	src/main.py	/^            obs = Obstacle(nums[0]-1, nums[1]-1, nums[2], nums[3])          #xmin,ymin, $/;"	v
 obs	src/pyo_main.py	/^            obs = Obstacle(nums[0]-1, nums[1]-1, nums[2], nums[3])          #xmin,ymin, $/;"	v
 obs	src/simulation.py	/^            obs = Obstacle(nums[0]-1, nums[1]-1, nums[2], nums[3])          #xmin,ymin, $/;"	v
+obs	src/simulation.py	/^    obs = Obstacle(-Region_Boundary, -Region_Boundary, -Region_Boundary, Region_Boundary,True)          $/;"	v
+obs	src/simulation.py	/^    obs = Obstacle(-Region_Boundary, Region_Boundary, -Region_Boundary, -Region_Boundary,True)         $/;"	v
+obs	src/simulation.py	/^    obs = Obstacle(-Region_Boundary, Region_Boundary, Region_Boundary, Region_Boundary,True)          $/;"	v
+obs	src/simulation.py	/^    obs = Obstacle(Region_Boundary, Region_Boundary, -Region_Boundary, Region_Boundary,True)          $/;"	v
 obs_column	src/main.py	/^        obs_column=[]$/;"	v
 obs_column	src/pyo_main.py	/^        obs_column=[]$/;"	v
 obs_column	src/test.py	/^        obs_column=[]$/;"	v
@@ -619,7 +628,7 @@ plot_obstacles	src/animation.py	/^def plot_obstacles(obstacles):$/;"	f
 plot_obstacles	src/backup_animation.py	/^def plot_obstacles(obstacles):$/;"	f
 plot_obstacles	src/main.py	/^def plot_obstacles(obstacles):$/;"	f
 plot_obstacles	src/pyo_main.py	/^def plot_obstacles(obstacles):$/;"	f
-plot_obstacles	src/simulation.py	/^def plot_obstacles(obstacles):$/;"	f
+plot_obstacles	src/simulation.py	/^def plot_obstacles(obstacles, walls):$/;"	f
 plot_polygon	src/utils/configuration_space.py	/^    def plot_polygon(self,coords,axes=None):$/;"	m	class:configuration_space
 plot_regions	src/VCD.py	/^    def plot_regions(self, ax=None):$/;"	m	class:VerticalCellDecomposition
 plot_robot	src/animation.py	/^def plot_robot(pose, params):$/;"	f
@@ -676,12 +685,12 @@ regex	src/simulation.py	/^        regex = re.compile('[-+]?\\d*\\.\\d+|[-+]?\\d+
 region_disection	src/VCD.py	/^    def region_disection(self, goalpos=None):$/;"	m	class:VerticalCellDecomposition
 remove	src/utils/priority_queue.py	/^  def remove(self,index):$/;"	m	class:priority_queue
 reset_cspace	src/VCD.py	/^    def reset_cspace(self,cspace):$/;"	m	class:VerticalCellDecomposition
-reset_cspace	src/utils/configuration_space.py	/^    def reset_cspace(self, boundaries, init_pos,goal_pos, obstacles):$/;"	m	class:configuration_space
+reset_environment	src/utils/configuration_space.py	/^    def reset_environment(self, boundaries, init_pos,goal_pos, obstacles):$/;"	m	class:configuration_space
 reso	src/test.py	/^    reso = 2.0$/;"	v
 rightChild	src/utils/priority_queue.py	/^  def rightChild(self,parent):$/;"	m	class:priority_queue
 s	src/simulation.py	/^                s = np.arange(0, sp.s[-1], ds)$/;"	v
 s_iter	src/simulation.py	/^                s_iter=0$/;"	v
-sample_goals	src/simulation.py	/^            sample_goals = random_sampling(params,9)$/;"	v
+sample_goals	src/simulation.py	/^            sample_goals = random_sampling(params,7)$/;"	v
 sample_states	src/state_lattice_planner.py	/^def sample_states(cur_states, angle_samples, a_min, a_max, d, p_max, p_min, nh):$/;"	f
 save_lookup_table	src/lookuptable_generator.py	/^def save_lookup_table(fname, table):$/;"	f
 scl	src/original_trj.py	/^scl=0.2$/;"	v
@@ -737,7 +746,7 @@ t_prev_goal	src/backup_animation.py	/^        t_prev_goal = time.time()$/;"	v
 t_prev_goal	src/backup_animation.py	/^t_prev_goal = time.time()$/;"	v
 t_prev_goal	src/simulation.py	/^            t_prev_goal = time.time()$/;"	v
 t_prev_goal	src/simulation.py	/^    t_prev_goal = time.time()$/;"	v
-table_path	src/state_lattice_planner.py	/^table_path = ".\/lookuptable_cpp3.csv"$/;"	v
+table_path	src/state_lattice_planner.py	/^table_path = ".\/lookuptables.csv"$/;"	v
 tellme	src/tools.py	/^        def tellme(s):$/;"	f	function:define_polygon
 test_1	tests/test_vehicle.py	/^    def test_1(self):$/;"	m	class:TestStringMethods
 test_optimize_trajectory	src/model_predictive_trajectory_generator.py	/^def test_optimize_trajectory():$/;"	f
@@ -784,7 +793,7 @@ update_occ_grid_map	src/main.py	/^def update_occ_grid_map(state, local_map, para
 update_occ_grid_map	src/pyo_main.py	/^def update_occ_grid_map(state, local_map, params_local, global_map, params_global):$/;"	f
 update_occ_grid_map	src/simulation.py	/^def update_occ_grid_map(state, local_map, params_local, global_map, params_global):$/;"	f
 update_turning_window	src/grid_based_sweep_coverage_path_planner.py	/^    def update_turning_window(self):$/;"	m	class:SweepSearcher
-v	src/motion_model.py	/^v = 10.0 \/ 3.6  # velocity [m\/s]$/;"	v
+v	src/motion_model.py	/^v = 2.5  # velocity [m\/s]$/;"	v
 v	src/original_trj.py	/^v = np.array([m.v[t]() for t in m.t])$/;"	v
 v_coords	src/main.py	/^            v_coords = []$/;"	v
 v_coords	src/main.py	/^        v_coords = []$/;"	v
@@ -858,7 +867,7 @@ visualize	src/animation.py	/^def visualize(traj, pose, obstacles,params):$/;"	f
 visualize	src/backup_animation.py	/^def visualize(traj, pose, obstacles,params):$/;"	f
 visualize	src/main.py	/^def visualize(traj, pose, obstacles,params):$/;"	f
 visualize	src/pyo_main.py	/^def visualize(traj, pose, obstacles,params):$/;"	f
-visualize	src/simulation.py	/^def visualize(traj, pose, obstacles,params):$/;"	f
+visualize	src/simulation.py	/^def visualize(traj, pose, obstacles, walls, params):$/;"	f
 vx_init	src/main.py	/^        vx_init = [0.0]   # initial x-component velocity$/;"	v
 vx_init	src/main.py	/^    vx_init = [0]           # initial x-component velocity$/;"	v
 vx_init	src/pyo_main.py	/^        vx_init = [0.0]   # initial x-component velocity$/;"	v
@@ -871,6 +880,7 @@ vy_init	src/pyo_main.py	/^        vy_init = [0.0]    # initial y-component veloc
 vy_init	src/pyo_main.py	/^    vy_init = [0]           # initial y-component velocity$/;"	v
 vy_init	src/test.py	/^        vy_init = [-0.0]    # initial y-component velocity$/;"	v
 vy_init	src/test.py	/^        vy_init = [0]   # initial y-component velocity$/;"	v
+walls	src/simulation.py	/^    walls=[]$/;"	v
 way_coords	src/animation.py	/^way_coords = np.asarray(waydf['coords'][1:])$/;"	v
 way_coords	src/backup_animation.py	/^way_coords = np.asarray(waydf['coords'][1:])$/;"	v
 way_coords	src/dataplot.py	/^way_coords = np.asarray(waydf['coords'][1:])$/;"	v

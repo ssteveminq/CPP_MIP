@@ -20,6 +20,7 @@ import re
 import time
 from matplotlib.patches import Polygon, Rectangle, Circle
 import matplotlib as mpl
+# import map
 #import numpy as np
 f_max=0.3
 v_max=0.4
@@ -37,6 +38,7 @@ dt = 0.2  # [s]
 L = 1.0  # [m] wheel base of vehicle
 AlphabetSet=['a','b','c','d','e','f','g','h','i','j','k','l','m', 
                 'n','o','p','q','r']
+Region_Boundary =12.5
 
 class map_params:
     def __init__(self):
@@ -69,7 +71,6 @@ class Params:
         # self.sweep_resolution = 0.4 # m
 
 
-
 def random_sampling(params, nums):
     #nums = the number of sample we need
 
@@ -85,8 +86,11 @@ def random_sampling(params, nums):
     # print(sample_xy)
     return sample_xy
 
+# def get_col(arr, col):
+    # return map(lambda x : x[col], arr)
+    
 
-def calc_IG_trjs(trajectory, horizon, gmap ,params_global):
+def calc_IG_trjs(trj_candidates, emap, params_local, params_global, horizon=15):
     print("TODO")
     #Calculating Information gain on trajectories
     #1) calculating sampling point for time horizon 
@@ -94,16 +98,50 @@ def calc_IG_trjs(trajectory, horizon, gmap ,params_global):
     #3) Collecting IG gain for overlapped region
     #Suppose we have maximum velocity/ arc length
     #sampling points w.r.t distance 
+    igs=[]
+    for trj in trj_candidates:
+        ig=0
+        print("len_trj", len(trj[0]))
+        for i in range(len(trj[0])):
+            if i<horizon:
+                x=trj[0][i]
+                y=trj[1][i]
+                yaw=trj[2][i]
+                ig+= get_entropy_infov([x,y,yaw],emap,params_local, params_global)
+
+        print("ig", ig)
+        # input()
+        igs.append(ig)
+    # input()
 
 
-    
+def get_entropy_infov(state,entropy_map,params_local,params_global):
+
+    minx, miny, maxx, maxy, xw, yw = calc_grid_map_config(params_local.xyreso, state[0], state[1], params_local.sensor_range)
+    entropy_sum=0.0
+    for ix_local in range(xw-1):
+        for iy_local in range(yw-1):
+            px = minx+ix_local*params_local.xyreso
+            py = miny+iy_local*params_local.xyreso
+            if px > params_global.xmax or px < params_global.xmin:
+                continue
+            if py > params_global.ymax or py < params_global.ymin:
+                continue
+
+            ix_global= math.floor((px-params_global.xmin)/params_global.xyreso)
+            iy_global= math.floor((py-params_global.ymin)/params_global.xyreso)
+            # print("(ix_global, iy_global): ",ix_global, " , ", iy_global)
+            entropy_sum+= entropy_map[ix_local][iy_local]
+
+    print("entropy_sum", entropy_sum)
+    return entropy_sum
 
 def generating_globaltrjs(cur_state, cspace, obstacles,goals, params_global):
 
     trjs=[]
     for goal_pos in goals:
         init_pos = [cur_state[0], cur_state[1]]
-        cspace.reset_cspace(params_global.boundaries,init_pos,goal_pos, obstacles)
+        cspace.reset_environment(params_global.boundaries,init_pos,goal_pos, obstacles)
         planner.reset_cspace(cspace)
         path, path_idx = planner.search(False, goal_pos)
         if path!=None:
@@ -200,7 +238,23 @@ def get_map_entropy(pmap_global,params_map):
 
     return -entropy_sum
 
-def get_entropymap(pmap_global,params_map):
+def get_global_entropymap(pmap_global,params_map):
+    entropy_sum=0
+    pmap= 1-1./(1.0+np.exp(pmap_global))
+
+    for ix in range(params_map.xw-1):
+        for iy in range(params_map.yw-1):
+            p =pmap[ix][iy]
+            if p>0.0 and p<1.0:
+                pmap[ix][iy]=-(p*math.log(p)+(1-p)*math.log(1-p))
+            elif p==0.0 or p==1.0:
+                 pmap[ix][iy]=0.0
+            else:
+                print("wrong probability value")
+
+    return pmap
+
+def get_local_entropymap(pmap_local,params_map):
     entropy_sum=0
     pmap= 1-1./(1.0+np.exp(pmap_global))
 
@@ -219,6 +273,7 @@ def get_entropymap(pmap_global,params_map):
 
 
 
+
 def update_occ_grid_map(state, local_map, params_local, global_map, params_global):
     ##for observed cell in local window--> update
     # print("local grids, xw, yw : ", params_local.xw, params_local.yw)
@@ -229,9 +284,9 @@ def update_occ_grid_map(state, local_map, params_local, global_map, params_globa
         for iy_local in range(params_local.yw-1):
             px = params_local.xmin+ix_local*params_local.xyreso
             py = params_local.ymin+iy_local*params_local.xyreso
-            if px > params_global.xmax or px < params_global.xmin:
+            if px >= params_global.xmax or px <= params_global.xmin:
                 continue
-            if py > params_global.ymax or py < params_global.ymin:
+            if py >= params_global.ymax or py <= params_global.ymin:
                 continue
 
             ix_global= math.floor((px-params_global.xmin)/params_global.xyreso)
@@ -315,16 +370,18 @@ def plot_map(pos_x,pos_y,way_x, way_y, waytimes):
 
 
 #obstacles
-def plot_obstacles(obstacles):
+def plot_obstacles(obstacles, walls):
     for obs in obstacles:
         obs.draw(axes[0,0])
+    for wall in walls:
+        wall.draw(axes[0,0])
 
 
-def visualize(traj, pose, obstacles,params):
+def visualize(traj, pose, obstacles, walls, params):
     # ax = plt.gca()
     # plt.plot(traj[:,0], traj[:,1], 'g')
     plot_robot(pose, params)
-    plot_obstacles(obstacles)
+    plot_obstacles(obstacles,walls)
 
     axes[0,0].set_xlim([-params.area_size, params.area_size])   # limit the plot space
     axes[0,0].set_ylim([-params.area_size, params.area_size])   # limit the plot space
@@ -407,7 +464,7 @@ if __name__ == "__main__":
     #Define two windows: 
     # axes[0] : robot, obstacle, waypoints, trajectory
     # axes[1] : sensor_map,occ_grid
-    fig,axes=plt.subplots(nrows=2,ncols=2,figsize=(30,30))
+    fig,axes=plt.subplots(nrows=2,ncols=2,figsize=(40,40))
 
     params = Params()
     params_globalmap =  map_params()
@@ -476,42 +533,30 @@ if __name__ == "__main__":
         # print("num ofobstacles:", len(obstacles))
         print("---load completed")
 
+    #Create wall - Rectangular Search region
+    walls=[]
+    obs = Obstacle(-Region_Boundary, -Region_Boundary, -Region_Boundary, Region_Boundary,True)          
+    walls.append(obs)                                   # attach obstacle to obstacle list
+    obs = Obstacle(-Region_Boundary, Region_Boundary, -Region_Boundary, -Region_Boundary,True)         
+    walls.append(obs)                                   # attach obstacle to obstacle list
+    obs = Obstacle(-Region_Boundary, Region_Boundary, Region_Boundary, Region_Boundary,True)          
+    walls.append(obs)                                   # attach obstacle to obstacle list
+    obs = Obstacle(Region_Boundary, Region_Boundary, -Region_Boundary, Region_Boundary,True)          
+    walls.append(obs)                                   # attach obstacle to obstacle list
+
+
     #create cspace
-    init_pos=[pos_x[0],pos_y[0]]
-    # init_pos=[3, 4]
+    # init_pos=[pos_x[0],pos_y[0]]
+    init_pos=[-1.5, 8]
     goal_pos=[-5, 9]
     # cspace = configuration_space(args['in'])
     cspace=configuration_space()
-    cspace.reset_cspace(params_globalmap.boundaries,init_pos,goal_pos, obstacles)
+    cspace.reset_environment(params_globalmap.boundaries,init_pos,goal_pos, obstacles)
     # cspace.plot_config_space()
     planner = VerticalCellDecomposition(cspace)
     planner.construct_graph()
-    # path, path_idx = planner.search(False)
+    # path, path_idx = planner.search(True)
 
-    '''
-    new_goal_pos=[8,7]
-    cspace.reset_cspace(params_globalmap.boundaries,init_pos,new_goal_pos, obstacles)
-    planner.reset_cspace(cspace)
-    path, path_idx = planner.search(False, new_goal_pos)
-    print("path", path)
-    xs=[]
-    ys=[]
-    for x_c, y_c in path:
-        xs.append(x_c)
-        ys.append(y_c)
-    sp=Spline2D(xs,ys)
-    ds = 0.1  # [m] distance of each intepolated points
-    s = np.arange(0, sp.s[-1], ds)
-    rx, ry, ryaw, rk = [], [], [], []
-    for i_s in s:
-        ix, iy = sp.calc_position(i_s)
-        rx.append(ix)
-        ry.append(iy)
-        ryaw.append(sp.calc_yaw(i_s))
-        rk.append(sp.calc_curvature(i_s))
-
-    axes[4].plot(rx, ry, "-r", label="spline")
-    '''
     waypoint_vcd = planner.generate_waypoint(params_localmap)
     planner.plot_regions(axes[1,0])
 
@@ -561,8 +606,6 @@ if __name__ == "__main__":
     # plt.show()
 
     # initial state = [x(m), y(m), yaw(rad), v(m/s), omega(rad/s)]
-    # state = np.array([pos_x[0],pos_y[0], 0.0, np.pi/2, 0.0, 0.0])
-    # state = np.array([pos_x[0],pos_y[0],np.pi/2, 0.0])
     state = np.array([init_pos[0],init_pos[1],0.0, 0.0])
     print("initial state: ",state)
     traj = state[:2]
@@ -604,12 +647,12 @@ if __name__ == "__main__":
             plot_map(pos_x,pos_y,way_x,way_y,waytimes)
             axes[0,0].plot(goal[0], goal[1])
             traj = np.vstack([traj, state[:2]])
-            visualize(traj, state, obstacles, params)
+            visualize(traj, state, obstacles, walls, params)
 
             #figure2- local sensor window
             axes[0,1].cla()
             axes[0,1].set_title('local sesnor grid')
-            pmap_local, updated_grids, intersect_dic, obs_verticeid, closest_vertexid, params_localmap.xmin, params_localmap.xmax, params_localmap.ymin, params_localmap.ymax, params_localmap.xyreso, params_localmap.xw, params_localmap.yw= generate_ray_casting_grid_map(obstacles, params_localmap, state[0],state[1], state[2])
+            pmap_local, updated_grids, intersect_dic, obs_verticeid, closest_vertexid, params_localmap.xmin, params_localmap.xmax, params_localmap.ymin, params_localmap.ymax, params_localmap.xyreso, params_localmap.xw, params_localmap.yw= generate_ray_casting_grid_map(obstacles, walls, params_localmap, state[0],state[1], state[2])
             draw_occmap(pmap_local, params_localmap, state[0],state[1], axes[0,1])
             #draw sensor ray to obstacles
             # for i in range(len(obstacles)):
@@ -627,7 +670,7 @@ if __name__ == "__main__":
             axes[1,1].cla()
             axes[1,1].set_title('global occupancy grid')
             pmap_global = update_occ_grid_map(state, pmap_local,params_localmap, pmap_global,params_globalmap)
-            entropymap = get_entropymap(pmap_global,params_globalmap)
+            entropymap = get_global_entropymap(pmap_global,params_globalmap)
             # draw_occmap_global(pmap_global,params_globalmap, axes[1,1])
             draw_entropymap_global(pmap_global,params_globalmap, axes[1,1])
             entropy = get_map_entropy(pmap_global, params_globalmap)
@@ -645,7 +688,7 @@ if __name__ == "__main__":
             axes[1,0].cla()
             axes[1,0].set_title('global & Local motion primitives')
             # uniform_terminal_state_sampling_test1(state,axes[4])
-            sample_goals = random_sampling(params,9)
+            sample_goals = random_sampling(params,7)
             gtrjs= generating_globaltrjs(state, cspace,obstacles,sample_goals,params_globalmap)
             num_colors = len(gtrjs)
             cm =plt.get_cmap('gist_rainbow')
@@ -660,9 +703,13 @@ if __name__ == "__main__":
                     rx.append(ix)
                     ry.append(iy)
 
-                axes[1,0].plot(rx[1:50], ry[1:50], color='g', label="spline")
+                axes[1,0].plot(rx[1:100], ry[1:100], color='g', label="spline")
             planner.plot_regions(axes[1,0])
-            lane_state_sampling_test1(state,axes[1,0])
+            #local trajectories
+            local_trjs = lane_state_sampling_test1(state,axes[1,0])
+            calc_IG_trjs(local_trjs, entropymap , params_localmap, params_globalmap)
+
+            # calc_IG_trjs
             # uniform_terminal_state_sampling_test1(state,axes[1,0])
 
             # lane_state_sampling_test1(state,axes[1,0])
@@ -671,7 +718,8 @@ if __name__ == "__main__":
             # axes[1,0].set_ylim([-1.2*params.area_size, 1.2*params.area_size])   # limit the plot space
             # planner.plot_regions(axes[1,0])
 
-    plt.show(aspect='auto')
+    plt.show()
+    # plt.show(aspect='auto')
 
 
 

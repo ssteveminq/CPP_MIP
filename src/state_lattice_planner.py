@@ -350,14 +350,15 @@ def lane_state_sampling_test1(cur_states, ax=None):
 
     l_width = 1.0
     v_width = 0.0
-    d = 3.0
+    d = 4.0
     d2 = 3.5
-    nxy = 4
+    nxy = 3
 
     targetstates0 = calc_lane_states_linear(l_center, l_heading, l_width, v_width, d, nxy)
     targetstates = calc_lane_states(l_center, l_heading, l_width, v_width, d, nxy)
     targetstates2 = calc_lane_states( l_center2, l_heading, l_width, v_width, d, nxy)
-    '''
+    
+    ''' plot target goals
     for tstates in targetstates0:
         if ax==None:
             plt.scatter(tstates[0], tstates[1], facecolor='black',edgecolor='black')      #final point
@@ -375,7 +376,8 @@ def lane_state_sampling_test1(cur_states, ax=None):
             plt.scatter(tstates[0], tstates[1], facecolor='blue',edgecolor='blue')      #final point
     '''
     
-    cur_states_mod=[0,0,np.pi/4,0]
+    cur_states_mod=[0,0,np.pi/6,0]
+    # cur_states_mod=[0,0,0.0,0]
     result0 = generate_path(cur_states_mod,targetstates0, k0)
     result = generate_path(cur_states_mod,targetstates, k0)
     result2 = generate_path(cur_states_mod,targetstates2, k0)
@@ -383,13 +385,14 @@ def lane_state_sampling_test1(cur_states, ax=None):
     # result4 = generate_path(cur_states,targetstates4, k0)
 
     # print("cur_states[0]", cur_states[0])
+    trjs=[]
 
     for table in result0:
         xc, yc, yawc = motion_model.generate_trajectory(cur_states_mod,
             table[3], table[4], table[5], k0)
 
         for i in range(len(xc)):
-            if cur_states[2]>np.pi/2:
+            if cur_states[2]>np.pi/2 and cur_states[2]<3*np.pi/2:
                 xc[i]=-xc[i]
             xc[i]+=cur_states[0]
 
@@ -397,6 +400,7 @@ def lane_state_sampling_test1(cur_states, ax=None):
             if cur_states[2]>np.pi:
                 yc[j]=-yc[j]
             yc[j]+=cur_states[1]
+        trjs.append([xc, yc, yawc])
 
         if show_animation:
             if ax==None:
@@ -409,7 +413,7 @@ def lane_state_sampling_test1(cur_states, ax=None):
         xc, yc, yawc = motion_model.generate_trajectory(cur_states_mod,
             table[3], table[4], table[5], k0)
         for i in range(len(xc)):
-            if cur_states[2]>np.pi/2:
+            if cur_states[2]>np.pi/2 and cur_states[2]<3*np.pi/2:
                 xc[i]=-xc[i]
             xc[i]+=cur_states[0]
 
@@ -417,6 +421,7 @@ def lane_state_sampling_test1(cur_states, ax=None):
             if cur_states[2]>np.pi:
                 yc[j]=-yc[j]
             yc[j]+=cur_states[1]
+        trjs.append([xc, yc, yawc])
 
         if show_animation:
             if ax==None:
@@ -428,7 +433,7 @@ def lane_state_sampling_test1(cur_states, ax=None):
         xc, yc, yawc = motion_model.generate_trajectory(cur_states_mod,
             table[3], table[4], table[5], k0)
         for i in range(len(xc)):
-            if cur_states[2]>np.pi/2:
+            if cur_states[2]>np.pi/2 and cur_states[2]<3*np.pi/2:
                 xc[i]=-xc[i]
             xc[i]+=cur_states[0]
 
@@ -437,6 +442,7 @@ def lane_state_sampling_test1(cur_states, ax=None):
                 yc[j]=-yc[j]
                 
             yc[j]+=cur_states[1]
+        trjs.append([xc, yc, yawc])
 
 
         if show_animation:
@@ -444,6 +450,9 @@ def lane_state_sampling_test1(cur_states, ax=None):
                 plt.plot(xc, yc, "-r")
             else:
                 ax.plot(xc, yc, "-r")
+
+    # print(trjs)
+    return trjs
 
     '''
 
@@ -472,10 +481,11 @@ def lane_state_sampling_test1(cur_states, ax=None):
 
 
     '''
-    if show_animation:
-        plt.grid(True)
+    # if show_animation:
+        # plt.grid(True)
         # plt.axis("equal")
         # plt.show()
+
 
 
 def main():
