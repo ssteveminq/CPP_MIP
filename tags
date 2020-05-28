@@ -5,6 +5,7 @@
 !_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
 !_TAG_PROGRAM_VERSION	5.9~svn20110310	//
 AlphabetSet	src/VCD.py	/^AlphabetSet=['a','b','c','d','e','f','g','h','i','j','k','l','m', $/;"	v
+AlphabetSet	src/real_simulation.py	/^AlphabetSet=['a','b','c','d','e','f','g','h','i','j','k','l','m', $/;"	v
 AlphabetSet	src/simulation.py	/^AlphabetSet=['a','b','c','d','e','f','g','h','i','j','k','l','m', $/;"	v
 DOWN	src/grid_based_sweep_coverage_path_planner.py	/^        DOWN = -1$/;"	v	class:SweepSearcher.SweepDirection
 EXTEND_AREA	src/raycasting_grid_map.py	/^EXTEND_AREA = 15.0$/;"	v
@@ -14,11 +15,13 @@ Kp	src/animation.py	/^Kp = 1.0  # speed propotional gain$/;"	v
 Kp	src/backup_animation.py	/^Kp = 1.0  # speed propotional gain$/;"	v
 Kp	src/main.py	/^Kp = 1.0  # speed propotional gain$/;"	v
 Kp	src/pyo_main.py	/^Kp = 1.0  # speed propotional gain$/;"	v
+Kp	src/real_simulation.py	/^Kp = 1.0  # speed propotional gain$/;"	v
 Kp	src/simulation.py	/^Kp = 1.0  # speed propotional gain$/;"	v
 Kv	src/animation.py	/^Kv = 0.05  # speed propotional gain$/;"	v
 Kv	src/backup_animation.py	/^Kv = 0.05  # speed propotional gain$/;"	v
 Kv	src/main.py	/^Kv = 0.15  # speed propotional gain$/;"	v
 Kv	src/pyo_main.py	/^Kv = 0.15  # speed propotional gain$/;"	v
+Kv	src/real_simulation.py	/^Kv = 0.15  # speed propotional gain$/;"	v
 Kv	src/simulation.py	/^Kv = 0.15  # speed propotional gain$/;"	v
 L	src/animation.py	/^L = 1.0  # [m] wheel base of vehicle$/;"	v
 L	src/backup_animation.py	/^L = 1.0  # [m] wheel base of vehicle$/;"	v
@@ -26,12 +29,14 @@ L	src/main.py	/^L = 1.0  # [m] wheel base of vehicle$/;"	v
 L	src/motion_model.py	/^L = 1.0  # wheel base$/;"	v
 L	src/original_trj.py	/^L = 5$/;"	v
 L	src/pyo_main.py	/^L = 1.0  # [m] wheel base of vehicle$/;"	v
+L	src/real_simulation.py	/^L = 1.0  # [m] wheel base of vehicle$/;"	v
 L	src/simulation.py	/^L = 1.0  # [m] wheel base of vehicle$/;"	v
 LEFT	src/grid_based_sweep_coverage_path_planner.py	/^        LEFT = -1$/;"	v	class:SweepSearcher.MovingDirection
 Lfc	src/animation.py	/^Lfc = 1.0  # look-ahead distance$/;"	v
 Lfc	src/backup_animation.py	/^Lfc = 1.0  # look-ahead distance$/;"	v
 Lfc	src/main.py	/^Lfc = 1.0  # look-ahead distance$/;"	v
 Lfc	src/pyo_main.py	/^Lfc = 1.0  # look-ahead distance$/;"	v
+Lfc	src/real_simulation.py	/^Lfc = 1.0  # look-ahead distance$/;"	v
 Lfc	src/simulation.py	/^Lfc = 1.0  # look-ahead distance$/;"	v
 M	src/main.py	/^        M = 75              # number of constraints in order to approximate the force and velocity magnitudes$/;"	v
 M	src/pyo_main.py	/^        M = 75              # number of constraints in order to approximate the force and velocity magnitudes$/;"	v
@@ -43,8 +48,10 @@ Params	src/animation.py	/^class Params:$/;"	c
 Params	src/backup_animation.py	/^class Params:$/;"	c
 Params	src/main.py	/^class Params:$/;"	c
 Params	src/pyo_main.py	/^class Params:$/;"	c
+Params	src/real_simulation.py	/^class Params:$/;"	c
 Params	src/simulation.py	/^class Params:$/;"	c
 RIGHT	src/grid_based_sweep_coverage_path_planner.py	/^        RIGHT = 1$/;"	v	class:SweepSearcher.MovingDirection
+Region_Boundary	src/real_simulation.py	/^Region_Boundary =12.5$/;"	v
 Region_Boundary	src/simulation.py	/^Region_Boundary =12.5$/;"	v
 Roadmap	src/utils/configuration_space.py	/^class Roadmap:$/;"	c
 Search	src/utils/uniform_cost_search.py	/^class Search:$/;"	c
@@ -65,11 +72,13 @@ Update_a	src/animation.py	/^def Update_a(state, goal):$/;"	f
 Update_a	src/backup_animation.py	/^def Update_a(state, goal):$/;"	f
 Update_a	src/main.py	/^def Update_a(state, goal):$/;"	f
 Update_a	src/pyo_main.py	/^def Update_a(state, goal):$/;"	f
+Update_a	src/real_simulation.py	/^def Update_a(state, goal):$/;"	f
 Update_a	src/simulation.py	/^def Update_a(state, goal):$/;"	f
 Update_phi	src/animation.py	/^def Update_phi(state, goal):$/;"	f
 Update_phi	src/backup_animation.py	/^def Update_phi(state, goal):$/;"	f
 Update_phi	src/main.py	/^def Update_phi(state, goal):$/;"	f
 Update_phi	src/pyo_main.py	/^def Update_phi(state, goal):$/;"	f
+Update_phi	src/real_simulation.py	/^def Update_phi(state, goal):$/;"	f
 Update_phi	src/simulation.py	/^def Update_phi(state, goal):$/;"	f
 Vehicle	src/vehicle.py	/^class Vehicle:$/;"	c
 VerticalCellDecomposition	src/VCD.py	/^class VerticalCellDecomposition:$/;"	c
@@ -96,6 +105,8 @@ __init__	src/obstacle.py	/^    def __init__(self,x_min,x_max,y_min,y_max,wall=No
 __init__	src/pyo_main.py	/^    def __init__(self):$/;"	m	class:Params
 __init__	src/pyo_main.py	/^    def __init__(self):$/;"	m	class:map_params
 __init__	src/raycasting_grid_map.py	/^    def __init__(self):$/;"	m	class:precastDB
+__init__	src/real_simulation.py	/^    def __init__(self):$/;"	m	class:Params
+__init__	src/real_simulation.py	/^    def __init__(self):$/;"	m	class:map_params
 __init__	src/simulation.py	/^    def __init__(self):$/;"	m	class:Params
 __init__	src/simulation.py	/^    def __init__(self):$/;"	m	class:map_params
 __init__	src/uav.py	/^    def __init__(self, mass: float, dt: float, T: float, x0: float, y0: float, th0: float, v0: float, id: int, model, M, v_max, a_max, area_size, x_fin: float, y_fin: float, wp: bool, x_wp=None, y_wp=None):$/;"	m	class:UAV
@@ -118,11 +129,13 @@ area_size	src/dataplot.py	/^area_size=13$/;"	v
 area_size	src/main.py	/^        area_size = 12      # window size$/;"	v
 area_size	src/original_trj.py	/^area_size=12$/;"	v
 area_size	src/pyo_main.py	/^        area_size = 12      # window size$/;"	v
+area_size	src/real_simulation.py	/^    area_size=13$/;"	v
 area_size	src/simulation.py	/^    area_size=13$/;"	v
 area_size	src/test.py	/^        area_size = 10      # window size$/;"	v
 area_size	src/test.py	/^        area_size = 10  # window size$/;"	v
 args	src/main.py	/^    args = vars(parser.parse_args())$/;"	v
 args	src/pyo_main.py	/^    args = vars(parser.parse_args())$/;"	v
+args	src/real_simulation.py	/^    args = vars(parser.parse_args())$/;"	v
 args	src/simulation.py	/^    args = vars(parser.parse_args())$/;"	v
 args	src/test.py	/^    args = parser.parse_args()$/;"	v
 array	src/utils/priority_queue.py	/^  array = [42,23,16,15,4,8]$/;"	v
@@ -136,6 +149,7 @@ biased_terminal_state_sampling_test1	src/state_lattice_planner.py	/^def biased_t
 biased_terminal_state_sampling_test2	src/state_lattice_planner.py	/^def biased_terminal_state_sampling_test2():$/;"	f
 bresenham	src/grid_map.py	/^def bresenham(start, end):$/;"	f
 calc	src/cubic_spline_planner.py	/^    def calc(self, t):$/;"	m	class:Spline
+calc_IG_trjs	src/real_simulation.py	/^def calc_IG_trjs(trj_candidates, emap, params_local, params_global, horizon=15):$/;"	f
 calc_IG_trjs	src/simulation.py	/^def calc_IG_trjs(trj_candidates, emap, params_local, params_global, horizon=15):$/;"	f
 calc_J	src/model_predictive_trajectory_generator.py	/^def calc_J(target, p, h, k0):$/;"	f
 calc_biased_polar_states	src/state_lattice_planner.py	/^def calc_biased_polar_states(goal_angle, ns, nxy, nh, d, a_min, a_max, p_min, p_max):$/;"	f
@@ -157,8 +171,11 @@ calcd	src/cubic_spline_planner.py	/^    def calcd(self, t):$/;"	m	class:Spline
 calcdd	src/cubic_spline_planner.py	/^    def calcdd(self, t):$/;"	m	class:Spline
 check_inside_polygon	src/grid_map_lib.py	/^    def check_inside_polygon(iox, ioy, x, y):$/;"	m	class:GridMap
 check_occupied_from_xy_index	src/grid_map_lib.py	/^    def check_occupied_from_xy_index(self, xind, yind, occupied_val=1.0):$/;"	m	class:GridMap
+check_polygon_between_regions	src/VCD.py	/^    def check_polygon_between_regions(self,region1,region2):$/;"	m	class:VerticalCellDecomposition
 check_polygon_visible	src/raycasting_grid_map.py	/^def check_polygon_visible(min_angle,max_angle,fov_anglelist):$/;"	f
+cm	src/real_simulation.py	/^            cm =plt.get_cmap('gist_rainbow')$/;"	v
 cm	src/simulation.py	/^            cm =plt.get_cmap('gist_rainbow')$/;"	v
+col	src/real_simulation.py	/^                col = cm(1.*i\/num_colors)$/;"	v
 col	src/simulation.py	/^                col = cm(1.*i\/num_colors)$/;"	v
 configuration_space	src/utils/configuration_space.py	/^class configuration_space:$/;"	c
 constrain_dynamics	src/uav.py	/^    def constrain_dynamics(self, v_init):$/;"	m	class:UAV
@@ -193,6 +210,7 @@ cost_th	src/model_predictive_trajectory_generator.py	/^cost_th = 0.2$/;"	v
 create_borders_grid_map	src/grid_map.py	/^    def create_borders_grid_map(self, polygon_center):$/;"	m	class:GridMap
 cspace	src/main.py	/^    cspace = configuration_space(args['in'])$/;"	v
 cspace	src/pyo_main.py	/^    cspace = configuration_space(args['in'])$/;"	v
+cspace	src/real_simulation.py	/^    cspace=configuration_space()$/;"	v
 cspace	src/simulation.py	/^    cspace=configuration_space()$/;"	v
 cspace	src/utils/configuration_space.py	/^	cspace = configuration_space("input.txt")$/;"	v
 d_obs	src/main.py	/^        d_obs = 1.0         # minimum distance required from obstacle$/;"	v
@@ -233,6 +251,7 @@ displayHeap	src/utils/priority_queue.py	/^  def displayHeap(self):$/;"	m	class:p
 distance	src/utils/graph_utils.py	/^def distance(pt1,pt2):$/;"	f
 draw	src/obstacle.py	/^    def draw(self,axes=None):$/;"	m	class:Obstacle
 draw_car	src/original_trj.py	/^def draw_car(x=0, y=0, yaw=0, phi=0,axes=None):$/;"	f
+draw_entropymap_global	src/real_simulation.py	/^def draw_entropymap_global(data,parmas_globalmap, ax):$/;"	f
 draw_entropymap_global	src/simulation.py	/^def draw_entropymap_global(data,parmas_globalmap, ax):$/;"	f
 draw_heatmap	src/raycasting_grid_map.py	/^def draw_heatmap(data, minx, maxx, miny, maxy, xyreso):$/;"	f
 draw_map	src/grid_map.py	/^    def draw_map(self, obstacles,ax=None):$/;"	m	class:GridMap
@@ -240,13 +259,16 @@ draw_occmap	src/animation.py	/^def draw_occmap(data, params_map,agent_x, agent_y
 draw_occmap	src/backup_animation.py	/^def draw_occmap(data, minx, maxx, miny, maxy, xyreso,agent_x, agent_y, ax):$/;"	f
 draw_occmap	src/main.py	/^def draw_occmap(data, params_map,agent_x, agent_y, ax):$/;"	f
 draw_occmap	src/pyo_main.py	/^def draw_occmap(data, params_map,agent_x, agent_y, ax):$/;"	f
+draw_occmap	src/real_simulation.py	/^def draw_occmap(data, params_map,agent_x, agent_y, ax):$/;"	f
 draw_occmap	src/simulation.py	/^def draw_occmap(data, params_map,agent_x, agent_y, ax):$/;"	f
 draw_occmap_global	src/animation.py	/^def draw_occmap_global(data,parmas_globalmap, ax):$/;"	f
 draw_occmap_global	src/backup_animation.py	/^def draw_occmap_global(data, minx, maxx, miny, maxy, xyreso, ax):$/;"	f
 draw_occmap_global	src/main.py	/^def draw_occmap_global(data,parmas_globalmap, ax):$/;"	f
 draw_occmap_global	src/pyo_main.py	/^def draw_occmap_global(data,parmas_globalmap, ax):$/;"	f
+draw_occmap_global	src/real_simulation.py	/^def draw_occmap_global(data,parmas_globalmap, ax):$/;"	f
 draw_occmap_global	src/simulation.py	/^def draw_occmap_global(data,parmas_globalmap, ax):$/;"	f
 ds	src/motion_model.py	/^ds = 0.2  # course distanse$/;"	v
+ds	src/real_simulation.py	/^                ds = 0.2                    # [m] distance of each intepolated points$/;"	v
 ds	src/simulation.py	/^                ds = 0.2                    # [m] distance of each intepolated points$/;"	v
 dt	src/animation.py	/^dt = 0.2  # [s]$/;"	v
 dt	src/backup_animation.py	/^dt = 0.2  # [s]$/;"	v
@@ -254,6 +276,7 @@ dt	src/main.py	/^        dt = 4.             # time step size$/;"	v
 dt	src/main.py	/^dt = 0.2  # [s]$/;"	v
 dt	src/pyo_main.py	/^        dt = 4.             # time step size$/;"	v
 dt	src/pyo_main.py	/^dt = 0.2  # [s]$/;"	v
+dt	src/real_simulation.py	/^dt = 0.2  # [s]$/;"	v
 dt	src/simulation.py	/^dt = 0.2  # [s]$/;"	v
 dt	src/test.py	/^        dt = 4          # time step size$/;"	v
 dt	src/test.py	/^        dt = 4.             # time step size$/;"	v
@@ -261,7 +284,9 @@ dx	src/backup_animation.py	/^    dx = goal[0] - state[0]$/;"	v
 dy	src/backup_animation.py	/^    dy = goal[1] - state[1]$/;"	v
 elementInHeap	src/utils/priority_queue.py	/^  def elementInHeap(self,x,y):$/;"	m	class:priority_queue
 entropy	src/animation.py	/^        entropy = get_map_entropy(pmap_global, params_globalmap)$/;"	v
+entropy	src/real_simulation.py	/^            entropy = get_map_entropy(pmap_global, params_globalmap)$/;"	v
 entropy	src/simulation.py	/^            entropy = get_map_entropy(pmap_global, params_globalmap)$/;"	v
+entropymap	src/real_simulation.py	/^            entropymap = get_global_entropymap(pmap_global,params_globalmap)$/;"	v
 entropymap	src/simulation.py	/^            entropymap = get_global_entropymap(pmap_global,params_globalmap)$/;"	v
 epsilon	src/main.py	/^    epsilon = 0.1                          # effect of the force on the objective function$/;"	v
 epsilon	src/pyo_main.py	/^    epsilon = 0.1                          # effect of the force on the objective function$/;"	v
@@ -300,6 +325,7 @@ f_max	src/backup_animation.py	/^f_max=0.3$/;"	v
 f_max	src/dataplot.py	/^f_max=0.35$/;"	v
 f_max	src/main.py	/^    f_max = [1.0]           # maximum force experienced by a vehicle$/;"	v
 f_max	src/pyo_main.py	/^    f_max = [1.0]           # maximum force experienced by a vehicle$/;"	v
+f_max	src/real_simulation.py	/^f_max=0.3$/;"	v
 f_max	src/simulation.py	/^f_max=0.3$/;"	v
 f_max	src/test.py	/^        f_max = [0.25]      # maximum force experienced by a vehicle$/;"	v
 f_max	src/test.py	/^        f_max = [0.35]    # maximum force experienced by a vehicle$/;"	v
@@ -371,16 +397,21 @@ generate_samples	src/obstacle.py	/^    def generate_samples(self, reso=0.2):$/;"
 generate_trajectory	src/motion_model.py	/^def generate_trajectory(cur_states, s, km, kf, k0):$/;"	f
 generate_vertices	src/obstacle.py	/^    def generate_vertices(self):$/;"	m	class:Obstacle
 generate_waypoint	src/VCD.py	/^    def generate_waypoint(self, params_local):$/;"	m	class:VerticalCellDecomposition
+generating_globaltrjs	src/real_simulation.py	/^def generating_globaltrjs(cur_state, cspace, obstacles,goals, params_global):$/;"	f
 generating_globaltrjs	src/simulation.py	/^def generating_globaltrjs(cur_state, cspace, obstacles,goals, params_global):$/;"	f
 get_area_polygon	src/VCD.py	/^    def get_area_polygon(self, region):$/;"	m	class:VerticalCellDecomposition
+get_entropy_infov	src/real_simulation.py	/^def get_entropy_infov(state,entropy_map,params_local,params_global):$/;"	f
 get_entropy_infov	src/simulation.py	/^def get_entropy_infov(state,entropy_map,params_local,params_global):$/;"	f
 get_final_path	src/utils/uniform_cost_search.py	/^    def get_final_path(self):$/;"	m	class:Search
+get_global_entropymap	src/real_simulation.py	/^def get_global_entropymap(pmap_global,params_map):$/;"	f
 get_global_entropymap	src/simulation.py	/^def get_global_entropymap(pmap_global,params_map):$/;"	f
+get_local_entropymap	src/real_simulation.py	/^def get_local_entropymap(pmap_local,params_map):$/;"	f
 get_local_entropymap	src/simulation.py	/^def get_local_entropymap(pmap_local,params_map):$/;"	f
 get_lookup_table	src/state_lattice_planner.py	/^def get_lookup_table():$/;"	f
 get_map_entropy	src/animation.py	/^def get_map_entropy(pmap_global,params_map):$/;"	f
 get_map_entropy	src/main.py	/^def get_map_entropy(pmap_global,params_map):$/;"	f
 get_map_entropy	src/pyo_main.py	/^def get_map_entropy(pmap_global,params_map):$/;"	f
+get_map_entropy	src/real_simulation.py	/^def get_map_entropy(pmap_global,params_map):$/;"	f
 get_map_entropy	src/simulation.py	/^def get_map_entropy(pmap_global,params_map):$/;"	f
 get_obs	src/utils/configuration_space.py	/^    def get_obs(self):$/;"	m	class:configuration_space
 get_preocc	src/backup_animation.py	/^def get_preocc(previous_map, grid,map_params):$/;"	f
@@ -394,36 +425,47 @@ goal	src/animation.py	/^        goal = [way_x[goali], way_y[goali]]$/;"	v
 goal	src/animation.py	/^goal = [way_x[goali], way_y[goali]]$/;"	v
 goal	src/backup_animation.py	/^        goal = [way_x[goali], way_y[goali]]$/;"	v
 goal	src/backup_animation.py	/^goal = [way_x[goali], way_y[goali]]$/;"	v
+goal	src/real_simulation.py	/^            goal = [way_x[goali], way_y[goali]]$/;"	v
+goal	src/real_simulation.py	/^    goal = [way_x[goali], way_y[goali]]$/;"	v
+goal	src/real_simulation.py	/^    goal=[7,6]$/;"	v
 goal	src/simulation.py	/^            goal = [way_x[goali], way_y[goali]]$/;"	v
 goal	src/simulation.py	/^    goal = [way_x[goali], way_y[goali]]$/;"	v
 goal	src/simulation.py	/^    goal=[7,6]$/;"	v
 goal_dist	src/animation.py	/^    goal_dist = sqrt((goal[0] - state[0])**2+(goal[1] - state[1])**2) #distance to gaol$/;"	v
 goal_dist	src/backup_animation.py	/^    goal_dist = sqrt(dx**2+dy**2)$/;"	v
+goal_dist	src/real_simulation.py	/^        goal_dist = sqrt((goal[0] - state[0])**2+(goal[1] - state[1])**2) #distance to gaol$/;"	v
 goal_dist	src/simulation.py	/^        goal_dist = sqrt((goal[0] - state[0])**2+(goal[1] - state[1])**2) #distance to gaol$/;"	v
 goal_pos	src/main.py	/^    goal_pos=cspace.goal_state $/;"	v
 goal_pos	src/pyo_main.py	/^    goal_pos=cspace.goal_state $/;"	v
+goal_pos	src/real_simulation.py	/^    goal_pos=[-10.2, -8.5]$/;"	v
 goal_pos	src/simulation.py	/^    goal_pos=[-5, 9]$/;"	v
 goal_tol	src/animation.py	/^goal_tol=0.2$/;"	v
 goal_tol	src/backup_animation.py	/^goal_tol=0.2$/;"	v
+goal_tol	src/real_simulation.py	/^    goal_tol=0.2$/;"	v
 goal_tol	src/simulation.py	/^    goal_tol=0.2$/;"	v
 goali	src/animation.py	/^goali = 0                           #define goal from waypoints set$/;"	v
 goali	src/backup_animation.py	/^goali = 0                           #define goal from waypoints set$/;"	v
+goali	src/real_simulation.py	/^    goali = 0                           #define goal from waypoints set$/;"	v
 goali	src/simulation.py	/^    goali = 0                           #define goal from waypoints set$/;"	v
 grid2meters	src/grid_map.py	/^    def grid2meters(self, pose_grid):$/;"	m	class:GridMap
 gridmap	src/test.py	/^    gridmap = GridMap(flight_area_vertices, initial_pose)$/;"	v
 gridobstacles	src/test.py	/^    gridobstacles = [$/;"	v
+gtrjs	src/real_simulation.py	/^            gtrjs= generating_globaltrjs(state, cspace,obstacles,sample_goals,params_globalmap)$/;"	v
 gtrjs	src/simulation.py	/^            gtrjs= generating_globaltrjs(state, cspace,obstacles,sample_goals,params_globalmap)$/;"	v
 h	src/model_predictive_trajectory_generator.py	/^h = np.matrix([0.2, 0.02, 0.02]).T  # parameter sampling distanse$/;"	v
 init_pos	src/main.py	/^    init_pos=cspace.start_state $/;"	v
 init_pos	src/pyo_main.py	/^    init_pos=cspace.start_state $/;"	v
+init_pos	src/real_simulation.py	/^    init_pos=[3.5,6]$/;"	v
 init_pos	src/simulation.py	/^    init_pos=[-1.5, 8]$/;"	v
 initial_entropy	src/animation.py	/^initial_entropy = get_map_entropy(pmap_global,params_globalmap)$/;"	v
+initial_entropy	src/real_simulation.py	/^    initial_entropy = get_map_entropy(pmap_global,params_globalmap)$/;"	v
 initial_entropy	src/simulation.py	/^    initial_entropy = get_map_entropy(pmap_global,params_globalmap)$/;"	v
 initial_pose	src/test.py	/^    initial_pose=[]$/;"	v
 initialize_global_occ_grid_map	src/animation.py	/^def initialize_global_occ_grid_map(params_map):$/;"	f
 initialize_global_occ_grid_map	src/backup_animation.py	/^def initialize_global_occ_grid_map(params_map):$/;"	f
 initialize_global_occ_grid_map	src/main.py	/^def initialize_global_occ_grid_map(params_map):$/;"	f
 initialize_global_occ_grid_map	src/pyo_main.py	/^def initialize_global_occ_grid_map(params_map):$/;"	f
+initialize_global_occ_grid_map	src/real_simulation.py	/^def initialize_global_occ_grid_map(params_map):$/;"	f
 initialize_global_occ_grid_map	src/simulation.py	/^def initialize_global_occ_grid_map(params_map):$/;"	f
 insert	src/utils/priority_queue.py	/^  def insert(self,x,y,cost,idx):$/;"	m	class:priority_queue
 inside_polygon	src/utils/graph_utils.py	/^def inside_polygon(x,y,polygon):$/;"	f
@@ -433,6 +475,8 @@ iter	src/animation.py	/^    iter=iter+1$/;"	v
 iter	src/animation.py	/^iter=0$/;"	v
 iter	src/backup_animation.py	/^    iter=iter+1$/;"	v
 iter	src/backup_animation.py	/^iter=0$/;"	v
+iter	src/real_simulation.py	/^        iter=iter+1$/;"	v
+iter	src/real_simulation.py	/^    iter=0$/;"	v
 iter	src/simulation.py	/^        iter=iter+1$/;"	v
 iter	src/simulation.py	/^    iter=0$/;"	v
 iters	src/main.py	/^        iters=0$/;"	v
@@ -442,21 +486,25 @@ k	src/animation.py	/^k = 0.1  # look forward gain$/;"	v
 k	src/backup_animation.py	/^k = 0.1  # look forward gain$/;"	v
 k	src/main.py	/^k = 0.1  # look forward gain$/;"	v
 k	src/pyo_main.py	/^k = 0.1  # look forward gain$/;"	v
+k	src/real_simulation.py	/^k = 0.1  # look forward gain$/;"	v
 k	src/simulation.py	/^k = 0.1  # look forward gain$/;"	v
 ktheta	src/animation.py	/^ktheta = 0.5$/;"	v
 ktheta	src/backup_animation.py	/^ktheta = 0.5$/;"	v
 ktheta	src/main.py	/^ktheta = 0.5$/;"	v
 ktheta	src/pyo_main.py	/^ktheta = 0.5$/;"	v
+ktheta	src/real_simulation.py	/^ktheta = 0.5$/;"	v
 ktheta	src/simulation.py	/^ktheta = 0.5$/;"	v
 l_free	src/animation.py	/^l_free=np.log(0.2\/0.8)$/;"	v
 l_free	src/main.py	/^l_free=np.log(0.2\/0.8)$/;"	v
 l_free	src/pyo_main.py	/^l_free=np.log(0.2\/0.8)$/;"	v
 l_free	src/raycasting_grid_map.py	/^l_free = np.log(0.3\/0.7)$/;"	v
+l_free	src/real_simulation.py	/^l_free=np.log(0.15\/0.85)$/;"	v
 l_free	src/simulation.py	/^l_free=np.log(0.15\/0.85)$/;"	v
 l_occ	src/animation.py	/^l_occ=np.log(0.8\/0.2)$/;"	v
 l_occ	src/main.py	/^l_occ=np.log(0.8\/0.2)$/;"	v
 l_occ	src/pyo_main.py	/^l_occ=np.log(0.8\/0.2)$/;"	v
 l_occ	src/raycasting_grid_map.py	/^l_occ = np.log(0.7\/0.3)$/;"	v
+l_occ	src/real_simulation.py	/^l_occ=np.log(0.85\/0.15)$/;"	v
 l_occ	src/simulation.py	/^l_occ=np.log(0.85\/0.15)$/;"	v
 labels	src/main.py	/^        labels = ['Turn rate 15 $\\degree$\/s', 'Turn rate 12 $\\degree$\/s']$/;"	v
 labels	src/pyo_main.py	/^        labels = ['Turn rate 15 $\\degree$\/s', 'Turn rate 12 $\\degree$\/s']$/;"	v
@@ -467,6 +515,7 @@ line_intersection	src/utils/graph_utils.py	/^def line_intersection(line1, line2)
 line_styles	src/main.py	/^        line_styles = ["--", ":", "-.", '-', '-']$/;"	v
 line_styles	src/pyo_main.py	/^        line_styles = ["--", ":", "-.", '-', '-']$/;"	v
 line_styles	src/test.py	/^        line_styles = ["--", ":", "-.", '-', '-']$/;"	v
+local_trjs	src/real_simulation.py	/^            local_trjs = lane_state_sampling_test1(state,axes[1,0])$/;"	v
 local_trjs	src/simulation.py	/^            local_trjs = lane_state_sampling_test1(state,axes[1,0])$/;"	v
 m	src/main.py	/^    m = Model("ppl")$/;"	v
 m	src/original_trj.py	/^m = ConcreteModel()$/;"	v
@@ -481,6 +530,7 @@ map_params	src/animation.py	/^class map_params:$/;"	c
 map_params	src/backup_animation.py	/^class map_params:$/;"	c
 map_params	src/main.py	/^class map_params:$/;"	c
 map_params	src/pyo_main.py	/^class map_params:$/;"	c
+map_params	src/real_simulation.py	/^class map_params:$/;"	c
 map_params	src/simulation.py	/^class map_params:$/;"	c
 marker_styles	src/main.py	/^        marker_styles = ['None', 'None', 'None', 'x', 'None']$/;"	v
 marker_styles	src/pyo_main.py	/^        marker_styles = ['None', 'None', 'None', 'x', 'None']$/;"	v
@@ -493,6 +543,7 @@ minheapify_pop	src/utils/priority_queue.py	/^  def minheapify_pop(self,index):$/
 motion	src/backup_animation.py	/^def motion(state, goal, params):$/;"	f
 motion	src/main.py	/^def motion(state, goal, params):$/;"	f
 motion	src/pyo_main.py	/^def motion(state, goal, params):$/;"	f
+motion	src/real_simulation.py	/^def motion(state, goal, params):$/;"	f
 motion	src/simulation.py	/^def motion(state, goal, params):$/;"	f
 move_target_grid	src/grid_based_sweep_coverage_path_planner.py	/^    def move_target_grid(self, cxind, cyind, gmap):$/;"	m	class:SweepSearcher
 n_steps	src/main.py	/^            n_steps = len(v_coords)$/;"	v
@@ -511,6 +562,7 @@ name	src/test.py	/^    name=name+timestamp +".png"$/;"	v
 ntimestep	src/animation.py	/^ntimestep = len(pos_x)$/;"	v
 ntimestep	src/backup_animation.py	/^ntimestep = len(pos_x)$/;"	v
 ntimestep	src/simulation.py	/^    ntimestep = len(pos_x)$/;"	v
+num_colors	src/real_simulation.py	/^            num_colors = len(gtrjs)$/;"	v
 num_colors	src/simulation.py	/^            num_colors = len(gtrjs)$/;"	v
 num_vehicles	src/main.py	/^        num_vehicles = len(veh_coords)$/;"	v
 num_vehicles	src/pyo_main.py	/^        num_vehicles = len(veh_coords)$/;"	v
@@ -590,19 +642,23 @@ params	src/animation.py	/^params = Params()$/;"	v
 params	src/backup_animation.py	/^params = Params()$/;"	v
 params	src/main.py	/^    params = Params()$/;"	v
 params	src/pyo_main.py	/^    params = Params()$/;"	v
+params	src/real_simulation.py	/^    params = Params()$/;"	v
 params	src/simulation.py	/^    params = Params()$/;"	v
 params_globalmap	src/animation.py	/^params_globalmap =  map_params()$/;"	v
 params_globalmap	src/main.py	/^    params_globalmap =  map_params()$/;"	v
 params_globalmap	src/pyo_main.py	/^    params_globalmap =  map_params()$/;"	v
+params_globalmap	src/real_simulation.py	/^    params_globalmap =  map_params()$/;"	v
 params_globalmap	src/simulation.py	/^    params_globalmap =  map_params()$/;"	v
 params_localmap	src/animation.py	/^params_localmap =  map_params()$/;"	v
 params_localmap	src/main.py	/^    params_localmap =  map_params()$/;"	v
 params_localmap	src/pyo_main.py	/^    params_localmap =  map_params()$/;"	v
+params_localmap	src/real_simulation.py	/^    params_localmap =  map_params()$/;"	v
 params_localmap	src/simulation.py	/^    params_localmap =  map_params()$/;"	v
 params_map	src/backup_animation.py	/^params_map =  map_params()$/;"	v
 parent	src/utils/priority_queue.py	/^  def parent(self,child):$/;"	m	class:priority_queue
 parser	src/main.py	/^    parser = argparse.ArgumentParser()$/;"	v
 parser	src/pyo_main.py	/^    parser = argparse.ArgumentParser()$/;"	v
+parser	src/real_simulation.py	/^    parser = argparse.ArgumentParser()$/;"	v
 parser	src/simulation.py	/^    parser = argparse.ArgumentParser()$/;"	v
 parser	src/test.py	/^    parser = argparse.ArgumentParser(description="Usage: main.py obs")$/;"	v
 perform_search	src/utils/uniform_cost_search.py	/^    def perform_search(self, goalpos):$/;"	m	class:Search
@@ -614,6 +670,7 @@ phi_max	src/original_trj.py	/^phi_max = 1.0$/;"	v
 pi_2_pi	src/motion_model.py	/^def pi_2_pi(angle):$/;"	f
 planner	src/main.py	/^    planner = VerticalCellDecomposition(cspace)$/;"	v
 planner	src/pyo_main.py	/^    planner = VerticalCellDecomposition(cspace)$/;"	v
+planner	src/real_simulation.py	/^    planner = VerticalCellDecomposition(cspace)$/;"	v
 planner	src/simulation.py	/^    planner = VerticalCellDecomposition(cspace)$/;"	v
 planning	src/grid_based_sweep_coverage_path_planner.py	/^def planning(ox, oy, reso,$/;"	f
 plot_arrow	src/model_predictive_trajectory_generator.py	/^def plot_arrow(x, y, yaw, length=1.0, width=0.5, fc="r", ec="k"):$/;"	f
@@ -623,11 +680,13 @@ plot_map	src/animation.py	/^def plot_map(pos_x,pos_y,way_x, way_y, waytimes):$/;
 plot_map	src/backup_animation.py	/^def plot_map(pos_x,pos_y,way_x, way_y, waytimes):$/;"	f
 plot_map	src/main.py	/^def plot_map(pos_x,pos_y,way_x, way_y, waytimes):$/;"	f
 plot_map	src/pyo_main.py	/^def plot_map(pos_x,pos_y,way_x, way_y, waytimes):$/;"	f
+plot_map	src/real_simulation.py	/^def plot_map(pos_x,pos_y,way_x, way_y, waytimes):$/;"	f
 plot_map	src/simulation.py	/^def plot_map(pos_x,pos_y,way_x, way_y, waytimes):$/;"	f
 plot_obstacles	src/animation.py	/^def plot_obstacles(obstacles):$/;"	f
 plot_obstacles	src/backup_animation.py	/^def plot_obstacles(obstacles):$/;"	f
 plot_obstacles	src/main.py	/^def plot_obstacles(obstacles):$/;"	f
 plot_obstacles	src/pyo_main.py	/^def plot_obstacles(obstacles):$/;"	f
+plot_obstacles	src/real_simulation.py	/^def plot_obstacles(obstacles, walls):$/;"	f
 plot_obstacles	src/simulation.py	/^def plot_obstacles(obstacles, walls):$/;"	f
 plot_polygon	src/utils/configuration_space.py	/^    def plot_polygon(self,coords,axes=None):$/;"	m	class:configuration_space
 plot_regions	src/VCD.py	/^    def plot_regions(self, ax=None):$/;"	m	class:VerticalCellDecomposition
@@ -635,12 +694,15 @@ plot_robot	src/animation.py	/^def plot_robot(pose, params):$/;"	f
 plot_robot	src/backup_animation.py	/^def plot_robot(pose, params):$/;"	f
 plot_robot	src/main.py	/^def plot_robot(pose, params):$/;"	f
 plot_robot	src/pyo_main.py	/^def plot_robot(pose, params):$/;"	f
+plot_robot	src/real_simulation.py	/^def plot_robot(pose, params):$/;"	f
 plot_robot	src/simulation.py	/^def plot_robot(pose, params):$/;"	f
 plot_vcd	src/VCD.py	/^    def plot_vcd(self):$/;"	m	class:VerticalCellDecomposition
 pmap_global	src/animation.py	/^        pmap_global = update_occ_grid_map(state, pmap_local,params_localmap, pmap_global,params_globalmap)$/;"	v
 pmap_global	src/animation.py	/^pmap_global = initialize_global_occ_grid_map(params_globalmap)$/;"	v
 pmap_global	src/backup_animation.py	/^        pmap_global = update_occ_grid_map(state, updated_grids,pmap_global,params_map)$/;"	v
 pmap_global	src/backup_animation.py	/^pmap_global = initialize_global_occ_grid_map(params_map)$/;"	v
+pmap_global	src/real_simulation.py	/^            pmap_global = update_occ_grid_map(state, pmap_local,params_localmap, pmap_global,params_globalmap)$/;"	v
+pmap_global	src/real_simulation.py	/^    pmap_global = initialize_global_occ_grid_map(params_globalmap)$/;"	v
 pmap_global	src/simulation.py	/^            pmap_global = update_occ_grid_map(state, pmap_local,params_localmap, pmap_global,params_globalmap)$/;"	v
 pmap_global	src/simulation.py	/^    pmap_global = initialize_global_occ_grid_map(params_globalmap)$/;"	v
 polygon_contains_point	src/raycasting_grid_map.py	/^def polygon_contains_point(point, obstacle):$/;"	f
@@ -675,7 +737,9 @@ precastDB	src/raycasting_grid_map.py	/^class precastDB:$/;"	c
 precasting	src/raycasting_grid_map.py	/^def precasting(minx, miny, xw, yw, xyreso, yawreso,agent_x,agent_y):$/;"	f
 print_region	src/VCD.py	/^    def print_region(self):$/;"	m	class:VerticalCellDecomposition
 priority_queue	src/utils/priority_queue.py	/^class priority_queue:$/;"	c
+random_sampling	src/real_simulation.py	/^def random_sampling(params, nums):$/;"	f
 random_sampling	src/simulation.py	/^def random_sampling(params, nums):$/;"	f
+read_inputfile	src/real_simulation.py	/^def read_inputfile(FILE_NAME="input2.txt"):$/;"	f
 regex	src/animation.py	/^regex = re.compile('[-+]?\\d*\\.\\d+|[-+]?\\d+')                #set pattern in order to find integer in string$/;"	v
 regex	src/backup_animation.py	/^regex = re.compile('[-+]?\\d*\\.\\d+|[-+]?\\d+')                #set pattern in order to find integer in string$/;"	v
 regex	src/dataplot.py	/^regex = re.compile('[-+]?\\d*\\.\\d+|[-+]?\\d+')                #set pattern in order to find integer in string$/;"	v
@@ -688,8 +752,11 @@ reset_cspace	src/VCD.py	/^    def reset_cspace(self,cspace):$/;"	m	class:Vertica
 reset_environment	src/utils/configuration_space.py	/^    def reset_environment(self, boundaries, init_pos,goal_pos, obstacles):$/;"	m	class:configuration_space
 reso	src/test.py	/^    reso = 2.0$/;"	v
 rightChild	src/utils/priority_queue.py	/^  def rightChild(self,parent):$/;"	m	class:priority_queue
+s	src/real_simulation.py	/^                s = np.arange(0, sp.s[-1], ds)$/;"	v
 s	src/simulation.py	/^                s = np.arange(0, sp.s[-1], ds)$/;"	v
+s_iter	src/real_simulation.py	/^                s_iter=0$/;"	v
 s_iter	src/simulation.py	/^                s_iter=0$/;"	v
+sample_goals	src/real_simulation.py	/^            sample_goals = random_sampling(params,7)$/;"	v
 sample_goals	src/simulation.py	/^            sample_goals = random_sampling(params,7)$/;"	v
 sample_states	src/state_lattice_planner.py	/^def sample_states(cur_states, angle_samples, a_min, a_max, d, p_max, p_min, nh):$/;"	f
 save_lookup_table	src/lookuptable_generator.py	/^def save_lookup_table(fname, table):$/;"	f
@@ -715,17 +782,24 @@ simple_motion	src/animation.py	/^def simple_motion(state, goal, params):$/;"	f
 simple_motion	src/backup_animation.py	/^def simple_motion(state, goal, params):$/;"	f
 simple_motion	src/main.py	/^def simple_motion(state, goal, params):$/;"	f
 simple_motion	src/pyo_main.py	/^def simple_motion(state, goal, params):$/;"	f
+simple_motion	src/real_simulation.py	/^def simple_motion(state, goal, params):$/;"	f
 simple_motion	src/simulation.py	/^def simple_motion(state, goal, params):$/;"	f
 simtime	src/animation.py	/^    simtime = simtime + dt$/;"	v
 simtime	src/animation.py	/^simtime=0.0$/;"	v
 simtime	src/backup_animation.py	/^    simtime = simtime + dt$/;"	v
 simtime	src/backup_animation.py	/^simtime=0.0$/;"	v
+simtime	src/real_simulation.py	/^        simtime = simtime + dt$/;"	v
+simtime	src/real_simulation.py	/^    simtime=0.0$/;"	v
 simtime	src/simulation.py	/^        simtime = simtime + dt$/;"	v
 simtime	src/simulation.py	/^    simtime=0.0$/;"	v
+smoothing_path	src/VCD.py	/^    def smoothing_path(self,final_path, final_path_idx):$/;"	m	class:VerticalCellDecomposition
 state	src/animation.py	/^    state = simple_motion(state, goal, params)                        #dynamics$/;"	v
 state	src/animation.py	/^state = np.array([pos_x[0],pos_y[0],np.pi\/2, 0.0])$/;"	v
 state	src/backup_animation.py	/^    state = simple_motion(state, goal, params)$/;"	v
 state	src/backup_animation.py	/^state = np.array([pos_x[0],pos_y[0],np.pi\/2, 0.0])$/;"	v
+state	src/real_simulation.py	/^        state = simple_motion(state, goal, params)                        #dynamics$/;"	v
+state	src/real_simulation.py	/^    state = np.array([init_pos[0],init_pos[1],0.0, 0.0])$/;"	v
+state	src/real_simulation.py	/^    state = np.array(start_state)$/;"	v
 state	src/simulation.py	/^        state = simple_motion(state, goal, params)                        #dynamics$/;"	v
 state	src/simulation.py	/^    state = np.array([init_pos[0],init_pos[1],0.0, 0.0])$/;"	v
 steps	src/main.py	/^        steps = int(T \/ dt)                             # number of steps$/;"	v
@@ -739,11 +813,14 @@ t	src/pyo_main.py	/^    t = time.localtime()$/;"	v
 t	src/test.py	/^    t = time.localtime()$/;"	v
 t_current	src/animation.py	/^    t_current = time.time()$/;"	v
 t_current	src/backup_animation.py	/^    t_current = time.time()$/;"	v
+t_current	src/real_simulation.py	/^        t_current = time.time()$/;"	v
 t_current	src/simulation.py	/^        t_current = time.time()$/;"	v
 t_prev_goal	src/animation.py	/^        t_prev_goal = time.time()$/;"	v
 t_prev_goal	src/animation.py	/^t_prev_goal = time.time()$/;"	v
 t_prev_goal	src/backup_animation.py	/^        t_prev_goal = time.time()$/;"	v
 t_prev_goal	src/backup_animation.py	/^t_prev_goal = time.time()$/;"	v
+t_prev_goal	src/real_simulation.py	/^            t_prev_goal = time.time()$/;"	v
+t_prev_goal	src/real_simulation.py	/^    t_prev_goal = time.time()$/;"	v
 t_prev_goal	src/simulation.py	/^            t_prev_goal = time.time()$/;"	v
 t_prev_goal	src/simulation.py	/^    t_prev_goal = time.time()$/;"	v
 table_path	src/state_lattice_planner.py	/^table_path = ".\/lookuptables.csv"$/;"	v
@@ -777,6 +854,8 @@ traj	src/animation.py	/^        traj = np.vstack([traj, state[:2]])$/;"	v
 traj	src/animation.py	/^traj = state[:2]$/;"	v
 traj	src/backup_animation.py	/^        traj = np.vstack([traj, state[:2]])$/;"	v
 traj	src/backup_animation.py	/^traj = state[:2]$/;"	v
+traj	src/real_simulation.py	/^            traj = np.vstack([traj, state[:2]])$/;"	v
+traj	src/real_simulation.py	/^    traj = state[:2]$/;"	v
 traj	src/simulation.py	/^            traj = np.vstack([traj, state[:2]])$/;"	v
 traj	src/simulation.py	/^    traj = state[:2]$/;"	v
 trajectories	src/animation.py	/^trajectories = [pos_x, pos_y, vel_x, vel_y, ]$/;"	v
@@ -791,6 +870,7 @@ update_occ_grid_map	src/animation.py	/^def update_occ_grid_map(state, local_map,
 update_occ_grid_map	src/backup_animation.py	/^def update_occ_grid_map(state,observed_grids, previous_map, mapparams):$/;"	f
 update_occ_grid_map	src/main.py	/^def update_occ_grid_map(state, local_map, params_local, global_map, params_global):$/;"	f
 update_occ_grid_map	src/pyo_main.py	/^def update_occ_grid_map(state, local_map, params_local, global_map, params_global):$/;"	f
+update_occ_grid_map	src/real_simulation.py	/^def update_occ_grid_map(state, local_map, params_local, global_map, params_global):$/;"	f
 update_occ_grid_map	src/simulation.py	/^def update_occ_grid_map(state, local_map, params_local, global_map, params_global):$/;"	f
 update_turning_window	src/grid_based_sweep_coverage_path_planner.py	/^    def update_turning_window(self):$/;"	m	class:SweepSearcher
 v	src/motion_model.py	/^v = 2.5  # velocity [m\/s]$/;"	v
@@ -825,6 +905,7 @@ v_max	src/dataplot.py	/^v_max=0.45$/;"	v
 v_max	src/main.py	/^    v_max = 0.75             # maximum velocity of the vehicle$/;"	v
 v_max	src/original_trj.py	/^v_max  = 30$/;"	v
 v_max	src/pyo_main.py	/^    v_max = 0.75             # maximum velocity of the vehicle$/;"	v
+v_max	src/real_simulation.py	/^v_max=0.4$/;"	v
 v_max	src/simulation.py	/^v_max=0.4$/;"	v
 v_max	src/test.py	/^    v_max = 0.45              # maximum velocity of the vehicle$/;"	v
 v_min	src/original_trj.py	/^v_min = -4$/;"	v
@@ -867,6 +948,7 @@ visualize	src/animation.py	/^def visualize(traj, pose, obstacles,params):$/;"	f
 visualize	src/backup_animation.py	/^def visualize(traj, pose, obstacles,params):$/;"	f
 visualize	src/main.py	/^def visualize(traj, pose, obstacles,params):$/;"	f
 visualize	src/pyo_main.py	/^def visualize(traj, pose, obstacles,params):$/;"	f
+visualize	src/real_simulation.py	/^def visualize(traj, pose, obstacles, walls, params):$/;"	f
 visualize	src/simulation.py	/^def visualize(traj, pose, obstacles, walls, params):$/;"	f
 vx_init	src/main.py	/^        vx_init = [0.0]   # initial x-component velocity$/;"	v
 vx_init	src/main.py	/^    vx_init = [0]           # initial x-component velocity$/;"	v
@@ -892,6 +974,7 @@ way_x	src/backup_animation.py	/^way_x=[]$/;"	v
 way_x	src/dataplot.py	/^way_x=[]$/;"	v
 way_x	src/main.py	/^        way_x=[]$/;"	v
 way_x	src/pyo_main.py	/^        way_x=[]$/;"	v
+way_x	src/real_simulation.py	/^    way_x=[]$/;"	v
 way_x	src/simulation.py	/^        way_x=[]$/;"	v
 way_x	src/simulation.py	/^    way_x=[]$/;"	v
 way_y	src/animation.py	/^way_y=[]$/;"	v
@@ -899,6 +982,7 @@ way_y	src/backup_animation.py	/^way_y=[]$/;"	v
 way_y	src/dataplot.py	/^way_y=[]$/;"	v
 way_y	src/main.py	/^        way_y=[]$/;"	v
 way_y	src/pyo_main.py	/^        way_y=[]$/;"	v
+way_y	src/real_simulation.py	/^    way_y=[]$/;"	v
 way_y	src/simulation.py	/^        way_y=[]$/;"	v
 way_y	src/simulation.py	/^    way_y=[]$/;"	v
 waydf	src/animation.py	/^waydf = pd.read_csv(wayfile_name, delimiter=',', names = ['index', 'time', 'coords'])$/;"	v
@@ -915,6 +999,7 @@ wayfile_name	src/pyo_main.py	/^        wayfile_name =dir_path + "\/results\/data
 wayfile_name	src/simulation.py	/^        wayfile_name =dir_path + "\/results\/data\/waypoints_" +timeindex+"_.csv"$/;"	v
 waypoint_vcd	src/main.py	/^    waypoint_vcd = planner.generate_waypoint(params_localmap)$/;"	v
 waypoint_vcd	src/pyo_main.py	/^    waypoint_vcd = planner.generate_waypoint(params_localmap)$/;"	v
+waypoint_vcd	src/real_simulation.py	/^    waypoint_vcd = planner.generate_waypoint(params_localmap)$/;"	v
 waypoint_vcd	src/simulation.py	/^    waypoint_vcd = planner.generate_waypoint(params_localmap)$/;"	v
 waytime	src/animation.py	/^waytime= np.asarray(waydf['time'][1:])$/;"	v
 waytime	src/backup_animation.py	/^waytime= np.asarray(waydf['time'][1:])$/;"	v

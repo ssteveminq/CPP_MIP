@@ -21,16 +21,16 @@ class VerticalCellDecomposition:
 
 
         self.polygon_vertices = [item for sublist in cspace.polygons for item in sublist]
-        print("self.polygon_vertices")
-        print(self.polygon_vertices)
+        # print("self.polygon_vertices")
+        # print(self.polygon_vertices)
 
         self.polygon_edges = []
 
         for polygon in cspace.polygons:
             for i in range(len(polygon)):
                 self.polygon_edges.append([polygon[i%len(polygon)],polygon[(i+1)%len(polygon)]])
-        print("polygon-edge")
-        print(self.polygon_edges)
+        # print("polygon-edge")
+        # print(self.polygon_edges)
 
         self.decomposition_lines = []
         self.decomposition_lines_midpts = []
@@ -186,10 +186,10 @@ class VerticalCellDecomposition:
         return 0.5*np.abs(main_area + correction)
 
 
-
     def region_disection(self, goalpos=None):
         maxY = self.cspace.boundary[2][1]
         minY = self.cspace.boundary[0][1]
+        # print("minY", minY, ", maxY:", maxY)
 
         self.original_vertices = self.polygon_vertices
         self.polygon_vertices = sorted(self.polygon_vertices, key=lambda x: x[0])
@@ -229,7 +229,7 @@ class VerticalCellDecomposition:
                 if(len(self.decomposition_lines_map[vertex])==2) and (len(self.decomposition_lines_map[next_vertex])==2):
                     ov = [self.decomposition_lines_map[vertex][0][1],self.decomposition_lines_map[vertex][1][1],\
                         self.decomposition_lines_map[next_vertex][0][1],self.decomposition_lines_map[next_vertex][1][1]]
-                    print("ov", ov)
+                    # print("ov", ov)
 
                     if((ov[0][1] in (maxY, minY)) and (ov[1][1] in (maxY, minY)) and (ov[2][1] in (maxY, minY)) and \
                                     (ov[3][1] in (maxY, minY))):
@@ -237,18 +237,70 @@ class VerticalCellDecomposition:
                         continue
 
                 if(current_vertex[1] == maxY): # upper line
+                    # print("upper")
+                    # print(self.decomposition_lines_map[vertex][j]+self.find_region_line("up", i+1, vertex, current_vertex))
                     self.regions.append(self.decomposition_lines_map[vertex][j]+self.find_region_line("up", i+1, vertex, current_vertex))
 
                 elif(current_vertex[1] == minY): # lower line
+                    # print("lower")
+                    # print(self.decomposition_lines_map[vertex][j]+self.find_region_line("down", i+1, vertex, current_vertex))
                     self.regions.append(self.decomposition_lines_map[vertex][j]+self.find_region_line("down", i+1, vertex, current_vertex))
 
                 else: # middle
+                    # print("middle")
                     lst = self.find_region_line("middle", i + 1, vertex, current_vertex)
                     if(len(lst) > 0):
                         self.regions.append(self.decomposition_lines_map[vertex][j]+lst)
                         # TODO, do not remove the comment below
                         # print(self.decomposition_lines_map[vertex][j]+lst)
 
+        # input()
+        # print(self.polygon_edges)
+
+        merged_regions=[]
+        #fix bugs ==> merge two cells if there doesn't exist obstacles between them
+        for i,region_i in enumerate(self.regions):
+            for j,region_j in enumerate(self.regions):
+                if i==j or i>j:
+                    continue
+                else:
+                    merged_region=[]
+                    #check x coordinates
+                    count=0
+                    for k in range(4):
+                        if region_i[k][0] ==region_j[k][0]:
+                            count+=1
+                
+                    if count==4:
+                        if self.check_polygon_between_regions(region_i, region_j)==False:
+                            ymin =100
+                            ymax =-100
+                            for k in range(4):
+                                if region_i[k][1]<ymin:
+                                    ymin=region_i[k][1]
+                                if region_j[k][1]<ymin:
+                                    ymin=region_j[k][1]
+                                if region_i[k][1]>ymax:
+                                    ymax=region_i[k][1]
+                                if region_j[k][1]>ymax:
+                                    ymax=region_j[k][1]
+                            # print("ymin: ", ymin, ", ymax:", ymax)
+                            # merged_region.append((region_i[0][0], ymin))
+                            # merged_region.append((region_i[0][0], ymax))
+                            # merged_region.append((region_i[2][0], ymin))
+                            # merged_region.append((region_i[2][0], ymax))
+                            # print("merged_region",merged_region)
+                            self.regions[i][0]=(region_i[0][0], ymin)
+                            self.regions[i][1]=(region_i[0][0], ymax)
+                            self.regions[i][2]=(region_i[2][0], ymin)
+                            self.regions[i][3]=(region_i[2][0], ymax)
+                            # self.regions.append(merged_region)
+                            self.regions.pop(j)
+                            # self.regions.remove(self.regions[i])
+                            
+                    # merged_regions.append(merged_region)
+
+        # print("start_state: ", self.cspace.start_state)
         self.roadmap.vertices_dict[0] = list(self.cspace.start_state)
         if goalpos!=None:
             self.roadmap.vertices_dict[1] = list(goalpos)
@@ -269,6 +321,17 @@ class VerticalCellDecomposition:
             self.roadmap.vertices_dict[i+2] = [c_x,c_y]      
             self.roadmap.vertices_dict_noedge[i+2] = [c_x,c_y]
 
+
+    def check_polygon_between_regions(self,region1,region2):
+        for edge in self.polygon_edges:
+            if edge[0][0]==region1[0][0] and edge[1][0]==region1[2][0]:
+                # print(edge)
+                return True
+        return False
+            
+
+
+
     def construct_graph(self):
         self.vertical_lines()
         self.region_disection()
@@ -276,15 +339,28 @@ class VerticalCellDecomposition:
 
     def construct_graph_main(self):
         max_key = list(self.roadmap.vertices_dict.keys())[-1]
+        print("dict", self.roadmap.vertices_dict)
+        # print("dict_noedge", self.roadmap.vertices_dict_noedge)
+
+        # print("max_key", max_key)
+        # input()
+
 
         for i,point in enumerate([self.cspace.start_state, self.goal_pose]):
             for j,centroid in enumerate(list(self.roadmap.vertices_dict.values())[2:]):
                 skip = False
                 graph_line = [centroid, point]
+                # print("graph_line", graph_line, ", point: ",point)
                 # check intersection with any of (edges, decomposition lines)
 
+                # num_intersect=0
                 for line in self.polygon_edges+self.decomposition_lines:
                     if(line_intersection(graph_line, line) is not None):
+                        # print("intersect")
+                        # print("graph_line", graph_line, ", point: ",point)
+                        # print("line", line)
+                        # int_x , int_y = line_intersection(graph_line, line)
+                        # print("int_x : ", int_x, "int_y: ", int_y)
                         skip = True
                         break
 
@@ -295,6 +371,7 @@ class VerticalCellDecomposition:
                 self.roadmap.adjacency_dict[j+2].append(i)
                 self.roadmap.edge_weights[i].append(distance(point,centroid))
                 self.roadmap.edge_weights[j+2].append(distance(point,centroid))
+
                 break
 
         #mk - remove midpoints from vertices
@@ -436,6 +513,17 @@ class VerticalCellDecomposition:
         # for i in range(len(way_x)):
             # ax.text(way_x[i]+0.5, way_y[i]-0.5,AlphabetSet[i], color='g')
 
+    def smoothing_path(self,final_path, final_path_idx):
+        # connect directly at the starting and the last point
+        for i, path_vertex in enumerate(final_path):
+            if i==0 or i==(len(final_path)-3):
+                dist_to_next2 =  distance(final_path[i],final_path[i+1])+distance(final_path[i+1],final_path[i+2])
+                dist_direct = distance(final_path[i],final_path[i+2])
+                if 1.2*dist_direct < dist_to_next2:
+                    final_path.pop(i+1)
+
+        return final_path, final_path_idx
+
 
 
     def search(self,showPlot=False, goalpos=None):
@@ -461,14 +549,16 @@ class VerticalCellDecomposition:
 
         final_path, final_path_idx, path_cost = searchResult
 
-        # for i in range(1,len(final_path)):
-            # plt.plot([elem[0] for elem in final_path[i-1:i+1]],[elem[1] for elem in final_path[i-1:i+1]],color='brown')
+        final_path, final_path_idx  = self.smoothing_path(final_path, final_path_idx)
+
+        for i in range(1,len(final_path)):
+            plt.plot([elem[0] for elem in final_path[i-1:i+1]],[elem[1] for elem in final_path[i-1:i+1]],color='brown')
 
         if showPlot:
 
-            for i in range(1,len(final_path)):
-                plt.plot([elem[0] for elem in final_path[i-1:i+1]],[elem[1] for elem in final_path[i-1:i+1]],color='brown')
             self.plot_vcd()
+            for i in range(1,len(final_path)):
+                plt.plot([elem[0] for elem in final_path[i-1:i+1]],[elem[1] for elem in final_path[i-1:i+1]],color='red')
             plt.show()
 
         return final_path, final_path_idx

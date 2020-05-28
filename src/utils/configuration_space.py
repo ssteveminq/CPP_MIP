@@ -19,8 +19,9 @@ class configuration_space:
                     self.polygons.append(list(ast.literal_eval(l)))
                 else:
                     temp = list(ast.literal_eval(l))
-                    self.start_state = temp[0]
-                    self.goal_state = temp[1]
+                    self.start_state = [temp[0], temp[1]]
+                    #Temprorary set the goal 
+                    self.goal_state = [temp[0]-2, temp[1]+4]
 
     def plot_polygon(self,coords,axes=None):
         if axes==None:

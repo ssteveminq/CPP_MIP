@@ -20,6 +20,7 @@ import re
 import time
 from matplotlib.patches import Polygon, Rectangle, Circle
 import matplotlib as mpl
+import ast
 # import map
 #import numpy as np
 f_max=0.3
@@ -110,9 +111,7 @@ def calc_IG_trjs(trj_candidates, emap, params_local, params_global, horizon=15):
                 ig+= get_entropy_infov([x,y,yaw],emap,params_local, params_global)
 
         print("ig", ig)
-        # input()
         igs.append(ig)
-    # input()
 
 
 def get_entropy_infov(state,entropy_map,params_local,params_global):
@@ -456,68 +455,92 @@ def motion(state, goal, params):
 
     return state
 
+
+def read_inputfile(FILE_NAME="input2.txt"):
+
+    line_ctr = 0
+    polygons=[]
+    with open(FILE_NAME) as f:
+        num_lines = sum(1 for l in f)
+    with open(FILE_NAME) as f:
+        for l in f:
+            line_ctr += 1
+            if line_ctr == 1:
+                boundary = list(ast.literal_eval(l))
+            elif line_ctr in range(2,num_lines):
+                polygons.append(list(ast.literal_eval(l)))
+            else:
+                temp = list(ast.literal_eval(l))
+                start_state = [temp[0],temp[1], temp[2], temp[3]]
+                init_pos = [temp[0],temp[1]]
+                # goal_state = temp[1]
+
+    #Create wall objects
+    walls=[]
+    xmin=100
+    ymin=100
+    xmax=-100
+    ymax=-100
+    for point in boundary:
+        if xmin>point[0]:
+            xmin = point[0]
+        if xmax<point[0]:
+            xmax = point[0]
+        if ymin>point[1]:
+            ymin = point[1]
+        if ymax<point[1]:
+            ymax = point[1]
+
+    print("xmin: " , xmin , ", xmax: ", xmax, ", ymin", ymin, ", ymax: ", ymax)
+    wall = Obstacle(xmin, xmin, ymin, ymax,True)          
+    walls.append(wall)
+    wall = Obstacle(xmin, xmax, ymin, ymin,True)          
+    walls.append(wall)
+    wall = Obstacle(xmax, xmax, ymin, ymax,True)          
+    walls.append(wall)
+    wall = Obstacle(xmin, xmax, ymax, ymax,True)          
+    walls.append(wall)
+
+
+    #Create obstacle objects
+    obstacles=[]
+    for obs in polygons:
+        xmin=100
+        ymin=100
+        xmax=-100
+        ymax=-100
+        for point in obs:
+            if xmin>point[0]:
+                xmin = point[0]
+            if xmax<point[0]:
+                xmax = point[0]
+            if ymin>point[1]:
+                ymin = point[1]
+            if ymax<point[1]:
+                ymax = point[1]
+
+        tmp = Obstacle(xmin, xmax,ymin,ymax)
+        obstacles.append(tmp)                       # attach obstacle to obstacle list
+    # print(obstacles)
+
+    return start_state, init_pos, obstacles, walls
+
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-in",help="input file (default: input.txt)",default="input2.txt")
+    parser.add_argument("-in",help="input file (default: input2.txt)",default="input2.txt")
     parser.add_argument("-load",help="load saved data? [y/n] (default: n)",default="n")
     args = vars(parser.parse_args())
-    #Define two windows: 
-    # axes[0] : robot, obstacle, waypoints, trajectory
-    # axes[1] : sensor_map,occ_grid
-    fig,axes=plt.subplots(nrows=2,ncols=2,figsize=(40,40))
 
     params = Params()
     params_globalmap =  map_params()
     params_localmap =  map_params()
 
-    if args['load']=='y':
+    start_state, init_pos, obstacles, walls = read_inputfile(args['in'])
 
-        timeindex = "04171450"
-        # timeindex = "04021858"
-        # Open the desired file for reading
-        dir_path = os.path.dirname(os.path.realpath(__file__))
-        dir_path=dir_path[:-4]
-        file_name =dir_path + "/results/data/robot_" +timeindex+"_.csv"
-        wayfile_name =dir_path + "/results/data/waypoints_" +timeindex+"_.csv"
-        obsfile_name =dir_path + "/results/data/obstacles2_"+timeindex+"_.csv"
 
-        # Open the desired file for reading
-        df = pd.read_csv(file_name, delimiter=',', names = ['index', 'x', 'y', 'vx', 'vy', 'fx', 'fy'])
-        waydf = pd.read_csv(wayfile_name, delimiter=',', names = ['index', 'time', 'coords'])
-        obsdf = pd.read_csv(obsfile_name , delimiter=',', names = ['obstacle'])
-
-        waytime= np.asarray(waydf['time'][1:])
-        waytimes= waytime.astype(np.float)
-
-        # idx_array = np.arange(len(list(df['index'])))   #time index
-        pos_x = np.asarray(df['x'][1:])             #robot pos_x
-        pos_y = np.asarray(df['y'][1:])             #robot pos_y
-
-        #convert from string to float 
-        pos_x = pos_x.astype(np.float)
-        pos_y = pos_y.astype(np.float)
-
-        vel_x = np.asarray(df['vx'][1:])             #robot pos_x
-        vel_y = np.asarray(df['vy'][1:])             #robot pos_y
-
-        #convert from string to float 
-        vel_x = vel_x.astype(np.float)
-        vel_y = vel_y.astype(np.float)
-
-        trajectories = [pos_x, pos_y, vel_x, vel_y, ]
-
-        #waypoint
-        way_x=[]
-        way_y=[]
-
-        regex = re.compile('[-+]?\d*\.\d+|[-+]?\d+')                #set pattern in order to find integer in string
-        way_coords = np.asarray(waydf['coords'][1:])
-        for i in range(len(way_coords)):
-            nums = [float(k) for k in regex.findall(way_coords[i])] #find integer value in string format '[ int, int ]'
-            way_x.append(nums[0])
-            way_y.append(nums[1])
-            # print("waypoints : (x,y ) = (", way_x,", ", way_y,")")
-
+    '''
         # print("waypoints :way_x)
         floatregex =re.compile('[-+]?\d*\.\d+|[-+]?\d+') 
         obstacles = []                                  # list which will contain all obstacles
@@ -532,29 +555,44 @@ if __name__ == "__main__":
             obstacles.append(obs)                                   # attach obstacle to obstacle list
         # print("num ofobstacles:", len(obstacles))
         print("---load completed")
+    '''
 
     #Create wall - Rectangular Search region
-    walls=[]
-    obs = Obstacle(-Region_Boundary, -Region_Boundary, -Region_Boundary, Region_Boundary,True)          
-    walls.append(obs)                                   # attach obstacle to obstacle list
-    obs = Obstacle(-Region_Boundary, Region_Boundary, -Region_Boundary, -Region_Boundary,True)         
-    walls.append(obs)                                   # attach obstacle to obstacle list
-    obs = Obstacle(-Region_Boundary, Region_Boundary, Region_Boundary, Region_Boundary,True)          
-    walls.append(obs)                                   # attach obstacle to obstacle list
-    obs = Obstacle(Region_Boundary, Region_Boundary, -Region_Boundary, Region_Boundary,True)          
-    walls.append(obs)                                   # attach obstacle to obstacle list
+    # walls=[]
+    # obs = Obstacle(-Region_Boundary, -Region_Boundary, -Region_Boundary, Region_Boundary,True)          
+    # walls.append(obs)                                   # attach obstacle to obstacle list
+    # obs = Obstacle(-Region_Boundary, Region_Boundary, -Region_Boundary, -Region_Boundary,True)         
+    # walls.append(obs)                                   # attach obstacle to obstacle list
+    # obs = Obstacle(-Region_Boundary, Region_Boundary, Region_Boundary, Region_Boundary,True)          
+    # walls.append(obs)                                   # attach obstacle to obstacle list
+    # obs = Obstacle(Region_Boundary, Region_Boundary, -Region_Boundary, Region_Boundary,True)          
+    # walls.append(obs)                                   # attach obstacle to obstacle list
 
     #create cspace
-    # init_pos=[pos_x[0],pos_y[0]]
-    init_pos=[-1.5, 8]
-    goal_pos=[-5, 9]
+    # init_pos = start_state
+    init_pos=[3.5,6]
+    print("init_pos", init_pos)
+    goal_pos=[-10.2, -8.5]
     # cspace = configuration_space(args['in'])
     cspace=configuration_space()
     cspace.reset_environment(params_globalmap.boundaries,init_pos,goal_pos, obstacles)
-    # cspace.plot_config_space()
     planner = VerticalCellDecomposition(cspace)
-    planner.construct_graph()
-    # path, path_idx = planner.search(True)
+    planner.reset_cspace(cspace)
+    planner.vertical_lines()
+    planner.region_disection(goal_pos)
+    # planner.generate_waypoint(params_localmap)
+    # planner.plot_regions()
+    # plt.show()
+    # cspace.plot_config_space()
+    # planner.construct_graph()
+    # path, path_idx = planner.search(True, goal_pos)
+    # input()
+
+
+    #Define two windows: 
+    # axes[0] : robot, obstacle, waypoints, trajectory
+    # axes[1] : sensor_map,occ_grid
+    fig,axes=plt.subplots(nrows=2,ncols=2,figsize=(40,40))
 
     waypoint_vcd = planner.generate_waypoint(params_localmap)
     planner.plot_regions(axes[1,0])
@@ -564,18 +602,14 @@ if __name__ == "__main__":
     way_y=[]
 
     for point in waypoint_vcd:
-        # print("x: ", point[0])
-        # print("y: ", point[1])
         way_x.append(point[0])
         way_y.append(point[1])
         # print("waypoints : (x,y ) = (", way_x,", ", way_y,")")
 
-
     #plot figures 
     # fig,axes=plt.figure(figsize=(10,20))
-    axes[0,0].scatter(pos_x[0], pos_y[0], facecolor='blue',edgecolor='blue')      #initial point
-    # axes[0].scatter(pos_x[-1], pos_y[-1], facecolor='red',edgecolor='red')      #final point
-    axes[0,0].plot(pos_x, pos_y, 'o', markersize = 20, fillstyle='none',color='black')             #trajectory point
+    # axes[0,0].scatter(init_pos[0], init_pos[1], facecolor='blue',edgecolor='blue')      #initial point
+    axes[0,0].plot(init_pos[0], init_pos[1], 'o', markersize = 20, fillstyle='none',color='black')             #trajectory point
     axes[1,0].plot(way_x, way_y, '*', markersize= 10, fillstyle='none',color='green')             #trajectory point
     # for i in range(len(waytimes)):
         # axes[0].text(way_x[i], way_y[i]-1,str(waytimes[i]), color='g')
@@ -596,9 +630,7 @@ if __name__ == "__main__":
     # axes[0,0.tight_layout()
 
     #simulation settings
-    ntimestep = len(pos_x)
     goal_tol=0.2
-
     goali = 0                           #define goal from waypoints set
     goal = [way_x[goali], way_y[goali]]
         
@@ -606,6 +638,7 @@ if __name__ == "__main__":
 
     # initial state = [x(m), y(m), yaw(rad), v(m/s), omega(rad/s)]
     state = np.array([init_pos[0],init_pos[1],0.0, 0.0])
+    state = np.array(start_state)
     print("initial state: ",state)
     traj = state[:2]
     iter=0
@@ -621,7 +654,6 @@ if __name__ == "__main__":
     initial_entropy = get_map_entropy(pmap_global,params_globalmap)
     print("initial entropy: ", initial_entropy )
 
-    # for i in range(ntimestep):
     for _ in range(params.numiters):
         state = simple_motion(state, goal, params)                        #dynamics
         goal_dist = sqrt((goal[0] - state[0])**2+(goal[1] - state[1])**2) #distance to gaol
@@ -643,7 +675,7 @@ if __name__ == "__main__":
             #figure1
             axes[0,0].cla()
             # plt.plot(goal[0], goal[1])
-            plot_map(pos_x,pos_y,way_x,way_y,waytimes)
+            # plot_map(init_pos[0], init_pos[1],way_x,way_y,waytimes)
             axes[0,0].plot(goal[0], goal[1])
             traj = np.vstack([traj, state[:2]])
             visualize(traj, state, obstacles, walls, params)

@@ -72,18 +72,18 @@ class Obstacle:
         #horizontal wall [ymin = ymax ]
         #vertical wall [xmin = xmax ]
         #determine wall horizontal or vertical
-        print("agent_x: ", agent_x, ", agent_y: ", agent_y)
+        # print("agent_x: ", agent_x, ", agent_y: ", agent_y)
         sensor_range = params.sensor_range
         fov_minx = agent_x - params.sensor_range
         fov_maxx = agent_x + params.sensor_range
         fov_miny = agent_y - params.sensor_range
         fov_maxy = agent_y + params.sensor_range
-        print("fov_maxx: ", fov_maxx)
-        print("fov_maxy: ", fov_maxy)
-        print("wall minx: ", self.x_min)
-        print("wall maxx: ", self.x_max)
-        print("wall miny: ", self.y_min)
-        print("wall maxy: ", self.y_max)
+        # print("fov_maxx: ", fov_maxx)
+        # print("fov_maxy: ", fov_maxy)
+        # print("wall minx: ", self.x_min)
+        # print("wall maxx: ", self.x_max)
+        # print("wall miny: ", self.y_min)
+        # print("wall maxy: ", self.y_max)
 
         xyreso = params.xyreso
         Vertices=[]
@@ -113,7 +113,6 @@ class Obstacle:
             #case: vertical
 
         else:           # wall is horizontal
-            print("horizontal")
             wall_y = self.y_min
             if abs(agent_y-wall_y)<sensor_range:
                 if self.x_min>fov_minx:

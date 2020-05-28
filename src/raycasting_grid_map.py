@@ -511,16 +511,6 @@ def generate_ray_casting_grid_map(obstacles,walls, params, agent_x=0.0, agent_y=
                     updated_gridlist.append(min_grid)
 
 
-
-
-        # print("visible_vertices", visible_vertices)
-       
-    # input()
-
-    
-
-
-
     return pmap, updated_gridlist, obsdict, obs_vertices, closest_vertices, minx, maxx, miny, maxy, xyreso, xw,yw
 
 #shoulde be written in terms of radian

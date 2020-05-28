@@ -17,6 +17,7 @@ class Search:
         else:
            # print("self.vertices", self.roadmap.vertices_dict[1])
            self.roadmap.vertices_dict[1]=goalpos
+           print("gaolpos", goalpos)
 
 
 
@@ -28,8 +29,8 @@ class Search:
         while not pq.isEmpty():
             temp = pq.pop()
 
-            # if [temp.x,temp.y] == self.roadmap.vertices_dict[1]:
-            if [temp.x,temp.y] == goalpos:
+            if [temp.x,temp.y] == self.roadmap.vertices_dict[1]:
+            # if [temp.x,temp.y] == goalpos:
                 final_path, final_path_idx = [list(reversed(item)) for item in self.get_final_path()]
                 return final_path, final_path_idx, self.g[1]
 
