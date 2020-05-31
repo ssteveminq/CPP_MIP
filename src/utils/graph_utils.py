@@ -8,6 +8,20 @@ def distance(pt1,pt2):
     '''Returns distance between two points.'''
     return ((pt1[0]-pt2[0])**2+(pt1[1]-pt2[1])**2)**0.5
 
+
+def transpose(l1, l2): 
+      
+    # iterate over list l1 to the length of an item  
+    for i in range(len(l1[0])): 
+        # print(i) 
+        row =[] 
+        for item in l1: 
+            # appending to new list with values and index positions 
+            # i contains index position and item contains values 
+            row.append(item[i]) 
+        l2.append(row) 
+    return l2 
+
 def line_intersection(line1, line2):
     '''Returns the point of intersection of two lines.'''
     xdiff = (line1[0][0] - line1[1][0], line2[0][0] - line2[1][0])

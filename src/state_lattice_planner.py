@@ -329,7 +329,7 @@ def biased_terminal_state_sampling_test2():
         plt.show()
 
 
-def lane_state_sampling_test1(cur_states, ax=None):
+def lane_state_sampling_test1(cur_states, params_global, ax=None):
     k0 = 0.0
 
     l_center = 1.0
@@ -357,6 +357,37 @@ def lane_state_sampling_test1(cur_states, ax=None):
     targetstates0 = calc_lane_states_linear(l_center, l_heading, l_width, v_width, d, nxy)
     targetstates = calc_lane_states(l_center, l_heading, l_width, v_width, d, nxy)
     targetstates2 = calc_lane_states( l_center2, l_heading, l_width, v_width, d, nxy)
+
+    for tstate in targetstates0:
+        Target_Outside=False
+
+        if tstate[0] > params_global.xmax or tstate[0] < params_global.xmin:
+            Target_Outside=True
+        if tstate[1] > params_global.ymax or tstate[1] < params_global.ymin:
+            Target_Outside=True
+        if Target_Outside:
+            targetstates0.remove(tstate)
+
+    for tstate in targetstates:
+        Target_Outside=False
+
+        if tstate[0] > params_global.xmax or tstate[0] < params_global.xmin:
+            Target_Outside=True
+        if tstate[1] > params_global.ymax or tstate[1] < params_global.ymin:
+            Target_Outside=True
+        if Target_Outside:
+            targetstates.remove(tstate)
+
+    for tstate in targetstates2:
+        Target_Outside=False
+
+        if tstate[0] > params_global.xmax or tstate[0] < params_global.xmin:
+            Target_Outside=True
+        if tstate[1] > params_global.ymax or tstate[1] < params_global.ymin:
+            Target_Outside=True
+        if Target_Outside:
+            targetstates2.remove(tstate)
+
     
     ''' plot target goals
     for tstates in targetstates0:

@@ -13,6 +13,7 @@ from raycasting_grid_map import generate_ray_casting_grid_map, calc_grid_map_con
 from state_lattice_planner import uniform_terminal_state_sampling_test1, lane_state_sampling_test1
 from utils.configuration_space import configuration_space
 from cubic_spline_planner import Spline2D 
+from utils.graph_utils import *
 from  VCD import VerticalCellDecomposition
 import pandas as pd
 import os
@@ -28,6 +29,7 @@ v_max=0.4
 #probability
 l_occ=np.log(0.85/0.15)
 l_free=np.log(0.15/0.85)
+horizon=20
 
 #pp control 
 k = 0.1  # look forward gain
@@ -76,23 +78,44 @@ def random_sampling(params, nums):
     #nums = the number of sample we need
 
     reso= (2*params.area_size)/(nums+1)
-    x = np.arange(-0.75*params.area_size, 0.75*params.area_size, reso)
+    x = np.arange(-0.9*params.area_size, 0.9*params.area_size, reso)
+    # print("x", x)
+    # input()
     # y = np.arange(params.area_size, 0.75*params.area_size, reso)
     sample_xy=[]
     for i in range(len(x)-1):
+        # print("i", i)
         temp_x= random.uniform(x[i],x[i+1])
-        temp_y= random.uniform(-0.8*params.area_size,0.8*params.area_size)
+        temp_y= random.uniform(-0.9*params.area_size,0.9*params.area_size)
         sample_xy.append([temp_x,temp_y])
         
     # print(sample_xy)
+    # input()
     return sample_xy
 
-# def get_col(arr, col):
-    # return map(lambda x : x[col], arr)
+def goal_sampling_VCD(waypoints, agent_x, agent_y, params_global):
+    #nums = the number of sample we need
+    dist_threshold = 2.0
+    agent_pos = [agent_x, agent_y]
+    goals = []
     
+    for waypoint in waypoints:
+        temppos=[0,0]
+        if distance(waypoint, agent_pos)> dist_threshold:
+            temppos[0]=waypoint[0]+random.uniform(-1.0,1.0)
+            temppos[1]=waypoint[1]+random.uniform(-1.0,1.0)
+            if temppos[0] > params_global.xmax or temppos[0] < params_global.xmin:
+                temppos[0]=waypoint[0]
+            if temppos[1] > params_global.ymax or temppos[1] < params_global.ymin:
+                temppos[1]=waypoint[1]
 
-def calc_IG_trjs(trj_candidates, emap, params_local, params_global, horizon=15):
-    print("TODO")
+            goals.append(temppos)
+
+    return goals
+
+
+def calc_IG_trjs(trj_candidates, emap, params_local, params_global, horizon=20):
+    # print("TODO")
     #Calculating Information gain on trajectories
     #1) calculating sampling point for time horizon 
     #2) calculating FOV region over sampling points 
@@ -102,16 +125,26 @@ def calc_IG_trjs(trj_candidates, emap, params_local, params_global, horizon=15):
     igs=[]
     for trj in trj_candidates:
         ig=0
-        print("len_trj", len(trj[0]))
+        travel=0
+        # print("len_trj", len(trj[0]))
+        # for i in range(horizon):
         for i in range(len(trj[0])):
             if i<horizon:
                 x=trj[0][i]
                 y=trj[1][i]
-                yaw=trj[2][i]
-                ig+= get_entropy_infov([x,y,yaw],emap,params_local, params_global)
+                # yaw=trj[2][i]
+                ig+= get_entropy_infov([x,y],emap,params_local, params_global)
 
-        print("ig", ig)
+        # print("ig", ig)
         igs.append(ig)
+    # print(igs)
+
+    sorted_ig = sorted(((v,i) for i, v in enumerate(igs)),reverse=True)
+    max_idx = sorted_ig[0][1]
+    print("best trj idx : ", max_idx)
+    print("best information gain : ", sorted_ig[0][0])
+    return trj_candidates[max_idx]
+    #find maximum
 
 
 def get_entropy_infov(state,entropy_map,params_local,params_global):
@@ -130,9 +163,10 @@ def get_entropy_infov(state,entropy_map,params_local,params_global):
             ix_global= math.floor((px-params_global.xmin)/params_global.xyreso)
             iy_global= math.floor((py-params_global.ymin)/params_global.xyreso)
             # print("(ix_global, iy_global): ",ix_global, " , ", iy_global)
-            entropy_sum+= entropy_map[ix_local][iy_local]
+            # entropy_sum+= entropy_map[ix_local][iy_local]
+            entropy_sum+= entropy_map[ix_global][iy_global]
 
-    print("entropy_sum", entropy_sum)
+    # print("entropy_sum", entropy_sum)
     return entropy_sum
 
 def generating_globaltrjs(cur_state, cspace, obstacles,goals, params_global):
@@ -170,7 +204,54 @@ def generating_globaltrjs(cur_state, cspace, obstacles,goals, params_global):
     return trjs
 
 
-def draw_occmap(data, params_map,agent_x, agent_y, ax):
+def trjs_to_sample(trjs, ax=None, num_points=60, showplot=True):
+    spline_trjs=[]
+    for i, sp in enumerate(trjs):
+        ds = 0.2                            # [m] distance of each intepolated points
+        s = np.arange(0, sp.s[-1], ds)
+        rx, ry, ryaw, rk = [], [], [], []
+        s_iter=0
+        for i_s in s:
+            ix, iy = sp.calc_position(i_s)
+            rx.append(ix)
+            ry.append(iy)
+
+        spline_trjs.append([rx, ry])
+
+    return spline_trjs
+
+
+
+def plot_global_trjs(trjs, ax=None):
+    # num_colors = len(gtrjs)
+    # cm =plt.get_cmap('gist_rainbow')
+    # for i, sp in enumerate(gtrjs):
+        # col = cm(1.*i/num_colors)
+        # ds = 0.2                    # [m] distance of each intepolated points
+        # s = np.arange(0, sp.s[-1], ds)
+        # rx, ry, ryaw, rk = [], [], [], []
+        # s_iter=0
+        # for i_s in s:
+            # ix, iy = sp.calc_position(i_s)
+            # rx.append(ix)
+            # ry.append(iy)
+    for trj in trjs:
+        if ax==None:
+            plt.plot(trj[0][1:70], trj[1][1:70], color='g', label="spline")
+            # plt.plot(trj[0], trj[1], color='g', label="spline")
+        else:
+            ax.plot(trj[0][1:70], trj[1][1:70], color='g', label="spline")
+            # ax.plot(trj[0], trj[1], color='g', label="spline")
+            # ax.plot(rx[1:80], ry[1:80], color='g', label="spline")
+
+def plot_best_trj(trj, ax=None):
+    if ax==None:
+        plt.plot(trj[0][1:60], trj[1][1:60], color='b',linewidth=2.5,  label="best-spline")
+    else:
+        ax.plot(trj[0][1:60], trj[1][1:60], color='b',linewidth=2.5,  label="best-spline")
+
+
+def draw_occmap(data, params_map,params_global, agent_x, agent_y, ax):
 
     minx=params_map.xmin
     miny=params_map.ymin
@@ -182,9 +263,27 @@ def draw_occmap(data, params_map,agent_x, agent_y, ax):
 
     x, y = np.mgrid[slice(minx - xyreso / 2.0, maxx + xyreso / 2.0, xyreso),
                     slice(miny - xyreso / 2.0, maxy + xyreso / 2.0, xyreso)]
-    # print("(x)", x)
-    # print("(y)", y)
-    ax.pcolor(x+agent_x, y+agent_y, data, vmax=1.0, cmap=plt.cm.Blues)
+    # print("len(x)", len(x))
+    # print("len(x[0])", len(x[0]))
+    # print("len(y)", len(y))
+    # x.reshape(41,41)
+    # y.reshape(41,41)
+    # print("len(y[0])", len(y[0]))
+    # print("x_shpe: ", x.shape)
+    # print("data size:", len(data))
+    # print("data size2:", len(data[0]))
+    # print("data shape:", data.shape)
+    # input()
+    # if x+agent_x 
+
+    # if px >= params_global.xmax or px <= params_global.xmin:
+        # continue
+    # if py >= params_global.ymax or py <= params_global.ymin:
+        # continue
+
+    # ax.pcolor(x+agent_x, y+agent_y, data, vmax=1.0, cmap=plt.cm.Blues)
+    # print("data", data)
+    ax.pcolormesh(x[:40,:40], y[:40,:40], data, vmax=1.0, cmap=plt.cm.Blues)
     # ax.pcolor(x, y, data, vmax=1.0, cmap=plt.cm.Blues)
     # ax.set_xlim([-params_map.sensor_range+agent_x, agent_x+params_map.sensor_range])   # limit the plot space
     # ax.set_ylim([agent_y-params_map.sensor_range, agent_y+params_map.sensor_range])   # limit the plot space
@@ -570,9 +669,9 @@ if __name__ == "__main__":
 
     #create cspace
     # init_pos = start_state
-    init_pos=[3.5,6]
+    init_pos=[3.0,4.0]
     print("init_pos", init_pos)
-    goal_pos=[-10.2, -8.5]
+    goal_pos=[5.2, -1.5]
     # cspace = configuration_space(args['in'])
     cspace=configuration_space()
     cspace.reset_environment(params_globalmap.boundaries,init_pos,goal_pos, obstacles)
@@ -582,64 +681,51 @@ if __name__ == "__main__":
     planner.region_disection(goal_pos)
     # planner.generate_waypoint(params_localmap)
     # planner.plot_regions()
-    # plt.show()
     # cspace.plot_config_space()
     # planner.construct_graph()
     # path, path_idx = planner.search(True, goal_pos)
-    # input()
 
 
-    #Define two windows: 
-    # axes[0] : robot, obstacle, waypoints, trajectory
-    # axes[1] : sensor_map,occ_grid
+    #Define four windows: 
+    # axes[0,0] : robot, obstacle, goal_points, 
+    # axes[1,0] : trajectories, region
+    # axes[0,1] : local sensor_map
+    # axes[1,1] : entropy_map
     fig,axes=plt.subplots(nrows=2,ncols=2,figsize=(40,40))
 
     waypoint_vcd = planner.generate_waypoint(params_localmap)
     planner.plot_regions(axes[1,0])
-
     #waypoint from vcd
     way_x=[]
     way_y=[]
-
     for point in waypoint_vcd:
         way_x.append(point[0])
         way_y.append(point[1])
         # print("waypoints : (x,y ) = (", way_x,", ", way_y,")")
 
     #plot figures 
-    # fig,axes=plt.figure(figsize=(10,20))
-    # axes[0,0].scatter(init_pos[0], init_pos[1], facecolor='blue',edgecolor='blue')      #initial point
+    axes[0,0].scatter(init_pos[0], init_pos[1], facecolor='blue',edgecolor='blue')      #initial point
     axes[0,0].plot(init_pos[0], init_pos[1], 'o', markersize = 20, fillstyle='none',color='black')             #trajectory point
     axes[1,0].plot(way_x, way_y, '*', markersize= 10, fillstyle='none',color='green')             #trajectory point
     # for i in range(len(waytimes)):
         # axes[0].text(way_x[i], way_y[i]-1,str(waytimes[i]), color='g')
 
     area_size=13
-    locs, labels = plt.xticks()
-    # locs, labels = plt.yticks()
-    #FixMe!
-    # axes[0].xticks(np.arange(-area_size,area_size,1.0))
-    # axes[0].yticks(np.arange(-area_size,area_size,1.0))
-    # ax = plt.axes()
-
     axes[0,0].set_xlabel('x')
     axes[0,0].set_ylabel('y')
     axes[0,0].set_xlim([-area_size, area_size])   # limit the plot space
     axes[0,0].set_ylim([-area_size, area_size])   # limit the plot space
     axes[0,0].grid(True)
-    # axes[0,0.tight_layout()
 
     #simulation settings
     goal_tol=0.2
-    goali = 0                           #define goal from waypoints set
-    goal = [way_x[goali], way_y[goali]]
-        
-    # plt.show()
+    # goali = 0                           #define goal from waypoints set
+    # goal = [way_x[goali], way_y[goali]]
+    goal =goal_pos                        #define goal from goal_pos(initial direction)
 
     # initial state = [x(m), y(m), yaw(rad), v(m/s), omega(rad/s)]
     state = np.array([init_pos[0],init_pos[1],0.0, 0.0])
-    state = np.array(start_state)
-    print("initial state: ",state)
+    # state = np.array(start_state)
     traj = state[:2]
     iter=0
     simtime=0.0
@@ -647,7 +733,6 @@ if __name__ == "__main__":
     #Checking initial and final goal
     print("initial state: ",state)
     print("goal : ",goal)
-    goal=[7,6]
 
     t_prev_goal = time.time()
     pmap_global = initialize_global_occ_grid_map(params_globalmap)
@@ -655,20 +740,56 @@ if __name__ == "__main__":
     print("initial entropy: ", initial_entropy )
 
     for _ in range(params.numiters):
-        state = simple_motion(state, goal, params)                        #dynamics
-        goal_dist = sqrt((goal[0] - state[0])**2+(goal[1] - state[1])**2) #distance to gaol
+        state = simple_motion(state, goal, params)                          #dynamics
+        goal_dist = distance(goal,state)                                    #distance to gaol
+        # goal_dist = sqrt((goal[0] - state[0])**2+(goal[1] - state[1])**2) #distance to gaol
         simtime = simtime + dt
-        # print("simtime" , simtime)
         t_current = time.time()
         if goal_dist < goal_tol:                                          # goal is reached
             print('Time from the previous reached goal:', t_current - t_prev_goal)
-            # if goali < len(goal_x) - 1:
-            if goali < len(way_x) - 1:
-                goali += 1
-            else:
-                break
+
+            #setting next goal  --> start finding best trajectories
+            axes[1,0].cla()
+            axes[1,0].set_title('global & Local motion primitives')
+            planner.plot_regions(axes[1,0])
+            # sample_goals = random_sampling(params,8)
+            # generate goal points from waypoints vcd
+            sample_goals = random_sampling(params,6)
+            sample_goals2 = goal_sampling_VCD(waypoint_vcd, state[0],state[1], params_globalmap)
+            sample_gols_total=[sample_goals,sample_goals2]
+            # generate global trjs to each sample goal
+            gtrjs= generating_globaltrjs(state, cspace,obstacles,sample_goals,params_globalmap)
+            sp_gtrjs = trjs_to_sample(gtrjs,axes[1,0])
+            plot_global_trjs(sp_gtrjs, axes[1,0])
+            #local trajectories
+            local_trjs = lane_state_sampling_test1(state,params_globalmap, axes[1,0])
+            trjs_candidate =[]
+            for gtrj in sp_gtrjs:
+                trjs_candidate.append(gtrj)
+            for ltrj in local_trjs:
+                trjs_candidate.append(ltrj)
+
+            # print("lenth gtrjs: ", len(sp_gtrjs), ", lenth ltrjs: ", len(local_trjs))
+            # print("lenth trjs: ", len(trjs_candidate))
+            best_trj = calc_IG_trjs(trjs_candidate, entropymap , params_localmap, params_globalmap)
+            plot_best_trj(best_trj, axes[1,0])
+
             t_prev_goal = time.time()
-            goal = [way_x[goali], way_y[goali]]
+            if len(best_trj[0])>horizon:
+                goal = [best_trj[0][horizon-1], best_trj[1][horizon-1]]
+            else:
+                goal = [best_trj[0][-1], best_trj[1][-1]]
+
+            if goal[0]> params_globalmap.xmax:
+                goal[0]=params_globalmap.xmax-0.5
+            elif goal[0]< params_globalmap.xmin:
+                goal[0]=params_globalmap.xmin+0.5
+            if goal[1]> params_globalmap.ymax:
+                goal[1]=params_globalmap.ymax-0.5
+            elif goal[1]< params_globalmap.ymin:
+                goal[1]=params_globalmap.ymin+0.5
+
+            axes[0,0].scatter(goal[0],goal[1], facecolor='red',edgecolor='red')
 
         #plot
         if params.animate:
@@ -676,7 +797,7 @@ if __name__ == "__main__":
             axes[0,0].cla()
             # plt.plot(goal[0], goal[1])
             # plot_map(init_pos[0], init_pos[1],way_x,way_y,waytimes)
-            axes[0,0].plot(goal[0], goal[1])
+            axes[0,0].scatter(goal[0], goal[1], facecolor='red',edgecolor='red')
             traj = np.vstack([traj, state[:2]])
             visualize(traj, state, obstacles, walls, params)
 
@@ -684,7 +805,7 @@ if __name__ == "__main__":
             axes[0,1].cla()
             axes[0,1].set_title('local sesnor grid')
             pmap_local, updated_grids, intersect_dic, obs_verticeid, closest_vertexid, params_localmap.xmin, params_localmap.xmax, params_localmap.ymin, params_localmap.ymax, params_localmap.xyreso, params_localmap.xw, params_localmap.yw= generate_ray_casting_grid_map(obstacles, walls, params_localmap, state[0],state[1], state[2])
-            draw_occmap(pmap_local, params_localmap, state[0],state[1], axes[0,1])
+            draw_occmap(pmap_local, params_localmap, params_globalmap, state[0],state[1], axes[0,1])
             #draw sensor ray to obstacles
             # for i in range(len(obstacles)):
                 # axes[0].plot([state[0], obstacles[i].vertices[obs_verticeid[i][0]][0]], [state[1], obstacles[i].vertices[obs_verticeid[i][0]][1]], color='orange')
@@ -695,7 +816,6 @@ if __name__ == "__main__":
                 # axes[0].plot(inter_point[0], inter_point[1], '*', markersize= 5, fillstyle='none',color='green')
 
             # axes[0,1.plot(ox, oy, "xr")
-
 
             #figure3- global occupancy grid
             axes[1,1].cla()
@@ -715,38 +835,42 @@ if __name__ == "__main__":
         #middle frequency
         # if iter%20==1:
             
-        if iter%30==1:
+        if iter==1:
             axes[1,0].cla()
             axes[1,0].set_title('global & Local motion primitives')
-            # uniform_terminal_state_sampling_test1(state,axes[4])
-            sample_goals = random_sampling(params,7)
-            gtrjs= generating_globaltrjs(state, cspace,obstacles,sample_goals,params_globalmap)
-            num_colors = len(gtrjs)
-            cm =plt.get_cmap('gist_rainbow')
-            for i, sp in enumerate(gtrjs):
-                col = cm(1.*i/num_colors)
-                ds = 0.2                    # [m] distance of each intepolated points
-                s = np.arange(0, sp.s[-1], ds)
-                rx, ry, ryaw, rk = [], [], [], []
-                s_iter=0
-                for i_s in s:
-                    ix, iy = sp.calc_position(i_s)
-                    rx.append(ix)
-                    ry.append(iy)
-
-                axes[1,0].plot(rx[1:100], ry[1:100], color='g', label="spline")
             planner.plot_regions(axes[1,0])
+            # sample_goals = random_sampling(params,8)
+            # generate goal points from waypoints vcd
+            sample_goals = goal_sampling_VCD(waypoint_vcd, state[0],state[1], params_globalmap)
+            # generate global trjs to each sample goal
+            gtrjs= generating_globaltrjs(state, cspace,obstacles,sample_goals,params_globalmap)
+            sp_gtrjs = trjs_to_sample(gtrjs,axes[1,0])
+            plot_global_trjs(sp_gtrjs, axes[1,0])
             #local trajectories
-            local_trjs = lane_state_sampling_test1(state,axes[1,0])
-            calc_IG_trjs(local_trjs, entropymap , params_localmap, params_globalmap)
+            local_trjs = lane_state_sampling_test1(state,params_globalmap, axes[1,0])
+            trjs_candidate =[]
+            for gtrj in sp_gtrjs:
+                trjs_candidate.append(gtrj)
+            for ltrj in local_trjs:
+                trjs_candidate.append(ltrj)
+
+            # print("lenth gtrjs: ", len(sp_gtrjs), ", lenth ltrjs: ", len(local_trjs))
+            # print("lenth trjs: ", len(trjs_candidate))
+            best_trj = calc_IG_trjs(trjs_candidate, entropymap , params_localmap, params_globalmap)
+            plot_best_trj(best_trj, axes[1,0])
+            if len(best_trj[0])>horizon:
+                goal = [best_trj[0][horizon-1], best_trj[1][horizon-1]]
+            else:
+                goal = [best_trj[0][-1], best_trj[1][-1]]
+
+            # goal = [best_trj[0][30], best_trj[1][30]]
+            axes[0,0].scatter(goal[0],goal[1], facecolor='red',edgecolor='red')
+            # goal = [best_trj[0][-1], best_trj[1][-1]]
 
             # calc_IG_trjs
             # uniform_terminal_state_sampling_test1(state,axes[1,0])
-
             # lane_state_sampling_test1(state,axes[1,0])
             # uniform_terminal_state_sampling_test1(state,axes[1,0])
-            # axes[1,0].set_xlim([-1.2*params.area_size, 1.2*params.area_size])   # limit the plot space
-            # axes[1,0].set_ylim([-1.2*params.area_size, 1.2*params.area_size])   # limit the plot space
             # planner.plot_regions(axes[1,0])
 
     plt.show()
