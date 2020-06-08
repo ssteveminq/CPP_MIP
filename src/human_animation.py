@@ -523,7 +523,7 @@ def collision_avoidance(human_state, gridmap, params):
 #Define two windows: 
 # axes[0] : robot, obstacle, waypoints, trajectory
 # axes[1] : sensor_map,occ_grid
-fig,axes=plt.subplots(nrows=3,ncols=1,figsize=(10,30))
+fig,axes=plt.subplots(nrows=3,ncols=1,figsize=(10,40))
 
 params = Params()
 human_params = humanParams()
@@ -669,6 +669,16 @@ flight_area_vertices = [ [-5.0, 5.0],
 gridmap = GridMap(flight_area_vertices, state[:2])
 # gridmap.add_obstacles_to_grid_map(obstacles)
 
+Region_Boundary =12.5
+walls=[]
+obs = Obstacle(-Region_Boundary, -Region_Boundary, -Region_Boundary, Region_Boundary,True)          
+walls.append(obs)                                   # attach obstacle to obstacle list
+obs = Obstacle(-Region_Boundary, Region_Boundary, -Region_Boundary, -Region_Boundary,True)         
+walls.append(obs)                                   # attach obstacle to obstacle list
+obs = Obstacle(-Region_Boundary, Region_Boundary, Region_Boundary, Region_Boundary,True)          
+walls.append(obs)                                   # attach obstacle to obstacle list
+obs = Obstacle(Region_Boundary, Region_Boundary, -Region_Boundary, Region_Boundary,True)          
+walls.append(obs)                                   # attach obstacle to obstacle list
 
 #main simulation
 # for i in range(ntimestep):
@@ -714,7 +724,8 @@ for _ in range(params.numiters):
 
         #figure2- local sensor window
         axes[1].cla()
-        pmap_local, updated_grids, intersect_dic, obs_verticeid, closest_vertexid, params_localmap.xmin, params_localmap.xmax, params_localmap.ymin, params_localmap.ymax, params_localmap.xyreso, params_localmap.xw, params_localmap.yw= generate_ray_casting_grid_map(obstacles, params_localmap, state[0],state[1], state[2])
+        # pmap_local, updated_grids, intersect_dic, obs_verticeid, closest_vertexid, params_localmap.xmin, params_localmap.xmax, params_localmap.ymin, params_localmap.ymax, params_localmap.xyreso, params_localmap.xw, params_localmap.yw= generate_ray_casting_grid_map(obstacles, params_localmap, state[0],state[1], state[2])
+        pmap_local, updated_grids, intersect_dic, obs_verticeid, closest_vertexid, params_localmap.xmin, params_localmap.xmax, params_localmap.ymin, params_localmap.ymax, params_localmap.xyreso, params_localmap.xw, params_localmap.yw= generate_ray_casting_grid_map(obstacles, walls, params_localmap, state[0],state[1], state[2])
         draw_occmap(pmap_local, params_localmap, state[0],state[1], axes[1])
         #draw sensor ray to obstacles
         for i in range(len(obstacles)):
