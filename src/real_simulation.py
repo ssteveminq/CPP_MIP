@@ -26,9 +26,6 @@ import matplotlib
 import matplotlib.animation as animation
 import matplotlib as mpl
 import ast
-# import map
-# wtf
-#import numpy as np
 #probability
 l_occ=np.log(0.9/0.1)
 l_free=np.log(0.1/0.9)
@@ -94,28 +91,19 @@ class Params:
         self.speed_cost_gain = 1.0
         self.robot_radius = 1.0  # [m]
 
-
         # self.time_to_switch_goal = 5.0 # sec #inactive for now
-        # self.sweep_resolution = 0.4 # m
-
 
 def random_sampling(params, nums):
     #nums = the number of sample we need
 
     reso= (2*params.area_size)/(nums+1)
     x = np.arange(-0.9*params.area_size, 0.9*params.area_size, reso)
-    # print("x", x)
-    # input()
-    # y = np.arange(params.area_size, 0.75*params.area_size, reso)
     sample_xy=[]
     for i in range(len(x)-1):
         # print("i", i)
         temp_x= random.uniform(x[i],x[i+1])
         temp_y= random.uniform(-0.9*params.area_size,0.9*params.area_size)
         sample_xy.append([temp_x,temp_y])
-        
-    # print(sample_xy)
-    # input()
     return sample_xy
 
 def goal_sampling_VCD(waypoints, agent_x, agent_y, params_global):
@@ -180,7 +168,6 @@ def calc_IG_trjs(trj_candidates, emap, params_local, params_global,params,  hori
         # print("ig: ", ig)
         # print("travel:" , travel)
         cost = params. weight_entropy*ig-w_t*travel
-        # print("ig", ig)
         igs.append(cost)
     # print(igs)
     sorted_ig = sorted(((v,i) for i, v in enumerate(igs)),reverse=True)
