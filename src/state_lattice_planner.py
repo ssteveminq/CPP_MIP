@@ -13,6 +13,7 @@ import math
 import pandas as pd
 import model_predictive_trajectory_generator as planner
 import motion_model
+from obstacle import Obstacle
 
 table_path = "./lookuptables.csv"
 
@@ -50,23 +51,23 @@ def generate_path(cur_states, target_states, k0):
     for state in target_states:
         bestp = search_nearest_one_from_lookuptable(
             state[0], state[1], state[2], lookup_table)
-        print("bestp", bestp)
+        # print("bestp", bestp)
 
         target = motion_model.State(x=state[0], y=state[1], yaw=state[2])
         init_p = np.matrix(
             [math.sqrt((state[0]) ** 2 + (state[1]) ** 2), bestp[4], bestp[5]]).T
         if init_p[0]>50:
             print("cur states: ", cur_states)
-            print("target states: ", state)
+            # print("target states: ", state)
 
         x, y, yaw, p = planner.optimize_trajectory(cur_states, target, k0, init_p)
 
         if x is not None:
-            print("find good path")
+            # print("find good path")
             result.append(
                 [x[-1], y[-1],yaw[-1], float(p[0]), float(p[1]), float(p[2])])
 
-    print("finish path generation")
+    # print("finish path generation")
     return result
 
 
@@ -329,9 +330,8 @@ def biased_terminal_state_sampling_test2():
         plt.show()
 
 
-def lane_state_sampling_test1(cur_states, params_global, ax=None):
+def lane_state_sampling_test1(cur_states, obstacles, params_global, ax=None):
     k0 = 0.0
-
     l_center = 1.0
     l_center2 = -1.0
     l_center3 = 1.0
@@ -352,7 +352,7 @@ def lane_state_sampling_test1(cur_states, params_global, ax=None):
     v_width = 0.0
     d = 4.0
     d2 = 3.5
-    nxy = 3
+    nxy = 2
 
     targetstates0 = calc_lane_states_linear(l_center, l_heading, l_width, v_width, d, nxy)
     targetstates = calc_lane_states(l_center, l_heading, l_width, v_width, d, nxy)
@@ -388,7 +388,6 @@ def lane_state_sampling_test1(cur_states, params_global, ax=None):
         if Target_Outside:
             targetstates2.remove(tstate)
 
-    
     ''' plot target goals
     for tstates in targetstates0:
         if ax==None:
@@ -407,7 +406,7 @@ def lane_state_sampling_test1(cur_states, params_global, ax=None):
             plt.scatter(tstates[0], tstates[1], facecolor='blue',edgecolor='blue')      #final point
     '''
     
-    cur_states_mod=[0,0,np.pi/6,0]
+    cur_states_mod=[0,0,np.pi/4,0]
     # cur_states_mod=[0,0,0.0,0]
     result0 = generate_path(cur_states_mod,targetstates0, k0)
     result = generate_path(cur_states_mod,targetstates, k0)
@@ -416,6 +415,10 @@ def lane_state_sampling_test1(cur_states, params_global, ax=None):
     # result4 = generate_path(cur_states,targetstates4, k0)
 
     # print("cur_states[0]", cur_states[0])
+    # results =[result0, result, result2]
+    # print("results", results)
+    # input()
+    
     trjs=[]
 
     for table in result0:
@@ -431,14 +434,30 @@ def lane_state_sampling_test1(cur_states, params_global, ax=None):
             if cur_states[2]>np.pi:
                 yc[j]=-yc[j]
             yc[j]+=cur_states[1]
-        trjs.append([xc, yc, yawc])
 
-        if show_animation:
-            if ax==None:
-                plt.plot(xc, yc, "-r")
-            else:
-                ax.plot(xc, yc, "-r")
+        #checking obstacles
+        obstacle_free=True
+        last_x = xc[-1]
+        last_y = yc[-1]
+        for obs in obstacles:
+            if obs.check_point_obstaclefree(last_x, last_y)==False:
+                obstacle_free=False
 
+        #checking global boundary
+        margin=1.0
+        if params_global.xmin+margin >last_x or params_global.xmax-margin <last_x:
+            obstacle_free=False
+        if params_global.ymin+margin >last_y or params_global.ymax-margin <last_y:
+            obstacle_free=False
+
+        if obstacle_free:
+            trjs.append([xc, yc, yawc])
+
+        # if show_animation:
+            # if ax==None:
+                # plt.plot(xc, yc, "-r")
+            # else:
+                # ax.plot(xc, yc, "-r")
 
     for table in result:
         xc, yc, yawc = motion_model.generate_trajectory(cur_states_mod,
@@ -452,13 +471,34 @@ def lane_state_sampling_test1(cur_states, params_global, ax=None):
             if cur_states[2]>np.pi:
                 yc[j]=-yc[j]
             yc[j]+=cur_states[1]
-        trjs.append([xc, yc, yawc])
 
-        if show_animation:
-            if ax==None:
-                plt.plot(xc, yc, "-r")
-            else:
-                ax.plot(xc, yc, "-r")
+        #checking obstacles
+        obstacle_free=True
+        last_x = xc[-1]
+        last_y = yc[-1]
+        for obs in obstacles:
+            if obs.check_point_obstaclefree(last_x, last_y)==False:
+                obstacle_free=False
+
+        #checking global boundary
+        margin=1.0
+        if params_global.xmin+margin >last_x or params_global.xmax-margin <last_x:
+            obstacle_free=False
+        if params_global.ymin+margin >last_y or params_global.ymax-margin <last_y:
+            obstacle_free=False
+
+        if obstacle_free:
+            trjs.append([xc, yc, yawc])
+
+
+
+
+
+        # if show_animation:
+            # if ax==None:
+                # plt.plot(xc, yc, "-r")
+            # else:
+                # ax.plot(xc, yc, "-r")
 
     for table in result2:
         xc, yc, yawc = motion_model.generate_trajectory(cur_states_mod,
@@ -473,17 +513,134 @@ def lane_state_sampling_test1(cur_states, params_global, ax=None):
                 yc[j]=-yc[j]
                 
             yc[j]+=cur_states[1]
-        trjs.append([xc, yc, yawc])
 
+        #checking obstacles
+        obstacle_free=True
+        last_x = xc[-1]
+        last_y = yc[-1]
+        for obs in obstacles:
+            if obs.check_point_obstaclefree(last_x, last_y)==False:
+                obstacle_free=False
 
-        if show_animation:
+        #checking global boundary
+        margin=1.0
+        if params_global.xmin+margin >last_x or params_global.xmax-margin <last_x:
+            obstacle_free=False
+        if params_global.ymin+margin >last_y or params_global.ymax-margin <last_y:
+            obstacle_free=False
+
+        if obstacle_free:
+            trjs.append([xc, yc, yawc])
+
+        # if show_animation:
+            # if ax==None:
+                # plt.plot(xc, yc, "-r")
+            # else:
+                # ax.plot(xc, yc, "-r")
+
+    # Rot1 = np.matrix([[math.cos(yaw), math.sin(yaw)],
+                      # [-math.sin(yaw), math.cos(yaw)]])
+    yaw=np.pi/3
+    Rot1 = np.array([[math.cos(yaw), -math.sin(yaw)],
+                      [math.sin(yaw), math.cos(yaw)]])
+    Rot2 = np.array([[math.cos(-yaw), -math.sin(-yaw)],
+                      [math.sin(-yaw), math.cos(-yaw)]])
+
+    #reconstructing trjaectories
+    totaltrjs=[]
+    newtrjs=[]
+    for trj in trjs:
+        y_temps=[]
+        x_temps=[]
+        xtemp_rots = []
+        ytemp_rots = []
+        
+        for i in range(len(trj[1])):
+            ytemp=-(1*trj[1][i]-cur_states[1])+cur_states[1]
+            xtemp=-(1*trj[0][i]-cur_states[0])+cur_states[0]
+            y_temps.append(ytemp)
+            x_temps.append(xtemp)
+            # xtemp_rot = trj[0][i]
+            # ytemp_rot = trj[1][i]
+            xtemp_rot = trj[0][i]-cur_states[0]
+            ytemp_rot = trj[1][i]-cur_states[1]
+            xtemp_rots.append(xtemp_rot)
+            ytemp_rots.append(ytemp_rot)
+
+        b = [xtemp_rots, ytemp_rots]
+        c = [xtemp_rots, ytemp_rots]
+        b = np.dot(Rot1, b)
+        c = np.dot(Rot2, c)
+        # d = np.zeros([2,len(xtemp_rots)])
+        dx = []
+        dy = []
+        ex = []
+        ey = []
+        for i in range(len(c[0])):
+            b[0][i]= b[0][i]+cur_states[0]
+            b[1][i]= b[1][i]+cur_states[1]
+            c[0][i]= c[0][i]+cur_states[0]
+            c[1][i]= c[1][i]+cur_states[1]
+            dx.append(b[0][i])
+            dy.append(b[1][i])
+            ex.append(c[0][i])
+            ey.append(c[1][i])
+
+        # print("c", c)
+        # print("c[0]", c[0])
+        # print("c[1]", c[1])
+        newtrj=[trj[0], y_temps, trj[2]]
+        newtrj2=[x_temps, trj[1], trj[2]]
+        newtrj3=[x_temps, y_temps, trj[2]]
+        rottrjs=[dx, dy,trj[2]]
+        rottrjs2=[ex, ey,trj[2]]
+
+        newtrjs.append(newtrj)
+        newtrjs.append(newtrj2)
+        newtrjs.append(newtrj3)
+        newtrjs.append(rottrjs)
+        newtrjs.append(rottrjs2)
+        totaltrjs.append(trj)
+
+    for trj in newtrjs:
+        #check_trajectories_with_obstalces()
+        #checking obstacles
+        obstacle_free=True
+        last_x = trj[0][-1]
+        last_y = trj[1][-1]
+        for obs in obstacles:
+            if obs.check_point_obstaclefree(last_x, last_y)==False:
+                obstacle_free=False
+
+        #checking global boundary
+        margin=1.0
+        if params_global.xmin+margin >last_x or params_global.xmax-margin <last_x:
+            obstacle_free=False
+        if params_global.ymin+margin >last_y or params_global.ymax-margin <last_y:
+            obstacle_free=False
+
+        if obstacle_free:
+            totaltrjs.append(trj)
+
+        # totaltrjs.append(trj)
+
+    if show_animation:
+        for trj in totaltrjs:
             if ax==None:
-                plt.plot(xc, yc, "-r")
+                plt.plot(trj[0], trj[1], "-r")
             else:
-                ax.plot(xc, yc, "-r")
+                ax.plot(trj[0], trj[1], "-r")
+                # ax.scatter(trj[0][-1],trj[1][-1], facecolor='blue',edgecolor='blue')
 
-    # print(trjs)
-    return trjs
+
+
+
+    # trjs=[newtrjs, trjs]
+
+    # print("--------------------------------")
+    # print("trj length", len(totaltrjs))
+    # input()
+    return totaltrjs
 
     '''
 

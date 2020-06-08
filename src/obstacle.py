@@ -20,6 +20,17 @@ class Obstacle:
                 print("wall is neither horizontal nor vertical")
                 self.isVertical = False
 
+    def check_point_obstaclefree(self, point_x, point_y):
+        margin=1.0
+        # return True if obstacle is free
+        # print("point_x:", point_x, "point_y: ", point_y)
+        # point_x = point2d[0]
+        # point_y = point2d[1]
+        if (self.x_min-margin< point_x) and (self.x_max+margin > point_x):
+            if (self.y_min-margin< point_y) and (self.y_max+margin) > point_y:
+                return False
+        return True
+
 
 
     def generate_vertices(self):

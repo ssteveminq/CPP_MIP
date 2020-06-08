@@ -1,5 +1,6 @@
 # !/usr/bin/env python3
 import argparse
+import pandas as pd
 from numpy import genfromtxt
 import numpy as np
 from math import *
@@ -14,34 +15,43 @@ from state_lattice_planner import uniform_terminal_state_sampling_test1, lane_st
 from utils.configuration_space import configuration_space
 from cubic_spline_planner import Spline2D 
 from utils.graph_utils import *
+from utils.dynamic_window_approach import *
 from  VCD import VerticalCellDecomposition
 import pandas as pd
 import os
 import re
 import time
 from matplotlib.patches import Polygon, Rectangle, Circle
+import matplotlib
+import matplotlib.animation as animation
 import matplotlib as mpl
 import ast
 # import map
+# wtf
 #import numpy as np
-f_max=0.3
-v_max=0.4
 #probability
-l_occ=np.log(0.85/0.15)
-l_free=np.log(0.15/0.85)
+l_occ=np.log(0.9/0.1)
+l_free=np.log(0.1/0.9)
 horizon=20
+boolsaved = False
 
 #pp control 
+#test
 k = 0.1  # look forward gain
 Lfc = 1.0  # look-ahead distance
 Kp = 1.0  # speed propotional gain
-Kv = 0.15  # speed propotional gain
-ktheta = 0.5
+Kv = 0.1  # speed propotional gain
+ktheta = 0.9
 dt = 0.2  # [s]
 L = 1.0  # [m] wheel base of vehicle
 AlphabetSet=['a','b','c','d','e','f','g','h','i','j','k','l','m', 
                 'n','o','p','q','r']
 Region_Boundary =12.5
+t = time.localtime()
+dir_path = os.path.dirname(os.path.realpath(__file__))
+dir_path=dir_path[:-4]
+timestamp =time.strftime('%m%d%H%M_', t)
+file_name =dir_path+"/results/entropy/entropy_" +timestamp+".csv"
 
 class map_params:
     def __init__(self):
@@ -65,11 +75,26 @@ class Params:
         self.numiters = 4000
         self.dt = 0.2
         self.goal_tol = 0.25
-        self.max_vel = 0.25 # m/s
+        self.weight_entropy = 0.02
+        self.max_vel = 0.5 # m/s
         self.min_vel = 0.0 # m/s
         self.sensor_range_m = 0.5 # m
         self.animate = 1
         self.area_size=13
+        #dwa parameters
+        self.max_yawrate = 45.0 * math.pi / 180.0  # [rad/s]
+        self.max_accel = 0.3  # [m/ss]
+        self.max_dyawrate = 45.0 * math.pi / 180.0  # [rad/ss]
+        self.v_reso = 0.02  # [m/s]
+        self.yawrate_reso = 0.1 * math.pi / 180.0  # [rad/s]
+        self.max_speed = 0.8  # [m/s]
+        self.min_speed = 0.0  # [m/s]
+        self.predict_time = 2.0  # [s]
+        self.to_goal_cost_gain = 1.0
+        self.speed_cost_gain = 1.0
+        self.robot_radius = 1.0  # [m]
+
+
         # self.time_to_switch_goal = 5.0 # sec #inactive for now
         # self.sweep_resolution = 0.4 # m
 
@@ -113,8 +138,7 @@ def goal_sampling_VCD(waypoints, agent_x, agent_y, params_global):
 
     return goals
 
-
-def calc_IG_trjs(trj_candidates, emap, params_local, params_global, horizon=20):
+def calc_IG_trjs(trj_candidates, emap, params_local, params_global,params,  horizon=25):
     # print("TODO")
     #Calculating Information gain on trajectories
     #1) calculating sampling point for time horizon 
@@ -129,20 +153,40 @@ def calc_IG_trjs(trj_candidates, emap, params_local, params_global, horizon=20):
         # print("len_trj", len(trj[0]))
         # for i in range(horizon):
         for i in range(len(trj[0])):
-            if i<horizon:
+            if horizon>0:
+                if i<horizon:
+                    w_t=1.0
+                    x=trj[0][i]
+                    y=trj[1][i]
+                    # yaw=trj[2][i]
+                    ig+= get_entropy_infov([x,y],emap,params_local, params_global)
+                    if i>0:
+                        dx = trj[0][i]-trj[0][i-1]
+                        dy = trj[0][i]-trj[0][i-1]
+                        travel+=(dx**2+dy**2)**0.5
+                    
+            else:                     #the infinite horizon case
                 x=trj[0][i]
                 y=trj[1][i]
                 # yaw=trj[2][i]
                 ig+= get_entropy_infov([x,y],emap,params_local, params_global)
+                w_t=0.2
+                if i>0:
+                    dx = trj[0][i]-trj[0][i-1]
+                    dy = trj[0][i]-trj[0][i-1]
+                    travel+=(dx**2+dy**2)**0.5
 
+
+        # print("ig: ", ig)
+        # print("travel:" , travel)
+        cost = params. weight_entropy*ig-w_t*travel
         # print("ig", ig)
-        igs.append(ig)
+        igs.append(cost)
     # print(igs)
-
     sorted_ig = sorted(((v,i) for i, v in enumerate(igs)),reverse=True)
     max_idx = sorted_ig[0][1]
-    print("best trj idx : ", max_idx)
-    print("best information gain : ", sorted_ig[0][0])
+    # print("best trj idx : ", max_idx)
+    # print("best information gain : ", sorted_ig[0][0])
     return trj_candidates[max_idx]
     #find maximum
 
@@ -155,9 +199,10 @@ def get_entropy_infov(state,entropy_map,params_local,params_global):
         for iy_local in range(yw-1):
             px = minx+ix_local*params_local.xyreso
             py = miny+iy_local*params_local.xyreso
-            if px > params_global.xmax or px < params_global.xmin:
+            # print("px: ", px, "py: ", py)
+            if px >= params_global.xmax or px <= params_global.xmin:
                 continue
-            if py > params_global.ymax or py < params_global.ymin:
+            if py >= params_global.ymax or py <= params_global.ymin:
                 continue
 
             ix_global= math.floor((px-params_global.xmin)/params_global.xyreso)
@@ -188,9 +233,6 @@ def generating_globaltrjs(cur_state, cspace, obstacles,goals, params_global):
                 # ys.append(y_c)
             sp=Spline2D(xs,ys)
             trjs.append(sp)
-
-    print("num_trjs", len(trjs))
-
         #plot spline
         # ds = 0.2  # [m] distance of each intepolated points
         # s = np.arange(0, sp.s[-1], ds)
@@ -237,18 +279,25 @@ def plot_global_trjs(trjs, ax=None):
             # ry.append(iy)
     for trj in trjs:
         if ax==None:
-            plt.plot(trj[0][1:70], trj[1][1:70], color='g', label="spline")
-            # plt.plot(trj[0], trj[1], color='g', label="spline")
+            # plt.plot(trj[0][1:70], trj[1][1:70], color='g', label="spline")
+            plt.plot(trj[0], trj[1], color='g', label="spline")
         else:
-            ax.plot(trj[0][1:70], trj[1][1:70], color='g', label="spline")
-            # ax.plot(trj[0], trj[1], color='g', label="spline")
+            # ax.plot(trj[0][1:70], trj[1][1:70], color='g', label="spline")
+            ax.plot(trj[0], trj[1], color='g', label="spline")
             # ax.plot(rx[1:80], ry[1:80], color='g', label="spline")
 
-def plot_best_trj(trj, ax=None):
+def plot_best_trj(trj, horizon,ax=None):
     if ax==None:
-        plt.plot(trj[0][1:60], trj[1][1:60], color='b',linewidth=2.5,  label="best-spline")
+        if horizon>0:
+            plt.plot(trj[0][1:horizon], trj[1][1:horizon], color='b',linewidth=2.5,  label="best-spline")
+        else:
+            plt.plot(trj[0], trj[1], color='b',linewidth=2.5,  label="best-spline")
     else:
-        ax.plot(trj[0][1:60], trj[1][1:60], color='b',linewidth=2.5,  label="best-spline")
+        if horizon>0:
+            ax.plot(trj[0][1:horizon], trj[1][1:horizon], color='b',linewidth=2.5,  label="best-spline")
+        else:
+            ax.plot(trj[0], trj[1], color='b',linewidth=2.5,  label="best-spline")
+
 
 
 def draw_occmap(data, params_map,params_global, agent_x, agent_y, ax):
@@ -481,8 +530,8 @@ def visualize(traj, pose, obstacles, walls, params):
     plot_robot(pose, params)
     plot_obstacles(obstacles,walls)
 
-    axes[0,0].set_xlim([-params.area_size, params.area_size])   # limit the plot space
-    axes[0,0].set_ylim([-params.area_size, params.area_size])   # limit the plot space
+    axes[0,0].set_xlim([-(params.area_size+1), (params.area_size+1)])   # limit the plot space
+    axes[0,0].set_ylim([-(params.area_size+1), (params.area_size+1)])   # limit the plot space
     axes[0,0].plot(traj[:,0], traj[:,1], 'k')
     # plt.legend()
 
@@ -527,32 +576,45 @@ def Update_phi(state, goal):
     des_phi = atan_zero_to_twopi(goal[1] - state[1], goal[0] - state[0])
     cur_yaw = state[2]
     # print("des_phi:, ", des_phi, "cur_yaw: ", state[2] )
-    err_phi = 0.5*(des_phi-cur_yaw)
+    err_phi = 0.7*math.sin(des_phi-cur_yaw)
     # err_phi = des_phi
 
     return err_phi
 
 #dyanmics
-def motion(state, goal, params):
-    # state = [x(m), y(m), yaw(rad), v(m/s), omega(rad/s)]
-    dx = goal[0] - state[0]
-    dy = goal[1] - state[1]
-    goal_yaw = atan2(dy, dx)
-    K_theta = 2.0
-    state[4] = K_theta*math.sin(goal_yaw - state[2]) # omega(rad/s)
-    state[2] += params.dt*state[4] # yaw(rad)
+def motion_dwa(state, inputs, goal, obpoints, walls, params):
+    # state = [x(m), y(m), yaw(rad) ,velocity(m/s), angular velocity ]
+    # input = [a(m/s**2), steering(rad) ]
+    # a =Update_a(state,goal)
+    # delta = Update_phi(state,goal)
+    # print("before-state", state)
+    # print("before-input", inputs)
 
-    dist_to_goal = np.linalg.norm(goal - state[:2])
-    K_v = 0.1
-    state[3] += K_v*dist_to_goal
-    if state[3] >= params.max_vel: state[3] = params.max_vel
-    if state[3] <= params.min_vel: state[3] = params.min_vel
+    u, ltraj = dwa_control(state, inputs, goal, obpoints, params)
 
-    dv = params.dt*state[3]
-    state[0] += dv*np.cos(state[2]) # x(m)
-    state[1] += dv*np.sin(state[2]) # y(m)
+    state[0] += u[0] * math.cos(state[2]) * params.dt
+    state[1] += u[0] * math.sin(state[2]) * params.dt
+    state[2] += u[1] * params.dt
+    state[3] = u[0]   #velocity
+    state[4] = u[1]   #angular velocity
 
-    return state
+    # print("delta:", delta)
+    # print("pre-state[2]:", state[2])
+    # print("goal:", goal)
+    # state[2] +=  math.sin(delta) * dt
+
+    # print("post-state[2]:", state[2])
+
+    if state[3] >= params.max_speed: state[3] = params.max_speed
+    if state[3] <= params.min_speed: state[3] = params.min_speed
+
+    if state[2] >= 2*math.pi: state[2] -= 2*math.pi
+    if state[2] <= -2*math.pi: state[2] += 2*math.pi
+
+
+    # print("after-state", state)
+    # print("after-input", u)
+    return state, u
 
 
 def read_inputfile(FILE_NAME="input2.txt"):
@@ -627,16 +689,40 @@ def read_inputfile(FILE_NAME="input2.txt"):
 
 
 if __name__ == "__main__":
+
+    # dir_path = os.path.dirname(os.path.realpath(__file__))
+    # dir_path=dir_path[:-4]
     parser = argparse.ArgumentParser()
     parser.add_argument("-in",help="input file (default: input2.txt)",default="input2.txt")
     parser.add_argument("-load",help="load saved data? [y/n] (default: n)",default="n")
     args = vars(parser.parse_args())
+
 
     params = Params()
     params_globalmap =  map_params()
     params_localmap =  map_params()
 
     start_state, init_pos, obstacles, walls = read_inputfile(args['in'])
+    # create obpoints
+    obpoints=[]
+    xyressol = 0.5
+    for obs in obstacles:
+        num_x = int(round((obs.x_max-obs.x_min)/(2*params_globalmap.xyreso)))+1
+        num_y = int(round((obs.y_max-obs.y_min)/(2*params_globalmap.xyreso)))+1
+        # print("num_x", num_x)
+        # print("num_y", num_y)
+        # input()
+        for i in range(num_x):
+            for j in range(num_y):
+                obspoint_x = obs.x_min+i*2*params_globalmap.xyreso
+                obspoint_y = obs.y_min+j*2*params_globalmap.xyreso
+                obpoints.append([obspoint_x, obspoint_y])
+    # print("obspoints:", obpoints)
+
+
+    # Writer = animation.writers['ffmpeg']
+    # writer = Writer(fps=20, metadata=dict(artist='Me'), bitrate=1800)
+    # writer = Writer(fps=20, metadata=dict(artist='Me'), bitrate=1800)
 
 
     '''
@@ -656,22 +742,11 @@ if __name__ == "__main__":
         print("---load completed")
     '''
 
-    #Create wall - Rectangular Search region
-    # walls=[]
-    # obs = Obstacle(-Region_Boundary, -Region_Boundary, -Region_Boundary, Region_Boundary,True)          
-    # walls.append(obs)                                   # attach obstacle to obstacle list
-    # obs = Obstacle(-Region_Boundary, Region_Boundary, -Region_Boundary, -Region_Boundary,True)         
-    # walls.append(obs)                                   # attach obstacle to obstacle list
-    # obs = Obstacle(-Region_Boundary, Region_Boundary, Region_Boundary, Region_Boundary,True)          
-    # walls.append(obs)                                   # attach obstacle to obstacle list
-    # obs = Obstacle(Region_Boundary, Region_Boundary, -Region_Boundary, Region_Boundary,True)          
-    # walls.append(obs)                                   # attach obstacle to obstacle list
-
     #create cspace
     # init_pos = start_state
-    init_pos=[3.0,4.0]
+    # init_pos=[3.0,4.0]
     print("init_pos", init_pos)
-    goal_pos=[5.2, -1.5]
+    goal_pos=[8.5, -2.0]
     # cspace = configuration_space(args['in'])
     cspace=configuration_space()
     cspace.reset_environment(params_globalmap.boundaries,init_pos,goal_pos, obstacles)
@@ -718,17 +793,25 @@ if __name__ == "__main__":
     axes[0,0].grid(True)
 
     #simulation settings
-    goal_tol=0.2
+    goal_tol=0.3
     # goali = 0                           #define goal from waypoints set
     # goal = [way_x[goali], way_y[goali]]
     goal =goal_pos                        #define goal from goal_pos(initial direction)
 
     # initial state = [x(m), y(m), yaw(rad), v(m/s), omega(rad/s)]
-    state = np.array([init_pos[0],init_pos[1],0.0, 0.0])
+    state = np.array([init_pos[0],init_pos[1],0.0, 0.0,0.0])
     # state = np.array(start_state)
     traj = state[:2]
     iter=0
     simtime=0.0
+    times =[]
+    entropys=[]
+    pos_xs=[]
+    pos_ys=[]
+    yaws=[]
+    velocities=[]
+    goal_xs=[]
+    goal_ys=[]
 
     #Checking initial and final goal
     print("initial state: ",state)
@@ -738,13 +821,23 @@ if __name__ == "__main__":
     pmap_global = initialize_global_occ_grid_map(params_globalmap)
     initial_entropy = get_map_entropy(pmap_global,params_globalmap)
     print("initial entropy: ", initial_entropy )
+    inputs= np.array([0.0, 0.0])
 
     for _ in range(params.numiters):
-        state = simple_motion(state, goal, params)                          #dynamics
+        state, inputs = motion_dwa(state, inputs, goal, obpoints, walls, params)
+        # state = simple_motion(state, goal, params)                          #dynamics
         goal_dist = distance(goal,state)                                    #distance to gaol
         # goal_dist = sqrt((goal[0] - state[0])**2+(goal[1] - state[1])**2) #distance to gaol
         simtime = simtime + dt
+        times.append(simtime)
         t_current = time.time()
+        pos_xs.append(state[0])
+        pos_ys.append(state[1])
+        yaws.append(state[2])
+        velocities.append(state[3])
+        if iter>0:
+            goal_xs.append(goal[0])
+            goal_ys.append(goal[1])
         if goal_dist < goal_tol:                                          # goal is reached
             print('Time from the previous reached goal:', t_current - t_prev_goal)
 
@@ -762,7 +855,7 @@ if __name__ == "__main__":
             sp_gtrjs = trjs_to_sample(gtrjs,axes[1,0])
             plot_global_trjs(sp_gtrjs, axes[1,0])
             #local trajectories
-            local_trjs = lane_state_sampling_test1(state,params_globalmap, axes[1,0])
+            local_trjs = lane_state_sampling_test1(state,obstacles, params_globalmap, axes[1,0])
             trjs_candidate =[]
             for gtrj in sp_gtrjs:
                 trjs_candidate.append(gtrj)
@@ -771,11 +864,11 @@ if __name__ == "__main__":
 
             # print("lenth gtrjs: ", len(sp_gtrjs), ", lenth ltrjs: ", len(local_trjs))
             # print("lenth trjs: ", len(trjs_candidate))
-            best_trj = calc_IG_trjs(trjs_candidate, entropymap , params_localmap, params_globalmap)
-            plot_best_trj(best_trj, axes[1,0])
+            best_trj = calc_IG_trjs(trjs_candidate, entropymap , params_localmap, params_globalmap, params,horizon )
+            plot_best_trj(best_trj, horizon,axes[1,0])
 
             t_prev_goal = time.time()
-            if len(best_trj[0])>horizon:
+            if len(best_trj[0])>horizon and horizon>0:
                 goal = [best_trj[0][horizon-1], best_trj[1][horizon-1]]
             else:
                 goal = [best_trj[0][-1], best_trj[1][-1]]
@@ -789,7 +882,6 @@ if __name__ == "__main__":
             elif goal[1]< params_globalmap.ymin:
                 goal[1]=params_globalmap.ymin+0.5
 
-            axes[0,0].scatter(goal[0],goal[1], facecolor='red',edgecolor='red')
 
         #plot
         if params.animate:
@@ -824,18 +916,22 @@ if __name__ == "__main__":
             entropymap = get_global_entropymap(pmap_global,params_globalmap)
             # draw_occmap_global(pmap_global,params_globalmap, axes[1,1])
             draw_entropymap_global(pmap_global,params_globalmap, axes[1,1])
-            entropy = get_map_entropy(pmap_global, params_globalmap)
+            curentropy = get_map_entropy(pmap_global, params_globalmap)
+            entropys.append(curentropy)
+            # entropy_log[simtime]=curentropy
+            # print(entropy_log)
             # print("----entropy : ", entropy)
+
 
             plt.pause(0.001)
             # plt.show()
 
-        iter=iter+1
+        iter+=1
 
         #middle frequency
         # if iter%20==1:
             
-        if iter==1:
+        if iter==1: #FixMe: it was 1
             axes[1,0].cla()
             axes[1,0].set_title('global & Local motion primitives')
             planner.plot_regions(axes[1,0])
@@ -847,7 +943,7 @@ if __name__ == "__main__":
             sp_gtrjs = trjs_to_sample(gtrjs,axes[1,0])
             plot_global_trjs(sp_gtrjs, axes[1,0])
             #local trajectories
-            local_trjs = lane_state_sampling_test1(state,params_globalmap, axes[1,0])
+            local_trjs = lane_state_sampling_test1(state,obstacles, params_globalmap, axes[1,0])
             trjs_candidate =[]
             for gtrj in sp_gtrjs:
                 trjs_candidate.append(gtrj)
@@ -856,12 +952,16 @@ if __name__ == "__main__":
 
             # print("lenth gtrjs: ", len(sp_gtrjs), ", lenth ltrjs: ", len(local_trjs))
             # print("lenth trjs: ", len(trjs_candidate))
-            best_trj = calc_IG_trjs(trjs_candidate, entropymap , params_localmap, params_globalmap)
-            plot_best_trj(best_trj, axes[1,0])
+            best_trj = calc_IG_trjs(trjs_candidate, entropymap , params_localmap, params_globalmap, params)
             if len(best_trj[0])>horizon:
                 goal = [best_trj[0][horizon-1], best_trj[1][horizon-1]]
             else:
                 goal = [best_trj[0][-1], best_trj[1][-1]]
+
+            plot_best_trj(best_trj, horizon, axes[1,0])
+
+            goal_xs.append(goal[0])
+            goal_ys.append(goal[1])
 
             # goal = [best_trj[0][30], best_trj[1][30]]
             axes[0,0].scatter(goal[0],goal[1], facecolor='red',edgecolor='red')
@@ -872,6 +972,22 @@ if __name__ == "__main__":
             # lane_state_sampling_test1(state,axes[1,0])
             # uniform_terminal_state_sampling_test1(state,axes[1,0])
             # planner.plot_regions(axes[1,0])
+
+        if curentropy < 0.35*initial_entropy:
+            horizon = 35
+            params.weight_entropy=0.01
+
+        if curentropy < 0.15*initial_entropy:
+            horizon = -1
+
+        if curentropy < 0.05*initial_entropy and boolsaved==False:
+            data=[times, pos_xs,pos_ys,yaws,velocities, entropys, goal_xs, goal_ys]
+            data = np.transpose(data)
+            pd.DataFrame(data, columns=['time', 'pos_x', 'pos_y', 'yaw', 'velocity', 'entropy', 'goal_x', 'goal_y']).to_csv(file_name,header=True)
+            print("entropy file saved")
+            boolsaved =True
+            input("done")
+            # anisave('test_video.mp4', writer=writer)
 
     plt.show()
     # plt.show(aspect='auto')

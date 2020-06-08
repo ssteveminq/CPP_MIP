@@ -17,7 +17,7 @@ class Search:
         else:
            # print("self.vertices", self.roadmap.vertices_dict[1])
            self.roadmap.vertices_dict[1]=goalpos
-           print("gaolpos", goalpos)
+           # print("gaolpos", goalpos)
 
 
 

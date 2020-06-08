@@ -339,7 +339,7 @@ class VerticalCellDecomposition:
 
     def construct_graph_main(self):
         max_key = list(self.roadmap.vertices_dict.keys())[-1]
-        print("dict", self.roadmap.vertices_dict)
+        # print("dict", self.roadmap.vertices_dict)
         # print("dict_noedge", self.roadmap.vertices_dict_noedge)
 
         # print("max_key", max_key)

@@ -8,4 +8,5 @@ results/multi_vehicles
 results/turn_rate
 results/waypoints
 results/waypoints_obs
+results/entropy
 tags

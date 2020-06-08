@@ -110,7 +110,7 @@ def optimize_trajectory(cur_states, target, k0, p):
 
         cost = np.linalg.norm(dc)
         if cost <= cost_th:
-            print("path is ok cost is:" + str(cost))
+            # print("path is ok cost is:" + str(cost))
             break
 
         J = calc_J(target, p, h, k0)
