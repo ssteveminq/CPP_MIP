@@ -283,6 +283,10 @@ def plot_map(pos_x,pos_y,way_x, way_y, waytimes):
     axes[0].scatter(-4.0, 2.0, facecolor='green',edgecolor='green')
     axes[0].scatter(-4.0, -2.0, facecolor='green',edgecolor='green')
 
+    # Plot the vertices of the pedestrian path
+    axes[0].scatter(-2.0, -3.5, facecolor='black',edgecolor='black')
+    axes[0].scatter(2.0, -3.5, facecolor='black',edgecolor='black')
+
     axes[0].plot(way_x, way_y, '*', markersize= 10, fillstyle='none',color='red')             #trajectory point
     axes[0].set_xlabel("x[m]")
     axes[0].set_ylabel("y[m]")
@@ -359,27 +363,27 @@ def Update_phi(state, goal):
     return err_phi
 
 #human model of motion
-def human_motion(human_state, human_goal, human_params):
-    # human_state = [x(m), y(m), yaw(rad), v(m/s), omega(rad/s)]
-    dx = human_goal[0] - human_state[0]
-    dy = human_goal[1] - human_state[1]
+def human_motion(motion_state, goal, human_params):
+    # target_state = [x(m), y(m), yaw(rad), v(m/s), omega(rad/s)]
+    dx = goal[0] - motion_state[0]
+    dy = goal[1] - motion_state[1]
     goal_yaw = atan2(dy, dx)
     K_theta = 2.0
-    # human_state[4] = K_theta*math.sin(goal_yaw - human_state[2]) # omega(rad/s)
-    gamma = Update_phi(human_state, human_goal)
-    human_state[2] +=  0.75*math.sin(gamma) * dt # yaw(rad)
+    # target_state[4] = K_theta*math.sin(goal_yaw - target_state[2]) # omega(rad/s)
+    gamma = Update_phi(motion_state, goal)
+    motion_state[2] +=  0.75*math.sin(gamma) * dt # yaw(rad)
 
-    dist_to_goal = np.linalg.norm(human_goal - human_state[:2])
+    dist_to_goal = np.linalg.norm(goal - motion_state[:2])
     K_v = 0.1
-    human_state[3] += K_v*dist_to_goal
-    if human_state[3] >= human_params.max_vel: human_state[3] = human_params.max_vel
-    if human_state[3] <= human_params.min_vel: human_state[3] = human_params.min_vel
+    motion_state[3] += K_v*dist_to_goal
+    if motion_state[3] >= human_params.max_vel: motion_state[3] = human_params.max_vel
+    if motion_state[3] <= human_params.min_vel: motion_state[3] = human_params.min_vel
 
-    dv = human_params.dt*human_state[3]
-    human_state[0] += dv*np.cos(human_state[2]) # x(m)
-    human_state[1] += dv*np.sin(human_state[2]) # y(m)
+    dv = human_params.dt*motion_state[3]
+    motion_state[0] += dv*np.cos(motion_state[2]) # x(m)
+    motion_state[1] += dv*np.sin(motion_state[2]) # y(m)
 
-    return human_state
+    return target_state
 
 class Point:
     def __init__(self):
@@ -387,25 +391,25 @@ class Point:
         self.y = 0.0
 
 
-def check_robot_in_FOV(human_state, state, human_params_localmap, gridmap):
+def check_robot_in_FOV(target_state, state, human_params_localmap, gridmap):
     # find area covered by the human FOV
-    # print("human_state [m]: ", state[:2])
+    # print("target_state [m]: ", state[:2])
 
-    top_right = np.array([human_state[0] + human_params_localmap.sensor_range, human_state[1] + human_params_localmap.sensor_range, -np.pi/2, 0.0])
+    top_right = np.array([target_state[0] + human_params_localmap.sensor_range, target_state[1] + human_params_localmap.sensor_range, -np.pi/2, 0.0])
     # print(" [m]: ", top_right[:2])
     
-    lower_right = np.array([human_state[0] + human_params_localmap.sensor_range, human_state[1] - human_params_localmap.sensor_range, -np.pi/2, 0.0])
+    lower_right = np.array([target_state[0] + human_params_localmap.sensor_range, target_state[1] - human_params_localmap.sensor_range, -np.pi/2, 0.0])
     # print("lower_right [m]: ", lower_right[:2])
     
-    top_left = np.array([human_state[0] - human_params_localmap.sensor_range, human_state[1] + human_params_localmap.sensor_range, -np.pi/2, 0.0])
+    top_left = np.array([target_state[0] - human_params_localmap.sensor_range, target_state[1] + human_params_localmap.sensor_range, -np.pi/2, 0.0])
     # print("top_left [m]: ", top_left[:2])
     
-    lower_left = np.array([human_state[0] - human_params_localmap.sensor_range, human_state[1] - human_params_localmap.sensor_range, -np.pi/2, 0.0])
+    lower_left = np.array([target_state[0] - human_params_localmap.sensor_range, target_state[1] - human_params_localmap.sensor_range, -np.pi/2, 0.0])
     # print("lower_left [m]: ", lower_left[:2]) 
     
     # print("-------------------------------------------------")
     # convert the vertices to grid units
-    pose_human = gridmap.meters2grid(human_state[:2])
+    pose_human = gridmap.meters2grid(target_state[:2])
     # print("pose_human check robot in FOV: ", pose_human)
     pose_tr = gridmap.meters2grid(top_right[:2])
     # print("top right corner of FOV check robot in FOV: ", pose_tr)
@@ -432,26 +436,26 @@ def check_robot_in_FOV(human_state, state, human_params_localmap, gridmap):
     # print("robot_in_FOV: ", robot_in_FOV)
     return robot_in_FOV
 
-def check_wall_in_FOV(human_state, human_params_localmap, gridmap):
+def check_wall_in_FOV(target_state, human_params_localmap, gridmap):
     wall_near_point_list = []
     # first we find out if wall in FOV
-    if abs(human_state[0]) > 3.0 or abs(human_state[1]) > 3.0:
+    if abs(target_state[0]) > 3.0 or abs(target_state[1]) > 3.0:
         wall_in_FOV = True
         # Then we find out the nearest point on the wall
-        if human_state[0] > 3.0:
-            wall_nearest_point = np.array([5.0, human_state[1]])
+        if target_state[0] > 3.0:
+            wall_nearest_point = np.array([5.0, target_state[1]])
             wall_near_point_list.append(wall_nearest_point)
         
-        if human_state[1] > 3.0:
-            wall_nearest_point = np.array([human_state[0], 5.0])
+        if target_state[1] > 3.0:
+            wall_nearest_point = np.array([target_state[0], 5.0])
             wall_near_point_list.append(wall_nearest_point)
         
-        if human_state[0] < -3.0:
-            wall_nearest_point = np.array([-5.0, human_state[1]])
+        if target_state[0] < -3.0:
+            wall_nearest_point = np.array([-5.0, target_state[1]])
             wall_near_point_list.append(wall_nearest_point)
         
-        if human_state[1] < -3.0:
-            wall_nearest_point = np.array([human_state[0], -5.0])
+        if target_state[1] < -3.0:
+            wall_nearest_point = np.array([target_state[0], -5.0])
             wall_near_point_list.append(wall_nearest_point)
     else:
         wall_in_FOV = False  
@@ -459,13 +463,13 @@ def check_wall_in_FOV(human_state, human_params_localmap, gridmap):
 
     return wall_in_FOV, wall_near_point_list
 
-def check_obstacle_in_FOV(human_state, human_params_localmap, gridmap, obstacles_array):
+def check_obstacle_in_FOV(target_state, human_params_localmap, gridmap, obstacles_array):
 
     # init empty array 
     distance_vec = np.empty([len(obstacles_array[0])])
     # get the distance b/w human and each vertex and fill array
     for i in range(len(obstacles_array[0])):
-        temp_dist = sqrt((obstacles_array[0][i][0] - human_state[0])**2+(obstacles_array[0][i][1] - human_state[1])**2)
+        temp_dist = sqrt((obstacles_array[0][i][0] - target_state[0])**2+(obstacles_array[0][i][1] - target_state[1])**2)
         # print("temp_dist = ",temp_dist)
         distance_vec[i] = temp_dist
     # find the nearest vertex 
@@ -484,26 +488,26 @@ def check_obstacle_in_FOV(human_state, human_params_localmap, gridmap, obstacles
 
     # print("obstacles_array[0][0][1]: ", obstacles_array[0][0][1])
     # print("obstacles_array[0][1][1]: ", obstacles_array[0][3][1])
-    # print("human_state = ", human_state)
+    # print("target_state = ", target_state)
 
     # if the robot is to the right or left of the obstacle
-    if human_state[1] >= obstacles_array[0][0][1] and human_state [1] <= obstacles_array[0][3][1] and (human_state[0] < obstacles_array[0][0][0] or human_state[0] > obstacles_array[0][1][0]):
-        obstacle_near_point = np.array([vertex_1[0],human_state[1]])
+    if target_state[1] >= obstacles_array[0][0][1] and target_state [1] <= obstacles_array[0][3][1] and (target_state[0] < obstacles_array[0][0][0] or target_state[0] > obstacles_array[0][1][0]):
+        obstacle_near_point = np.array([vertex_1[0],target_state[1]])
         # print("case 1")
-    elif human_state[1] < obstacles_array[0][0][1] and (human_state[0] < obstacles_array[0][0][0] or human_state[0] > obstacles_array[0][1][0]):
+    elif target_state[1] < obstacles_array[0][0][1] and (target_state[0] < obstacles_array[0][0][0] or target_state[0] > obstacles_array[0][1][0]):
         obstacle_near_point = np.array([vertex_1[0],vertex_1[1]])
         # print("case 2")
-    elif human_state [1] > obstacles_array[0][3][1] and (human_state[0] < obstacles_array[0][0][0] or human_state[0] > obstacles_array[0][1][0]):
+    elif target_state [1] > obstacles_array[0][3][1] and (target_state[0] < obstacles_array[0][0][0] or target_state[0] > obstacles_array[0][1][0]):
         obstacle_near_point = np.array([vertex_1[0],vertex_1[1]])
         # print("case 3")
     # if the robot is below / above 
-    elif human_state[0] >= obstacles_array[0][0][0] and human_state[0] <= obstacles_array[0][1][0]:
+    elif target_state[0] >= obstacles_array[0][0][0] and target_state[0] <= obstacles_array[0][1][0]:
         # print("case 4")
-        obstacle_near_point = np.array([human_state[0], vertex_1[1]])
+        obstacle_near_point = np.array([target_state[0], vertex_1[1]])
     else: 
         obstacle_near_point = np.array([0.0, 0.0])
 
-    distance_to_nearest_vertex = sqrt((human_state[0] - obstacle_near_point[0])**2 + (human_state[1] - obstacle_near_point[1])**2)
+    distance_to_nearest_vertex = sqrt((target_state[0] - obstacle_near_point[0])**2 + (target_state[1] - obstacle_near_point[1])**2)
 
     # is the object in FOV?
     if distance_to_nearest_vertex <= human_params_localmap.sensor_range:
@@ -514,33 +518,33 @@ def check_obstacle_in_FOV(human_state, human_params_localmap, gridmap, obstacles
     # obstacle_near_point = np.array([0,0])
     return obstacle_in_FOV, obstacle_near_point
 
-def potential_goal_update(human_goal, human_state, state, params, t_current, t_prev_goal, human_goali, robot_in_FOV, wall_in_FOV, wall_near_point_list, obstacle_in_FOV, obstacle_near_point):
+def potential_goal_update(target_goal, target_state, state, params, t_current, t_prev_goal, target_goali, robot_in_FOV, wall_in_FOV, wall_near_point_list, obstacle_in_FOV, obstacle_near_point):
     init = Point()
     final = Point()
     x_sum = 0
     y_sum = 0
     divisor = 0
 
-    prev_human_goal = [human_goal[0], human_goal[1]]
+    prev_target_goal = [target_goal[0], target_goal[1]]
 
-    # if human_state[0] > -2.0:
-    #     print("human_state[0]: ", human_state[0])
+    # if target_state[0] > -2.0:
+    #     print("target_state[0]: ", target_state[0])
 
     # Initial human position 
-    init.x = human_state[0]
-    init.y = human_state[1]
+    init.x = target_state[0]
+    init.y = target_state[1]
     # vector for the wall potentials
     wall_pot_vectors = np.empty([len(wall_near_point_list), 2]) 
 
 
     if robot_in_FOV: ### THIS NEEDS TO BE DEBUGGED???? MAYBE? 
         print("robot_in_FOV = True")
-        human_robot_dist = sqrt((state[0] - human_state[0])**2+(state[1] - human_state[1])**2) 
+        human_robot_dist = sqrt((state[0] - target_state[0])**2+(state[1] - target_state[1])**2) 
         robot_potential = (1.0/2.0) * Krep * ((1.0/human_robot_dist)-(1/SAFETY_DIST))**2
 
         # Get human robot relative info
-        dx = human_state[0] - state[0]
-        dy = human_state[1] - state[1]
+        dx = target_state[0] - state[0]
+        dy = target_state[1] - state[1]
         human_robot_pot_vec = robot_potential * np.array([dx, dy])
         x_sum += human_robot_pot_vec[0]
         y_sum += human_robot_pot_vec[1]
@@ -549,24 +553,24 @@ def potential_goal_update(human_goal, human_state, state, params, t_current, t_p
     
     if wall_in_FOV: 
         for i in range(len(wall_near_point_list)):
-            wall_dist = sqrt((wall_near_point_list[i][0] - human_state[0])**2+(wall_near_point_list[i][1] - human_state[1])**2) 
+            wall_dist = sqrt((wall_near_point_list[i][0] - target_state[0])**2+(wall_near_point_list[i][1] - target_state[1])**2) 
             if wall_dist < 0.3: # Only want to actually avoid though if within this dist 
                 print("wall_in_FOV = True")
                 wall_potential = (1.0/2.0) * Krep * ((1.0/wall_dist)-(1/SAFETY_DIST))**2
-                dx = human_state[0] - wall_near_point_list[i][0]
-                dy = human_state[1] - wall_near_point_list[i][1]
+                dx = target_state[0] - wall_near_point_list[i][0]
+                dy = target_state[1] - wall_near_point_list[i][1]
                 tmp = wall_potential * np.array([dx, dy])
                 # print("wall_pot_vector[i] = ", tmp)
                 wall_pot_vectors[i] = tmp
             elif robot_in_FOV == False:
-                if prev_human_goal == [-4,-2] or prev_human_goal == [-4,2] or prev_human_goal == [-2,2] or prev_human_goal == [-2,-2]:
-                    human_goal, human_goali = human_goal_update(human_goal, human_state, params, t_current, t_prev_goal, human_goali)
+                if prev_target_goal == [-4,-2] or prev_target_goal == [-4,2] or prev_target_goal == [-2,2] or prev_target_goal == [-2,-2]:
+                    target_goal, target_goali = target_goal_update(target_goal, target_state, params, t_current, t_prev_goal, target_goali)
                 else:
-                    human_goali -= 1
-                    if human_goali < 0:
-                        human_goali = 3
-                    human_goal, human_goali = human_goal_update(human_goal, human_state, params, t_current, t_prev_goal, human_goali)
-                return human_goal, human_goali
+                    target_goali -= 1
+                    if target_goali < 0:
+                        target_goali = 3
+                    target_goal, target_goali = target_goal_update(target_goal, target_state, params, t_current, t_prev_goal, target_goali)
+                return target_goal, target_goali
             if wall_dist < 0.3:
                 for i in range(len(wall_pot_vectors)):
                     x_sum += wall_pot_vectors[i][0]
@@ -574,25 +578,25 @@ def potential_goal_update(human_goal, human_state, state, params, t_current, t_p
                     divisor += 1
     
     if obstacle_in_FOV: 
-        obst_hum_dist = sqrt((human_state[0] - obstacle_near_point[0])**2 + (human_state[1] - obstacle_near_point[1])**2)
+        obst_hum_dist = sqrt((target_state[0] - obstacle_near_point[0])**2 + (target_state[1] - obstacle_near_point[1])**2)
         if obst_hum_dist < 0.3:
             print("obstacle_in_FOV = True")
             obstacle_potential = (1.0/2.0) * Krep * ((1.0/obst_hum_dist)-(1/SAFETY_DIST))**2
-            dx = human_state[0] - obstacle_near_point[0]
-            dy = human_state[1] - obstacle_near_point[1]
+            dx = target_state[0] - obstacle_near_point[0]
+            dy = target_state[1] - obstacle_near_point[1]
             obst_pot_vec = obstacle_potential * np.array([dx, dy])
             x_sum += obst_pot_vec[0]
             y_sum += obst_pot_vec[1]
             divisor += 1
         elif robot_in_FOV == False:
-            if prev_human_goal == [-4,-2] or prev_human_goal == [-4,2] or prev_human_goal == [-2,2] or prev_human_goal == [-2,-2]:
-                human_goal, human_goali = human_goal_update(human_goal, human_state, params, t_current, t_prev_goal, human_goali)
+            if prev_target_goal == [-4,-2] or prev_target_goal == [-4,2] or prev_target_goal == [-2,2] or prev_target_goal == [-2,-2]:
+                target_goal, target_goali = target_goal_update(target_goal, target_state, params, t_current, t_prev_goal, target_goali)
             else:
-                human_goali -= 1
-                if human_goali < 0:
-                    human_goali = 3
-                human_goal, human_goali = human_goal_update(human_goal, human_state, params, t_current, t_prev_goal, human_goali)
-            return human_goal, human_goali
+                target_goali -= 1
+                if target_goali < 0:
+                    target_goali = 3
+                target_goal, target_goali = target_goal_update(target_goal, target_state, params, t_current, t_prev_goal, target_goali)
+            return target_goal, target_goali
 
     
     x_avg = x_sum / divisor
@@ -642,55 +646,60 @@ def potential_goal_update(human_goal, human_state, state, params, t_current, t_p
         final.y = -4.5
     if final.y > 5.0: 
         final.y = 4.5
-    human_goal = [final.x, final.y]
-    print("human current state: ", human_state[:2])
+    target_goal = [final.x, final.y]
+    print("human current state: ", target_state[:2])
     print("robot current state: ", state[:2])
-    print("new human goal (Avoid trajectory): ", human_goal)
-    return human_goal, human_goali
+    print("new human goal (Avoid trajectory): ", target_goal)
+    return target_goal, target_goali
 
-def human_goal_update(human_goal, human_state, params, t_current, t_prev_goal, human_goali):
-    '''
-    We simply need to check if the human is at the goal and if so then update the goal position
-    to remain in the square trajectory.
-    '''
-    human_goal_dist = sqrt((human_goal[0] - human_state[0])**2+(human_goal[1] - human_state[1])**2)
+def target_goal_update(target_goal, target_state, params, t_current, t_prev_goal, target_goali):
+    
+    target_goal_dist = sqrt((target_goal[0] - target_state[0])**2+(target_goal[1] - target_state[1])**2)
 
-    if human_goal == [-4,-2] or human_goal == [-4,2] or human_goal == [-2,2] or human_goal == [-2,-2]:
-        if human_goal_dist < goal_tol:
+    if target_goal == [-4,-2] or target_goal == [-4,2] or target_goal == [-2,2] or target_goal == [-2,-2]:
+        if target_goal_dist < goal_tol:
             #TODO FIX THE TIME 
             print('Time from the previous reached goal (human):', t_current - t_prev_goal)
-            if human_goali == 0: 
-                human_goali += 1
-                human_goal = [-4, -2]
-            elif human_goali == 1:
-                human_goali += 1
-                human_goal = [-4, 2]
-            elif human_goali == 2:
-                human_goali += 1
-                human_goal = [-2, 2]
+            if target_goali == 0: 
+                target_goali += 1
+                target_goal = [-4, -2]
+            elif target_goali == 1:
+                target_goali += 1
+                target_goal = [-4, 2]
+            elif target_goali == 2:
+                target_goali += 1
+                target_goal = [-2, 2]
             else:
-                human_goali = 0
-                human_goal = [-2, -2]
+                target_goali = 0
+                target_goal = [-2, -2]
             t_prev_goal = time.time()
-            print("human new goal(loop trajectory): ", human_goal)
+            print("human new goal(loop trajectory): ", target_goal)
     else:
-        if human_goali == 0: 
-            # human_goali += 1
-            human_goal = [-4, -2]
-        elif human_goali == 1:
-            # human_goali += 1
-            human_goal = [-4, 2]
-        elif human_goali == 2:
-            # human_goali += 1
-            human_goal = [-2, 2]
+        if target_goali == 0: 
+            # target_goali += 1
+            target_goal = [-4, -2]
+        elif target_goali == 1:
+            # target_goali += 1
+            target_goal = [-4, 2]
+        elif target_goali == 2:
+            # target_goali += 1
+            target_goal = [-2, 2]
         else:
-            # human_goali = 0
-            human_goal = [-2, -2]
+            # target_goali = 0
+            target_goal = [-2, -2]
         t_prev_goal = time.time()
-        print("human new goal(loop trajectory): ", human_goal)
+        print("human new goal(loop trajectory): ", target_goal)
 
-    return human_goal, human_goali
+    return target_goal, target_goali
 
+
+def pedestrian_goal_update(state, goal, params, t_current, t_prev_goal, pedestrian_goal_bool):
+    '''
+    We simply need to check if the human is at the goal and if so then update the goal position
+    to remain in the line trajectory.
+    '''
+
+    return pedestrian_goal, pedestrian_goal_bool
 
 def obstacle_check(pose, gridmap, params):
     # print("obstacle_check pose", pose)
@@ -779,36 +788,36 @@ def slow_down(state, params, dv=0.1):
     return state
 
 
-def collision_avoidance(human_state, gridmap, params):
-    pose_grid = gridmap.meters2grid(human_state[:2])
-    boundary = obstacle_check([pose_grid[0], pose_grid[1], human_state[2]], gridmap.gmap, params)
+def collision_avoidance(target_state, gridmap, params):
+    pose_grid = gridmap.meters2grid(target_state[:2])
+    boundary = obstacle_check([pose_grid[0], pose_grid[1], target_state[2]], gridmap.gmap, params)
 
     if boundary['right'] or boundary['front']:
-        # human_state = back_shift(human_state, 0.03)
-        human_state = slow_down(human_state, params)
-        human_state = turn_left(human_state, np.radians(60))
+        # target_state = back_shift(target_state, 0.03)
+        target_state = slow_down(target_state, params)
+        target_state = turn_left(target_state, np.radians(60))
         print("Collision_avoidance front/right")
-        # human_state = forward_shift(human_state, 0.02)
+        # target_state = forward_shift(target_state, 0.02)
     elif boundary['left']:
-        # human_state = back_shift(human_state, 0.03)
-        human_state = slow_down(human_state, params)
-        human_state = turn_right(human_state, np.radians(60))
+        # target_state = back_shift(target_state, 0.03)
+        target_state = slow_down(target_state, params)
+        target_state = turn_right(target_state, np.radians(60))
         print("Collision_avoidance left")
-        # human_state = forward_shift(human_state, 0.02)
+        # target_state = forward_shift(target_state, 0.02)
 
     # Additionally need to avoid leaving the area
-    if abs(human_state[0]) > 4.7 or abs(human_state[1]) > 4.7:
-        human_state = slow_down(human_state, params)
-        human_state = turn_left(human_state, np.radians(60))
-        human_state = forward_shift(human_state, 0.2)
+    if abs(target_state[0]) > 4.7 or abs(target_state[1]) > 4.7:
+        target_state = slow_down(target_state, params)
+        target_state = turn_left(target_state, np.radians(60))
+        target_state = forward_shift(target_state, 0.2)
     
-    return human_state
+    return target_state
 
 
 #Define two windows: 
 # axes[0] : robot, obstacle, waypoints, trajectory
 # axes[1] : sensor_map,occ_grid
-fig,axes=plt.subplots(nrows=4,ncols=1,figsize=(10,30))
+fig,axes=plt.subplots(nrows=3,ncols=1,figsize=(10,30))
 
 params = Params()
 human_params = humanParams()
@@ -889,13 +898,16 @@ for i in range(len(obstacle_coords)):
 axes[0].scatter(pos_x[0], pos_y[0], facecolor='blue',edgecolor='blue')      #initial robot point
 axes[0].scatter(-3.0, 0.0, facecolor='red',edgecolor='red')      #initial human point
 axes[0].scatter(pos_x[-1], pos_y[-1], facecolor='red',edgecolor='red')      #final point
-# Plot the vertices of the human path
+# Plot the vertices of the target path
 axes[0].scatter(-2.0, 2.0, facecolor='green',edgecolor='green')
 axes[0].scatter(-2.0, -2.0, facecolor='green',edgecolor='green')
 axes[0].scatter(-4.0, 2.0, facecolor='green',edgecolor='green')
 axes[0].scatter(-4.0, -2.0, facecolor='green',edgecolor='green')
 axes[0].plot(pos_x, pos_y, 'o', markersize = 20, fillstyle='none',color='black')             #trajectory point
 axes[0].plot(way_x, way_y, '*', markersize= 10, fillstyle='none',color='green')             #trajectory point
+# Plot the vertices of the pedestrian path
+axes[0].scatter(-2.0, -3.0, facecolor='black',edgecolor='black')
+axes[0].scatter(2.0, -3.0, facecolor='black',edgecolor='black')
 for i in range(len(waytimes)):
     axes[0].text(way_x[i], way_y[i]-1,str(waytimes[i]), color='g')
 
@@ -920,18 +932,23 @@ goal_tol=0.2
 
 goali = 0                           #define goal from waypoints set
 goal = [way_x[goali], way_y[goali]]
-human_goal = [-2., -2.0]           # pre defined human goal
+target_goal = [-2.0, -2.0]           # pre defined target goal
+pedestrian_goal = [2.0, -3.0]           # pre defined target goal
 
-human_goali = 0
+target_goali = 0                       # used to determine next vertex of square trajectory
+pedestrian_goal_bool = True
 	
 
 # initial state = [x(m), y(m), yaw(rad), v(m/s), omega(rad/s)]
 # state = np.array([pos_x[0],pos_y[0], 0.0, np.pi/2, 0.0, 0.0])
 state = np.array([pos_x[0],pos_y[0],np.pi/2, 0.0])
-human_state = np.array([-3.0, 0.0, -np.pi/2, 0.0]) 
+target_state = np.array([-3.0, 0.0, -np.pi/2, 0.0])
+pedestrian_state = np.array([0.0, 1.0, -np.pi/2, 0.0]) 
 
 traj = state[:2]
-human_traj = human_state[:2]
+target_traj = target_state[:2]
+pedestrian_traj = pedestrian_state[:2]
+
 iter=0
 simtime=0.0
 
@@ -939,9 +956,13 @@ simtime=0.0
 print("robot initial state: ", state)
 print("robot initial goal : ", goal)
 
-# Checking the human intial position and first goal 
-print("human initial state: ", human_state)
-print("human initial goal : ", human_goal)
+# Checking the target intial position and first goal 
+print("target initial state: ", target_state)
+print("target initial goal : ", target_goal)
+
+# Checking the target intial position and first goal 
+print("pedestrian initial state: ", pedestrian_state)
+print("pedestrian initial goal : ", pedestrian_goal)
 
 t_prev_goal = time.time()
 pmap_global = initialize_global_occ_grid_map(params_globalmap)
@@ -972,12 +993,18 @@ wall_near_point_list = []
 # for i in range(ntimestep):
 for _ in range(params.numiters):
     state = simple_motion(state, goal, params)                        # robot dynamics
-    human_state = human_motion(human_state, human_goal, human_params) # human motion model
-    human_state = collision_avoidance(human_state, gridmap, human_params)
+    
+    target_state = human_motion(target_state, target_goal, human_params) # human motion model
+    target_state = collision_avoidance(target_state, gridmap, human_params)
+    
+    pedestrian_state = human_motion(target_state, target_goal, human_params) # human motion model
+    pedestrian_state = collision_avoidance(target_state, gridmap, human_params)
+    
     goal_dist = sqrt((goal[0] - state[0])**2+(goal[1] - state[1])**2) # robot distance to goal
-    human_goal_dist = sqrt((human_goal[0] - human_state[0])**2+(human_goal[1] - human_state[1])**2) # human distance to goal
+    target_goal_dist = sqrt((target_goal[0] - target_state[0])**2+(target_goal[1] - target_state[1])**2) # target distance to goal
+    pedestrian_goal_dist = sqrt((pedestrian_goal[0] - pedestrian_state[0])**2+(pedestrian_goal[1] - pedestrian_state[1])**2) # pedestrian distance to goal
 
-    human_robot_dist = sqrt((state[0] - human_state[0])**2+(state[1] - human_state[1])**2)
+    human_robot_dist = sqrt((state[0] - target_state[0])**2+(state[1] - target_state[1])**2)
 
     simtime = simtime + dt
     # print("simtime" , simtime)
@@ -994,27 +1021,25 @@ for _ in range(params.numiters):
         t_prev_goal = time.time()
         goal = [way_x[goali], way_y[goali]]
 
-    robot_in_FOV = check_robot_in_FOV(human_state, state, human_params_localmap, gridmap)
-    wall_in_FOV, wall_near_point_list = check_wall_in_FOV(human_state, human_params_localmap, gridmap)
-    obstacle_in_FOV, obstacle_near_point = check_obstacle_in_FOV(human_state, human_params_localmap, gridmap, obstacles_array)
-
-    # print("robot_in_FOV, wall_in_FOV, obstacle_in_FOV: ", robot_in_FOV, ", ", wall_in_FOV, ", ", obstacle_in_FOV)
+    robot_in_FOV = check_robot_in_FOV(target_state, state, human_params_localmap, gridmap)
+    wall_in_FOV, wall_near_point_list = check_wall_in_FOV(target_state, human_params_localmap, gridmap)
+    obstacle_in_FOV, obstacle_near_point = check_obstacle_in_FOV(target_state, human_params_localmap, gridmap, obstacles_array)
 
     # New goal for the human: either continue on square or travel away from human
     if robot_in_FOV or wall_in_FOV or obstacle_in_FOV:
-        human_goal, human_goali = potential_goal_update(human_goal, human_state, state, params, t_current, t_prev_goal, human_goali, robot_in_FOV, wall_in_FOV, wall_near_point_list, obstacle_in_FOV, obstacle_near_point)
+        target_goal, target_goali = potential_goal_update(target_goal, target_state, state, params, t_current, t_prev_goal, target_goali, robot_in_FOV, wall_in_FOV, wall_near_point_list, obstacle_in_FOV, obstacle_near_point)
         robot_in_FOV = False
         wall_in_FOV = False
         obstacle_in_FOV = False
     else:
-        prev_human_goal = [human_goal[0], human_goal[1]]
-        if prev_human_goal == [-4,-2] or prev_human_goal == [-4,2] or prev_human_goal == [-2,2] or prev_human_goal == [-2,-2]:
-            human_goal, human_goali = human_goal_update(human_goal, human_state, params, t_current, t_prev_goal, human_goali)
+        prev_target_goal = [target_goal[0], target_goal[1]]
+        if prev_target_goal == [-4,-2] or prev_target_goal == [-4,2] or prev_target_goal == [-2,2] or prev_target_goal == [-2,-2]:
+            target_goal, target_goali = target_goal_update(target_goal, target_state, params, t_current, t_prev_goal, target_goali)
         else:
-            human_goali -= 1
-            if human_goali < 0:
-                human_goali = 3
-            human_goal, human_goali = human_goal_update(human_goal, human_state, params, t_current, t_prev_goal, human_goali)
+            target_goali -= 1
+            if target_goali < 0:
+                target_goali = 3
+            target_goal, target_goali = target_goal_update(target_goal, target_state, params, t_current, t_prev_goal, target_goali)
     #plot
     if params.animate:
         #figure1
@@ -1023,9 +1048,9 @@ for _ in range(params.numiters):
         plot_map(pos_x,pos_y,way_x,way_y,waytimes) # plots the static points
         axes[0].plot(goal[0], goal[1])
         traj = np.vstack([traj, state[:2]])
-        human_traj = np.vstack([human_traj, human_state[:2]])
+        target_traj = np.vstack([target_traj, target_state[:2]])
         visualize(traj, state, obstacles, params)
-        visualize_human(human_traj, human_state, obstacles, params)
+        visualize_human(target_traj, target_state, obstacles, params)
 
         #figure2- robot local sensor window
         axes[1].cla()
@@ -1041,18 +1066,18 @@ for _ in range(params.numiters):
             axes[0].plot(inter_point[0], inter_point[1], '*', markersize= 5, fillstyle='none',color='green')
 
         ##################################################################
-        # figure 4- human local sensor window
-        axes[3].cla() #clear axes
-        human_pmap_local, human_updated_grids, human_intersect_dic, human_obs_verticeid, human_closest_vertexid, human_params_localmap.xmin, human_params_localmap.xmax, human_params_localmap.ymin, human_params_localmap.ymax, human_params_localmap.xyreso, human_params_localmap.xw, human_params_localmap.yw= generate_ray_casting_grid_map(obstacles, human_params_localmap, human_state[0],human_state[1], human_state[2])
-        draw_occmap(human_pmap_local, human_params_localmap, human_state[0],human_state[1], axes[3])
-        # draw sensor ray to obstacles
-        for i in range(len(obstacles)):
-            axes[0].plot([human_state[0], obstacles[i].vertices[human_obs_verticeid[i][0]][0]], [human_state[1], obstacles[i].vertices[human_obs_verticeid[i][0]][1]], color='orange')
-            axes[0].plot([human_state[0], obstacles[i].vertices[human_obs_verticeid[i][1]][0]], [human_state[1], obstacles[i].vertices[human_obs_verticeid[i][1]][1]], color='orange')
-            axes[0].plot([human_state[0], obstacles[i].vertices[human_closest_vertexid[i]][0]], [human_state[1], obstacles[i].vertices[human_closest_vertexid[i]][1]], color='orange')
-        # TODO: Intersection is broken  
-        # for angle,inter_point in intersect_dic.items():
-        #     axes[0].plot(inter_point[0], inter_point[1], '*', markersize= 5, fillstyle='none',color='red')
+        # # figure 4- human local sensor window
+        # axes[3].cla() #clear axes
+        # human_pmap_local, human_updated_grids, human_intersect_dic, human_obs_verticeid, human_closest_vertexid, human_params_localmap.xmin, human_params_localmap.xmax, human_params_localmap.ymin, human_params_localmap.ymax, human_params_localmap.xyreso, human_params_localmap.xw, human_params_localmap.yw= generate_ray_casting_grid_map(obstacles, human_params_localmap, target_state[0],target_state[1], target_state[2])
+        # draw_occmap(human_pmap_local, human_params_localmap, target_state[0],target_state[1], axes[3])
+        # # draw sensor ray to obstacles
+        # for i in range(len(obstacles)):
+        #     axes[0].plot([target_state[0], obstacles[i].vertices[human_obs_verticeid[i][0]][0]], [target_state[1], obstacles[i].vertices[human_obs_verticeid[i][0]][1]], color='orange')
+        #     axes[0].plot([target_state[0], obstacles[i].vertices[human_obs_verticeid[i][1]][0]], [target_state[1], obstacles[i].vertices[human_obs_verticeid[i][1]][1]], color='orange')
+        #     axes[0].plot([target_state[0], obstacles[i].vertices[human_closest_vertexid[i]][0]], [target_state[1], obstacles[i].vertices[human_closest_vertexid[i]][1]], color='orange')
+        # # TODO: Intersection is broken  
+        # # for angle,inter_point in intersect_dic.items():
+        # #     axes[0].plot(inter_point[0], inter_point[1], '*', markersize= 5, fillstyle='none',color='red')
         ##################################################################3
 
         # axes[1].plot(ox, oy, "xr")
