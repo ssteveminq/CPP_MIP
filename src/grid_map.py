@@ -17,8 +17,8 @@ from matplotlib.patches import Polygon
 class GridMap:
     def __init__(self, polygon_vertices, point_inside_polygon=[0,0]):
         self.map_center = np.array([0.0, 0.0])
-        self.map_width_m = 10.0
-        self.map_length_m = 10.0
+        self.map_width_m = 25.0
+        self.map_length_m = 25.0
         # self.width = 10
         # self.height = 10
         # self.map_width_m = 15.0 #5.0
