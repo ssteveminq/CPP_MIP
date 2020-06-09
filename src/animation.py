@@ -81,7 +81,7 @@ class humanParams:
         self.numiters = 2000
         self.dt = 0.2
         self.goal_tol = 0.25
-        self.max_vel = 0.5 # m/s
+        self.max_vel = 0.6 # m/s
         self.min_vel = 0.0 # m/s
         self.sensor_range_m = 1.0 # m
         self.animate = 1
@@ -424,7 +424,7 @@ def Update_phi(state, goal):
     return err_phi
 
 #human model of motion
-def human_motion(motion_state, goal, human_params, goal_tol):
+def human_motion(motion_state, goal, human_params, goal_tol, target_bool):
     # target_state = [x(m), y(m), yaw(rad), v(m/s), omega(rad/s)]
     dx = goal[0] - motion_state[0]
     dy = goal[1] - motion_state[1]
@@ -443,12 +443,21 @@ def human_motion(motion_state, goal, human_params, goal_tol):
         motion_state[2] += 2.0*np.pi
      
     yaw_diff = goal_yaw - motion_state[2]
-    if abs(yaw_diff) > np.pi/3.:                # if orientation is very far off: stop and turn
-        motion_state[3] = 0.1
-    else:                                       # else continue as normal
-        dist_to_goal = np.linalg.norm(goal - motion_state[:2])
-        K_v = 0.1
-        motion_state[3] += K_v*dist_to_goal
+    if target_bool:
+        if goal == [-4,-2] or goal == [-4,2] or goal == [-2,2] or goal == [-2,-2]:
+            if abs(yaw_diff) > np.pi/3.:                # if orientation is very far off: stop and turn
+                motion_state[3] = 0.1
+            else:                                       # else continue as normal
+                dist_to_goal = np.linalg.norm(goal - motion_state[:2])
+                K_v = 0.1
+                motion_state[3] += K_v*dist_to_goal
+    else:
+        if abs(yaw_diff) > np.pi/3.:                # if orientation is very far off: stop and turn
+            motion_state[3] = 0.1
+        else:                                       # else continue as normal
+            dist_to_goal = np.linalg.norm(goal - motion_state[:2])
+            K_v = 0.1
+            motion_state[3] += K_v*dist_to_goal
     # Now make the turn
     # target_state[4] = K_theta*math.sin(goal_yaw - target_state[2]) # omega(rad/s)
     gamma = Update_phi(motion_state, goal)
@@ -471,35 +480,7 @@ class Point:
 
 def check_robot_in_FOV(target_state, state, human_params_localmap, gridmap):
     # find area covered by the human FOV
-    # print("target_state [m]: ", state[:2])
 
-    # top_right = np.array([target_state[0] + human_params_localmap.sensor_range, target_state[1] + human_params_localmap.sensor_range, -np.pi/2, 0.0])
-    # print("top right [m]: ", top_right[:2])
-    
-    # lower_right = np.array([target_state[0] + human_params_localmap.sensor_range, target_state[1] - human_params_localmap.sensor_range, -np.pi/2, 0.0])
-    # print("lower_right [m]: ", lower_right[:2])
-    
-    # top_left = np.array([target_state[0] - human_params_localmap.sensor_range, target_state[1] + human_params_localmap.sensor_range, -np.pi/2, 0.0])
-    # print("top_left [m]: ", top_left[:2])
-    
-    # lower_left = np.array([target_state[0] - human_params_localmap.sensor_range, target_state[1] - human_params_localmap.sensor_range, -np.pi/2, 0.0])
-    # print("lower_left [m]: ", lower_left[:2]) 
-    
-    # # print("-------------------------------------------------")
-    # # convert the vertices to grid units
-    # pose_human = gridmap.meters2grid(target_state[:2])
-    # # print("pose_human check robot in FOV: ", pose_human)
-    # pose_tr = gridmap.meters2grid(top_right[:2])
-    # # print("top right corner of FOV check robot in FOV: ", pose_tr)
-    # pose_lr = gridmap.meters2grid(lower_right[:2])
-    # # print("lower right corner of FOV check robot in FOV: ", pose_lr)
-    # pose_tl = gridmap.meters2grid(top_left[:2])
-    # # print("top left corner of FOV check robot in FOV: ", pose_tl)
-    # pose_ll = gridmap.meters2grid(lower_left[:2])
-    # # print("lower left corner of FOV check robot in FOV: ", pose_ll)
-
-    
-##########################################################
     # keep between +/- 2*pi
     if target_state[2] > np.pi*2.0:
         target_state[2] -= np.pi*2.0
@@ -717,14 +698,15 @@ def potential_goal_update(target_goal, target_state, state, params, t_current, t
                 # print("wall_pot_vector[i] = ", tmp)
                 wall_pot_vectors[i] = tmp
             elif robot_in_FOV == False:
-                if prev_target_goal == [-4,-2] or prev_target_goal == [-4,2] or prev_target_goal == [-2,2] or prev_target_goal == [-2,-2]:
-                    target_goal, target_goali = target_goal_update(target_goal, target_state, params, t_current, t_prev_goal, target_goali)
-                else:
-                    target_goali -= 1
-                    if target_goali < 0:
-                        target_goali = 3
-                    target_goal, target_goali = target_goal_update(target_goal, target_state, params, t_current, t_prev_goal, target_goali)
-                return target_goal, target_goali
+                # if prev_target_goal == [-4,-2] or prev_target_goal == [-4,2] or prev_target_goal == [-2,2] or prev_target_goal == [-2,-2]:
+                #     target_goal, target_goali = target_goal_update(target_goal, target_state, params, t_current, t_prev_goal, target_goali)
+                # else:
+                #     target_goali -= 1
+                #     if target_goali < 0:
+                #         target_goali = 3
+                #     target_goal, target_goali = target_goal_update(target_goal, target_state, params, t_current, t_prev_goal, target_goali)
+                # return target_goal, target_goali
+                pass
             if wall_dist < 0.3:
                 for i in range(len(wall_pot_vectors)):
                     x_sum += wall_pot_vectors[i][0]
@@ -743,16 +725,18 @@ def potential_goal_update(target_goal, target_state, state, params, t_current, t
             y_sum += obst_pot_vec[1]
             divisor += 1
         elif robot_in_FOV == False:
-            if prev_target_goal == [-4,-2] or prev_target_goal == [-4,2] or prev_target_goal == [-2,2] or prev_target_goal == [-2,-2]:
-                target_goal, target_goali = target_goal_update(target_goal, target_state, params, t_current, t_prev_goal, target_goali)
-            else:
-                target_goali -= 1
-                if target_goali < 0:
-                    target_goali = 3
-                target_goal, target_goali = target_goal_update(target_goal, target_state, params, t_current, t_prev_goal, target_goali)
-            return target_goal, target_goali
+            # if prev_target_goal == [-4,-2] or prev_target_goal == [-4,2] or prev_target_goal == [-2,2] or prev_target_goal == [-2,-2]:
+            #     target_goal, target_goali = target_goal_update(target_goal, target_state, params, t_current, t_prev_goal, target_goali)
+            # else:
+            #     target_goali -= 1
+            #     if target_goali < 0:
+            #         target_goali = 3
+            #     target_goal, target_goali = target_goal_update(target_goal, target_state, params, t_current, t_prev_goal, target_goali)
+            # return target_goal, target_goali
+            pass
 
-    
+    if divisor <= 0.00001:
+        divisor = 1 
     x_avg = x_sum / divisor
     y_avg = y_sum / divisor
     # print("x_avg = ", x_avg)
@@ -1168,10 +1152,11 @@ wall_near_point_list = []
 for _ in range(params.numiters):
     state = simple_motion(state, goal, params)                        # robot dynamics
     
-    target_state = human_motion(target_state, target_goal, human_params, goal_tol) # human motion model
+    target_bool = True
+    target_state = human_motion(target_state, target_goal, human_params, goal_tol, target_bool) # human motion model
     target_state = collision_avoidance(target_state, gridmap, human_params)
-
-    pedestrian_state = human_motion(pedestrian_state, pedestrian_goal, human_params, goal_tol) # human motion model
+    target_bool = False
+    pedestrian_state = human_motion(pedestrian_state, pedestrian_goal, human_params, goal_tol, target_bool) # human motion model
     pedestrian_state = collision_avoidance(pedestrian_state, gridmap, human_params)
 
     goal_dist = sqrt((goal[0] - state[0])**2+(goal[1] - state[1])**2) # robot distance to goal
@@ -1203,21 +1188,32 @@ for _ in range(params.numiters):
     if pedestrian_goal_dist < goal_tol:
         pedestrian_goal, pedestrian_goal_bool = pedestrian_goal_update(pedestrian_state, pedestrian_goal, params, t_current, t_prev_goal, pedestrian_goal_bool)
 
+    wall_dist = 100.0
+    if wall_in_FOV:
+        for i in range(len(wall_near_point_list)):
+            temp = sqrt((wall_near_point_list[i][0] - target_state[0])**2+(wall_near_point_list[i][1] - target_state[1])**2) 
+            if temp < wall_dist:
+                wall_dist = temp
+    obstacle_dist = 100.0
+    if obstacle_in_FOV:
+        obstacle_dist = sqrt((target_state[0] - obstacle_near_point[0])**2 + (target_state[1] - obstacle_near_point[1])**2)
+
     # New goal for the human: either continue on square or travel away from human
-    if robot_in_FOV or wall_in_FOV or obstacle_in_FOV:
+    if robot_in_FOV or (wall_dist < 0.3) or (obstacle_dist < 0.3):
         target_goal, target_goali = potential_goal_update(target_goal, target_state, state, params, t_current, t_prev_goal, target_goali, robot_in_FOV, wall_in_FOV, wall_near_point_list, obstacle_in_FOV, obstacle_near_point)
         robot_in_FOV = False
         wall_in_FOV = False
         obstacle_in_FOV = False
     else:
         prev_target_goal = [target_goal[0], target_goal[1]]
-        if prev_target_goal == [-4,-2] or prev_target_goal == [-4,2] or prev_target_goal == [-2,2] or prev_target_goal == [-2,-2]:
-            target_goal, target_goali = target_goal_update(target_goal, target_state, params, t_current, t_prev_goal, target_goali)
-        else:
-            target_goali -= 1
-            if target_goali < 0:
-                target_goali = 3
-            target_goal, target_goali = target_goal_update(target_goal, target_state, params, t_current, t_prev_goal, target_goali)
+        if target_goal_dist <= goal_tol:
+            if prev_target_goal == [-4,-2] or prev_target_goal == [-4,2] or prev_target_goal == [-2,2] or prev_target_goal == [-2,-2]:
+                target_goal, target_goali = target_goal_update(target_goal, target_state, params, t_current, t_prev_goal, target_goali)
+            else:
+                target_goali -= 1
+                if target_goali < 0:
+                    target_goali = 3
+                target_goal, target_goali = target_goal_update(target_goal, target_state, params, t_current, t_prev_goal, target_goali)
     #plot
     if params.animate:
         #figure1
