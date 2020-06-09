@@ -12,8 +12,8 @@ from shapely.geometry.polygon import Polygon
 
 EXTEND_AREA = 15.0
 show_animation = True
-l_occ = np.log(0.7/0.3)
-l_free = np.log(0.3/0.7)
+l_occ = np.log(0.8/0.2)
+l_free = np.log(0.2/0.8)
 
 def polygon_contains_point(point, obstacle):
 
