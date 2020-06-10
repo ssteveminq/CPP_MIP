@@ -29,6 +29,10 @@ import ast
 #probability
 l_occ=np.log(0.9/0.1)
 l_free=np.log(0.1/0.9)
+l_same = np.log(0.9/0.1)
+l_diff= np.log(0.01/0.99)
+# p_occ_given_pocc = 0.99
+# p_occ_priorc = 0.01
 horizon=20
 boolsaved = False
 
@@ -73,7 +77,7 @@ class Params:
         self.dt = 0.2
         self.goal_tol = 0.25
         self.weight_entropy = 0.02
-        self.max_vel = 0.5 # m/s
+        self.max_vel = 0.8 # m/s
         self.min_vel = 0.0 # m/s
         self.sensor_range_m = 0.5 # m
         self.animate = 1
@@ -358,13 +362,13 @@ def draw_entropymap_global(data,parmas_globalmap, ax):
 
 
 
-
 def get_map_entropy(pmap_global,params_map):
     entropy_sum=0
-    pmap= 1-1./(1.0+np.exp(pmap_global))
+    # pmap= 1-1./(1.0+np.exp(pmap_global))
     for ix in range(params_map.xw-1):
         for iy in range(params_map.yw-1):
-            p =pmap[ix][iy]
+            p=1-1./(1.0+np.exp(pmap_global[ix][iy]))
+            # p =pmap[ix][iy]
             # print("p: ", p)
             if p>0.0 and p<1.0:
                 entropy_sum+=(p*math.log(p)+(1-p)*math.log(1-p))
@@ -407,7 +411,6 @@ def get_local_entropymap(pmap_local,params_map):
 
 
 
-
 def update_occ_grid_map(state, local_map, params_local, global_map, params_global):
     ##for observed cell in local window--> update
     # print("local grids, xw, yw : ", params_local.xw, params_local.yw)
@@ -428,7 +431,28 @@ def update_occ_grid_map(state, local_map, params_local, global_map, params_globa
             # print("(ix_global, iy_global): ",ix_global, " , ", iy_global)
             meas = local_map[ix_local][iy_local]
             global_map[ix_global][iy_global] +=meas
+            updated_list.append([ix_global, iy_global])
 
+
+    # '''
+    #convert log odds to probability 
+    pmap= 1-1./(1.0+np.exp(global_map))
+
+    # '''
+    for ix in range(params_global.xw-1):
+        for iy in range(params_global.yw-1):
+            if [ix,iy] in updated_list:
+                # print("ix: ", ix, ", iy:",  iy)
+                continue
+            else:
+                # prior=1-1./(1.0+np.exp(pmap_global[ix][iy]))
+                # print("no-----list- ix: ", ix, ", iy:",  iy)
+                # global_map[ix][iy]=global_map[ix][iy]*1.03
+                prior = pmap[ix][iy]
+                posterior = prior*0.995+(1-prior)*0.005
+                global_map[ix][iy]= np.log(posterior/(1-posterior))
+                # global_map[ix][iy]+=l_same
+    # '''
     return global_map
 
 def initialize_global_occ_grid_map(params_map):
@@ -885,6 +909,7 @@ if __name__ == "__main__":
             axes[0,1].set_title('local sesnor grid')
             pmap_local, updated_grids, intersect_dic, obs_verticeid, closest_vertexid, params_localmap.xmin, params_localmap.xmax, params_localmap.ymin, params_localmap.ymax, params_localmap.xyreso, params_localmap.xw, params_localmap.yw= generate_ray_casting_grid_map(obstacles, walls, params_localmap, state[0],state[1], state[2])
             draw_occmap(pmap_local, params_localmap, params_globalmap, state[0],state[1], axes[0,1])
+            # print("updated_grids", updated_grids )
             #draw sensor ray to obstacles
             # for i in range(len(obstacles)):
                 # axes[0].plot([state[0], obstacles[i].vertices[obs_verticeid[i][0]][0]], [state[1], obstacles[i].vertices[obs_verticeid[i][0]][1]], color='orange')
