@@ -353,10 +353,15 @@ def draw_entropymap_global(data,parmas_globalmap, ax):
     maxx=params_globalmap.xmax
     maxy=params_globalmap.ymax
     xyreso=params_globalmap.xyreso
+    print("data", data)
+    # min_data=min(data)
+    # max_data=max(data)
+    # print("mindata: ", min_data, "maxdata: ", max_data)
 
     x, y = np.mgrid[slice(minx - xyreso / 2.0, maxx + xyreso / 2.0, xyreso),
                     slice(miny - xyreso / 2.0, maxy + xyreso / 2.0, xyreso)]
-    ax.pcolor(x, y, data, vmax=0.69315, cmap=plt.cm.Reds)
+    # ax.pcolor(x, y, data, vmax=0.69315, cmap=plt.cm.Reds)
+    ax.pcolor(x, y, data, vmax=1.0, cmap=plt.cm.Reds)
     ax.set_xlim([1.1*minx, 1.1*maxx])   # limit the plot space
     ax.set_ylim([1.1*miny, 1.1*maxy])   # limit the plot space
 
@@ -368,6 +373,7 @@ def get_map_entropy(pmap_global,params_map):
     for ix in range(params_map.xw-1):
         for iy in range(params_map.yw-1):
             p=1-1./(1.0+np.exp(pmap_global[ix][iy]))
+            # p=1-1./(1.0+pow(2,pmap_global[ix][iy]))
             # p =pmap[ix][iy]
             # print("p: ", p)
             if p>0.0 and p<1.0:
@@ -378,13 +384,15 @@ def get_map_entropy(pmap_global,params_map):
 
 def get_global_entropymap(pmap_global,params_map):
     entropy_sum=0
+    #log odd to proabability
     pmap= 1-1./(1.0+np.exp(pmap_global))
+    # pmap= 1-1./(1.0+pow(2,pmap_global))
 
     for ix in range(params_map.xw-1):
         for iy in range(params_map.yw-1):
             p =pmap[ix][iy]
             if p>0.0 and p<1.0:
-                pmap[ix][iy]=-(p*math.log(p)+(1-p)*math.log(1-p))
+                pmap[ix][iy]=-(p*math.log2(p)+(1-p)*math.log2(1-p))
             elif p==0.0 or p==1.0:
                  pmap[ix][iy]=0.0
             else:
@@ -395,6 +403,7 @@ def get_global_entropymap(pmap_global,params_map):
 def get_local_entropymap(pmap_local,params_map):
     entropy_sum=0
     pmap= 1-1./(1.0+np.exp(pmap_global))
+    # pmap= 1-1./(1.0+pow(2,pmap_global))
 
     for ix in range(params_map.xw-1):
         for iy in range(params_map.yw-1):
@@ -437,6 +446,9 @@ def update_occ_grid_map(state, local_map, params_local, global_map, params_globa
     # '''
     #convert log odds to probability 
     pmap= 1-1./(1.0+np.exp(global_map))
+    # pmap= 1-1./(1.0+pow(2,global_map))
+    # print(pmap)
+    # input()
 
     # '''
     for ix in range(params_global.xw-1):
@@ -449,8 +461,13 @@ def update_occ_grid_map(state, local_map, params_local, global_map, params_globa
                 # print("no-----list- ix: ", ix, ", iy:",  iy)
                 # global_map[ix][iy]=global_map[ix][iy]*1.03
                 prior = pmap[ix][iy]
-                posterior = prior*0.995+(1-prior)*0.005
+                posterior = prior*0.99995+(1-prior)*0.00005
+                # if posterior<0.5:
                 global_map[ix][iy]= np.log(posterior/(1-posterior))
+                # if prior!=0.5:
+                    # print("prior: ", prior, ", Posterior:", posterior)
+                    # print("log-odd: ", np.log(posterior/(1-posterior)))
+                    # print("-----------------")
                 # global_map[ix][iy]+=l_same
     # '''
     return global_map
@@ -927,7 +944,7 @@ if __name__ == "__main__":
             pmap_global = update_occ_grid_map(state, pmap_local,params_localmap, pmap_global,params_globalmap)
             entropymap = get_global_entropymap(pmap_global,params_globalmap)
             # draw_occmap_global(pmap_global,params_globalmap, axes[1,1])
-            draw_entropymap_global(pmap_global,params_globalmap, axes[1,1])
+            draw_entropymap_global(entropymap,params_globalmap, axes[1,1])
             curentropy = get_map_entropy(pmap_global, params_globalmap)
             entropys.append(curentropy)
             # entropy_log[simtime]=curentropy
