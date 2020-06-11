@@ -27,7 +27,7 @@ import matplotlib.animation as animation
 import matplotlib as mpl
 import ast
 from grid_map import GridMap
-from animation import *
+from humans import *
 #probability
 l_occ=np.log(0.9/0.1)
 l_free=np.log(0.1/0.9)
@@ -944,7 +944,7 @@ if __name__ == "__main__":
                 goal[1]=params_globalmap.ymin+0.5
         
         robot_in_FOV = check_robot_in_FOV(target_state, state, human_params_localmap, gridmap)
-        wall_in_FOV, wall_near_point_list = check_wall_in_FOV(target_state, human_params_localmap, gridmap)
+        wall_in_FOV, wall_near_point_list = check_wall_in_FOV(target_state, human_params_localmap, gridmap, params_globalmap)
         obstacle_in_FOV, obstacle_near_point = check_obstacle_in_FOV(target_state, human_params_localmap, gridmap, obstacles_array)
 
         # New goal for the pedestrian
@@ -963,7 +963,7 @@ if __name__ == "__main__":
 
         # New goal for the human: either continue on square or travel away from human
         if robot_in_FOV or (wall_dist < 0.3) or (obstacle_dist < 0.3):
-            target_goal, target_goali = potential_goal_update(target_goal, target_state, state, params, t_current, t_prev_goal, target_goali, robot_in_FOV, wall_in_FOV, wall_near_point_list, obstacle_in_FOV, obstacle_near_point)
+            target_goal, target_goali = potential_goal_update(target_goal, target_state, state, params, t_current, t_prev_goal, target_goali, robot_in_FOV, wall_in_FOV, wall_near_point_list, obstacle_in_FOV, obstacle_near_point, params_globalmap)
             robot_in_FOV = False
             wall_in_FOV = False
             obstacle_in_FOV = False
