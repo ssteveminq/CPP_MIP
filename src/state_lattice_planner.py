@@ -330,7 +330,7 @@ def biased_terminal_state_sampling_test2():
         plt.show()
 
 
-def lane_state_sampling_test1(cur_states, obstacles, params_global, ax=None):
+def lane_state_sampling_test1(cur_states, obstacles, params_global, showplot=True, ax=None):
     k0 = 0.0
     l_center = 1.0
     l_center2 = -1.0
@@ -411,8 +411,6 @@ def lane_state_sampling_test1(cur_states, obstacles, params_global, ax=None):
     result0 = generate_path(cur_states_mod,targetstates0, k0)
     result = generate_path(cur_states_mod,targetstates, k0)
     result2 = generate_path(cur_states_mod,targetstates2, k0)
-    # result3 = generate_path(cur_states,targetstates3, k0)
-    # result4 = generate_path(cur_states,targetstates4, k0)
 
     # print("cur_states[0]", cur_states[0])
     # results =[result0, result, result2]
@@ -453,11 +451,6 @@ def lane_state_sampling_test1(cur_states, obstacles, params_global, ax=None):
         if obstacle_free:
             trjs.append([xc, yc, yawc])
 
-        # if show_animation:
-            # if ax==None:
-                # plt.plot(xc, yc, "-r")
-            # else:
-                # ax.plot(xc, yc, "-r")
 
     for table in result:
         xc, yc, yawc = motion_model.generate_trajectory(cur_states_mod,
@@ -490,15 +483,6 @@ def lane_state_sampling_test1(cur_states, obstacles, params_global, ax=None):
         if obstacle_free:
             trjs.append([xc, yc, yawc])
 
-
-
-
-
-        # if show_animation:
-            # if ax==None:
-                # plt.plot(xc, yc, "-r")
-            # else:
-                # ax.plot(xc, yc, "-r")
 
     for table in result2:
         xc, yc, yawc = motion_model.generate_trajectory(cur_states_mod,
@@ -624,7 +608,7 @@ def lane_state_sampling_test1(cur_states, obstacles, params_global, ax=None):
 
         # totaltrjs.append(trj)
 
-    if show_animation:
+    if showplot:
         for trj in totaltrjs:
             if ax==None:
                 plt.plot(trj[0], trj[1], "-r")
@@ -632,14 +616,6 @@ def lane_state_sampling_test1(cur_states, obstacles, params_global, ax=None):
                 ax.plot(trj[0], trj[1], "-r")
                 # ax.scatter(trj[0][-1],trj[1][-1], facecolor='blue',edgecolor='blue')
 
-
-
-
-    # trjs=[newtrjs, trjs]
-
-    # print("--------------------------------")
-    # print("trj length", len(totaltrjs))
-    # input()
     return totaltrjs
 
     '''

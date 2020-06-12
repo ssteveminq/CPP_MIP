@@ -14,6 +14,8 @@ EXTEND_AREA = 15.0
 show_animation = True
 l_occ = np.log(0.8/0.2)
 l_free = np.log(0.2/0.8)
+l_occ_math = math.log(0.8/0.2)
+l_free_math = math.log(0.2/0.8)
 
 def polygon_contains_point(point, obstacle):
 
@@ -479,6 +481,7 @@ def generate_ray_casting_grid_map(obstacles,walls, params, agent_x=0.0, agent_y=
                     pmap[min_grid.ix][min_grid.iy]=l_occ  #log_occ 
                     min_grid.value=l_occ
                     updated_gridlist.append(min_grid)
+                    # print("l_free_math: ",l_free_math)
 
             iterator+=1
         obs_iter+=1
