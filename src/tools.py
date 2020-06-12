@@ -49,3 +49,19 @@ def define_polygon(num_pts=4, ax=None):
 
         return pts
 
+# convert the angle into a positive value [0,2pi)
+def orientation_processing(angle):
+    if angle < -2.0*np.pi:
+        angle += (2.0*np.pi)*2.0
+        return angle
+    if angle == -2.0*np.pi:
+        angle = 0.0
+        return angle 
+    if -2.0*np.pi < angle < 0:
+        angle += 2.0*np.pi
+    if 0 <= angle < np.2.0*pi:
+        return angle
+    if 2.0*np.pi <= angle:
+        angle -= 2.0*np.pi
+        return angle
+        

@@ -236,27 +236,16 @@ class Point:
         self.y = 0.0
 
 
-def check_robot_in_FOV(target_state, state, human_params_localmap, gridmap):
-    # find area covered by the human FOV
-
-    # keep between +/- 2*pi
-    if target_state[2] > np.pi*2.0:
-        target_state[2] -= np.pi*2.0
-    if target_state[2] < -np.pi*2.0:
-        target_state[2] += np.pi*2.0
-    # for comparison puposes
-    if target_state[2] < 0:
-        target_state[2] += 2.0*np.pi
-    
-    if target_state[2] >= 3*np.pi/2:
+def get_human_FOV(human_state, human_params_localmap, gridmap):
+	if human_state[2] >= 3*np.pi/2:
         # get the vertices of the sensor field
-        temp = 2*np.pi - target_state[2]
-        ilx = human_params_localmap.sensor_range*np.cos(temp) + target_state[0]
-        ily = human_params_localmap.sensor_range*np.sin(temp) + target_state[1]
+        temp = 2*np.pi - human_state[2]
+        ilx = human_params_localmap.sensor_range*np.cos(temp) + human_state[0]
+        ily = human_params_localmap.sensor_range*np.sin(temp) + human_state[1]
         left = np.array([ilx, ily])
         front_left = np.array([ilx + human_params_localmap.sensor_range*np.cos(temp), ily - human_params_localmap.sensor_range*np.sin(temp)])
-        irx = target_state[0] - human_params_localmap.sensor_range*np.cos(temp)
-        iry = target_state[1] - human_params_localmap.sensor_range*np.sin(temp)
+        irx = human_state[0] - human_params_localmap.sensor_range*np.cos(temp)
+        iry = human_state[1] - human_params_localmap.sensor_range*np.sin(temp)
         right = np.array([irx, iry])
         front_right = np.array([irx + human_params_localmap.sensor_range*np.cos(temp), iry - human_params_localmap.sensor_range*np.sin(temp)])
         # convert to grid space (map frame)
@@ -265,15 +254,15 @@ def check_robot_in_FOV(target_state, state, human_params_localmap, gridmap):
         pose_tl = gridmap.meters2grid(right)
         pose_ll = gridmap.meters2grid(front_right)
 
-    elif np.pi <= target_state[2] < 3*np.pi/2:
+    elif np.pi <= human_state[2] < 3*np.pi/2:
         # get the vertices of the sensor field
-        temp = target_state[2] - np.pi
-        ilx = human_params_localmap.sensor_range*np.cos(temp) + target_state[0]
-        ily = target_state[1] - human_params_localmap.sensor_range*np.sin(temp) 
+        temp = human_state[2] - np.pi
+        ilx = human_params_localmap.sensor_range*np.cos(temp) + human_state[0]
+        ily = human_state[1] - human_params_localmap.sensor_range*np.sin(temp) 
         left = np.array([ilx, ily])
         front_left = np.array([ilx - human_params_localmap.sensor_range*np.cos(temp), ily - human_params_localmap.sensor_range*np.sin(temp)])
-        irx = target_state[0] - human_params_localmap.sensor_range*np.cos(temp)
-        iry = target_state[1] + human_params_localmap.sensor_range*np.sin(temp)
+        irx = human_state[0] - human_params_localmap.sensor_range*np.cos(temp)
+        iry = human_state[1] + human_params_localmap.sensor_range*np.sin(temp)
         right = np.array([irx, iry])
         front_right = np.array([irx - human_params_localmap.sensor_range*np.cos(temp), iry - human_params_localmap.sensor_range*np.sin(temp)])
         # convert to grid space (map frame)
@@ -282,15 +271,15 @@ def check_robot_in_FOV(target_state, state, human_params_localmap, gridmap):
         pose_tl = gridmap.meters2grid(right)
         pose_ll = gridmap.meters2grid(front_right)
 
-    elif np.pi/2 <= target_state[2] < np.pi:
+    elif np.pi/2 <= human_state[2] < np.pi:
         # get the vertices of the sensor field
-        temp = np.pi - target_state[2]
-        ilx = target_state[0] - human_params_localmap.sensor_range*np.cos(temp)
-        ily = target_state[1] - human_params_localmap.sensor_range*np.sin(temp) 
+        temp = np.pi - human_state[2]
+        ilx = human_state[0] - human_params_localmap.sensor_range*np.cos(temp)
+        ily = human_state[1] - human_params_localmap.sensor_range*np.sin(temp) 
         left = np.array([ilx, ily])
         front_left = np.array([ilx - human_params_localmap.sensor_range*np.cos(temp), ily + human_params_localmap.sensor_range*np.sin(temp)])
-        irx = target_state[0] + human_params_localmap.sensor_range*np.cos(temp)
-        iry = target_state[1] + human_params_localmap.sensor_range*np.sin(temp)
+        irx = human_state[0] + human_params_localmap.sensor_range*np.cos(temp)
+        iry = human_state[1] + human_params_localmap.sensor_range*np.sin(temp)
         right = np.array([irx, iry])
         front_right = np.array([irx - human_params_localmap.sensor_range*np.cos(temp), iry + human_params_localmap.sensor_range*np.sin(temp)])
         # convert to grid space (map frame)
@@ -299,21 +288,31 @@ def check_robot_in_FOV(target_state, state, human_params_localmap, gridmap):
         pose_tl = gridmap.meters2grid(front_left)
         pose_ll = gridmap.meters2grid(left)
 
-    elif 0 <= target_state[2] < np.pi/2:
+    elif 0 <= human_state[2] < np.pi/2:
         # get the vertices of the sensor field
-        ilx = target_state[0] - human_params_localmap.sensor_range*np.cos(target_state[2])
-        ily = target_state[1] + human_params_localmap.sensor_range*np.sin(target_state[2]) 
+        ilx = human_state[0] - human_params_localmap.sensor_range*np.cos(human_state[2])
+        ily = human_state[1] + human_params_localmap.sensor_range*np.sin(human_state[2]) 
         left = np.array([ilx, ily])
-        front_left = np.array([ilx + human_params_localmap.sensor_range*np.cos(target_state[2]), ily + human_params_localmap.sensor_range*np.sin(target_state[2])])
-        irx = target_state[0] + human_params_localmap.sensor_range*np.cos(target_state[2])
-        iry = target_state[1] - human_params_localmap.sensor_range*np.sin(target_state[2])
+        front_left = np.array([ilx + human_params_localmap.sensor_range*np.cos(human_state[2]), ily + human_params_localmap.sensor_range*np.sin(human_state[2])])
+        irx = human_state[0] + human_params_localmap.sensor_range*np.cos(human_state[2])
+        iry = human_state[1] - human_params_localmap.sensor_range*np.sin(human_state[2])
         right = np.array([irx, iry])
-        front_right = np.array([irx + human_params_localmap.sensor_range*np.cos(target_state[2]), iry + human_params_localmap.sensor_range*np.sin(target_state[2])])
+        front_right = np.array([irx + human_params_localmap.sensor_range*np.cos(human_state[2]), iry + human_params_localmap.sensor_range*np.sin(human_state[2])])
         # convert to grid space (map frame)
         pose_tr = gridmap.meters2grid(front_right)
         pose_lr = gridmap.meters2grid(right)
         pose_tl = gridmap.meters2grid(front_left)
         pose_ll = gridmap.meters2grid(left)
+	return right, left, front_rigth, front_left
+
+def check_robot_in_FOV(target_state, state, human_params_localmap, gridmap):
+    # find area covered by the human FOV
+
+    target_state[2] = orientation_processing(target_state[2])
+
+    right, left, front_rigth, front_left, pose_tr, pose_lr, pose_tl, pose_ll = get_human_FOV(target_state, human_params_localmap, gridmap)
+    
+    
 
     # find the robot pose in grid
     pose_robot = gridmap.meters2grid(state[:2])
@@ -333,10 +332,7 @@ def check_wall_in_FOV(target_state, human_params_localmap, gridmap, map_params):
     wall_near_point_list = []
     wall_in_FOV = False
     
-    if target_state[2] < 0.0: 
-        target_state[2] += 2.0*np.pi
-    if target_state[2] > 2.0*np.pi:
-        target_state[2] -= 2.0*np.pi
+    target_state[2] = orientation_processing(target_state[2])
 
     # first we find out if wall in FOV
     if abs(target_state[0]) > (map_params.xmax - human_params_localmap.sensor_range) or abs(target_state[1]) > (map_params.ymax - human_params_localmap.sensor_range):
