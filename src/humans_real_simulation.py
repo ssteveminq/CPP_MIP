@@ -28,6 +28,7 @@ import matplotlib as mpl
 import ast
 from grid_map import GridMap
 from humans import *
+from tools import orientation_processing
 #probability
 l_occ=np.log(0.9/0.1)
 l_free=np.log(0.1/0.9)
