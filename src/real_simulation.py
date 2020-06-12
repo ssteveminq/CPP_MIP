@@ -27,8 +27,8 @@ import matplotlib.animation as animation
 import matplotlib as mpl
 import ast
 #probability
-l_occ=np.log(0.9/0.1)
-l_free=np.log(0.1/0.9)
+l_occ=np.log(0.95/0.05)
+l_free=np.log(0.05/0.95)
 l_same = np.log(0.9/0.1)
 l_diff= np.log(0.01/0.99)
 # p_occ_given_pocc = 0.99
@@ -254,6 +254,13 @@ def trjs_to_sample(trjs, num_points=60, showplot=True):
     return spline_trjs
 
 
+def plot_local_trjs(trjs, ax=None):
+    for trj in trjs:
+        if ax==None:
+            plt.plot(trj[0], trj[1], "-r")
+        else:
+            ax.plot(trj[0], trj[1], "-r")
+
 
 def plot_global_trjs(trjs, ax=None):
     # num_colors = len(gtrjs)
@@ -444,7 +451,7 @@ def update_occ_grid_map(state, local_map, params_local, global_map, params_globa
                 # print("no-----list- ix: ", ix, ", iy:",  iy)
                 # global_map[ix][iy]=global_map[ix][iy]*1.03
                 prior = pmap[ix][iy]
-                posterior = prior*0.99995+(1-prior)*0.00005
+                posterior = prior*0.999995+(1-prior)*0.000005
                 # if posterior<0.5:
                 global_map[ix][iy]= np.log(posterior/(1-posterior))
                 # if prior!=0.5:
@@ -849,11 +856,12 @@ if __name__ == "__main__":
             # generate global trjs to each sample goal
             gtrjs= generating_globaltrjs(state, cspace,obstacles,sample_goals,params_globalmap)
             sp_gtrjs = trjs_to_sample(gtrjs)
+            local_trjs = lane_state_sampling_test1(state,obstacles, params_globalmap)
             #local trajectories
-            if show_animation:
-                local_trjs = lane_state_sampling_test1(state,obstacles, params_globalmap, show_animation, axes[1,0])
-            else:
-                local_trjs = lane_state_sampling_test1(state,obstacles, params_globalmap, show_animation)
+            # if show_animation:
+                # local_trjs = lane_state_sampling_test1(state,obstacles, params_globalmap, show_animation, axes[1,0])
+            # else:
+                # local_trjs = lane_state_sampling_test1(state,obstacles, params_globalmap, show_animation)
             trjs_candidate =[]
             for gtrj in sp_gtrjs:
                 trjs_candidate.append(gtrj)
@@ -879,7 +887,7 @@ if __name__ == "__main__":
                 goal[1]=params_globalmap.ymin+0.5
 
             if show_animation:
-
+                plot_local_trjs(local_trjs, axes[1,0])
                 plot_global_trjs(sp_gtrjs, axes[1,0])
                 plot_best_trj(best_trj, horizon,axes[1,0])
 
@@ -932,10 +940,11 @@ if __name__ == "__main__":
             sample_goals = goal_sampling_VCD(waypoint_vcd, state[0],state[1], params_globalmap)
             gtrjs= generating_globaltrjs(state, cspace,obstacles,sample_goals,params_globalmap)
             sp_gtrjs = trjs_to_sample(gtrjs)
-            if show_animation:
-                local_trjs = lane_state_sampling_test1(state,obstacles, params_globalmap, show_animation, axes[1,0])
-            else:
-                local_trjs = lane_state_sampling_test1(state,obstacles, params_globalmap, show_animation)
+            local_trjs = lane_state_sampling_test1(state,obstacles, params_globalmap)
+            # if show_animation:
+                # local_trjs = lane_state_sampling_test1(state,obstacles, params_globalmap, show_animation, axes[1,0])
+            # else:
+                # local_trjs = lane_state_sampling_test1(state,obstacles, params_globalmap, show_animation)
             trjs_candidate =[]
             for gtrj in sp_gtrjs:
                 trjs_candidate.append(gtrj)
@@ -952,6 +961,7 @@ if __name__ == "__main__":
             goal_ys.append(goal[1])
 
             if show_animation:
+                plot_local_trjs(local_trjs, axes[1,0])
                 plot_global_trjs(sp_gtrjs, axes[1,0])
                 plot_best_trj(best_trj, horizon, axes[1,0])
                 axes[0,0].scatter(goal[0],goal[1], facecolor='red',edgecolor='red')
@@ -987,11 +997,11 @@ if __name__ == "__main__":
                 # uniform_terminal_state_sampling_test1(state,axes[1,0])
                 # planner.plot_regions(axes[1,0])
 
-        if curentropy < 0.35*initial_entropy:
+        if curentropy < 0.4*initial_entropy:
             horizon = 35
             params.weight_entropy=0.01
 
-        if curentropy < 0.15*initial_entropy:
+        if curentropy < 0.2*initial_entropy:
             horizon = -1
 
         if curentropy < 0.05*initial_entropy and boolsaved==False:
@@ -1002,6 +1012,8 @@ if __name__ == "__main__":
             boolsaved =True
             input("done")
             # anisave('test_video.mp4', writer=writer)
+
+        print("cur entropy: ", curentropy)
 
     plt.show()
     # plt.show(aspect='auto')

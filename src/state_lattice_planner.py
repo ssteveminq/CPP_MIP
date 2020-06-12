@@ -330,7 +330,7 @@ def biased_terminal_state_sampling_test2():
         plt.show()
 
 
-def lane_state_sampling_test1(cur_states, obstacles, params_global, showplot=True, ax=None):
+def lane_state_sampling_test1(cur_states, obstacles, params_global, showplot=False, ax=None):
     k0 = 0.0
     l_center = 1.0
     l_center2 = -1.0
@@ -345,8 +345,6 @@ def lane_state_sampling_test1(cur_states, obstacles, params_global, showplot=Tru
         l_heading=abs(l_heading)
     if l_heading>np.pi/4:
         l_heading=np.pi/4
-
-    # print("l_heading", l_heading*180/np.pi)
 
     l_width = 1.0
     v_width = 0.0
@@ -418,7 +416,6 @@ def lane_state_sampling_test1(cur_states, obstacles, params_global, showplot=Tru
     # input()
     
     trjs=[]
-
     for table in result0:
         xc, yc, yawc = motion_model.generate_trajectory(cur_states_mod,
             table[3], table[4], table[5], k0)
@@ -479,10 +476,8 @@ def lane_state_sampling_test1(cur_states, obstacles, params_global, showplot=Tru
             obstacle_free=False
         if params_global.ymin+margin >last_y or params_global.ymax-margin <last_y:
             obstacle_free=False
-
         if obstacle_free:
             trjs.append([xc, yc, yawc])
-
 
     for table in result2:
         xc, yc, yawc = motion_model.generate_trajectory(cur_states_mod,
@@ -512,7 +507,6 @@ def lane_state_sampling_test1(cur_states, obstacles, params_global, showplot=Tru
             obstacle_free=False
         if params_global.ymin+margin >last_y or params_global.ymax-margin <last_y:
             obstacle_free=False
-
         if obstacle_free:
             trjs.append([xc, yc, yawc])
 
@@ -570,9 +564,6 @@ def lane_state_sampling_test1(cur_states, obstacles, params_global, showplot=Tru
             ex.append(c[0][i])
             ey.append(c[1][i])
 
-        # print("c", c)
-        # print("c[0]", c[0])
-        # print("c[1]", c[1])
         newtrj=[trj[0], y_temps, trj[2]]
         newtrj2=[x_temps, trj[1], trj[2]]
         newtrj3=[x_temps, y_temps, trj[2]]
@@ -606,15 +597,12 @@ def lane_state_sampling_test1(cur_states, obstacles, params_global, showplot=Tru
         if obstacle_free:
             totaltrjs.append(trj)
 
-        # totaltrjs.append(trj)
-
-    if showplot:
-        for trj in totaltrjs:
-            if ax==None:
-                plt.plot(trj[0], trj[1], "-r")
-            else:
-                ax.plot(trj[0], trj[1], "-r")
-                # ax.scatter(trj[0][-1],trj[1][-1], facecolor='blue',edgecolor='blue')
+    # if showplot:
+        # for trj in totaltrjs:
+            # if ax==None:
+                # plt.plot(trj[0], trj[1], "-r")
+            # else:
+                # ax.plot(trj[0], trj[1], "-r")
 
     return totaltrjs
 
