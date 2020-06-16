@@ -29,6 +29,8 @@ import ast
 from grid_map import GridMap
 from humans import *
 from tools import orientation_processing
+from observation import *
+
 #probability
 l_occ=np.log(0.9/0.1)
 l_free=np.log(0.1/0.9)
@@ -242,7 +244,7 @@ def generating_globaltrjs(cur_state, cspace, obstacles,goals, params_global):
     return trjs
 
 
-def trjs_to_sample(trjs, ax=None, num_points=60, showplot=True):
+def trjs_to_sample(trjs, num_points=60, showplot=True):
     spline_trjs=[]
     for i, sp in enumerate(trjs):
         ds = 0.2                            # [m] distance of each intepolated points
@@ -258,6 +260,13 @@ def trjs_to_sample(trjs, ax=None, num_points=60, showplot=True):
 
     return spline_trjs
 
+
+def plot_local_trjs(trjs, ax=None):
+    for trj in trjs:
+        if ax==None:
+            plt.plot(trj[0], trj[1], "-r")
+        else:
+            ax.plot(trj[0], trj[1], "-r")
 
 
 def plot_global_trjs(trjs, ax=None):
@@ -295,7 +304,6 @@ def plot_best_trj(trj, horizon,ax=None):
             ax.plot(trj[0], trj[1], color='b',linewidth=2.5,  label="best-spline")
 
 
-
 def draw_occmap(data, params_map,params_global, agent_x, agent_y, ax):
 
     minx=params_map.xmin
@@ -308,19 +316,6 @@ def draw_occmap(data, params_map,params_global, agent_x, agent_y, ax):
 
     x, y = np.mgrid[slice(minx - xyreso / 2.0, maxx + xyreso / 2.0, xyreso),
                     slice(miny - xyreso / 2.0, maxy + xyreso / 2.0, xyreso)]
-    # print("len(x)", len(x))
-    # print("len(x[0])", len(x[0]))
-    # print("len(y)", len(y))
-    # x.reshape(41,41)
-    # y.reshape(41,41)
-    # print("len(y[0])", len(y[0]))
-    # print("x_shpe: ", x.shape)
-    # print("data size:", len(data))
-    # print("data size2:", len(data[0]))
-    # print("data shape:", data.shape)
-    # input()
-    # if x+agent_x 
-
     # if px >= params_global.xmax or px <= params_global.xmin:
         # continue
     # if py >= params_global.ymax or py <= params_global.ymin:
@@ -361,19 +356,21 @@ def draw_entropymap_global(data,parmas_globalmap, ax):
 
     x, y = np.mgrid[slice(minx - xyreso / 2.0, maxx + xyreso / 2.0, xyreso),
                     slice(miny - xyreso / 2.0, maxy + xyreso / 2.0, xyreso)]
-    ax.pcolor(x, y, data, vmax=0.69315, cmap=plt.cm.Reds)
+    # ax.pcolor(x, y, data, vmax=0.69315, cmap=plt.cm.Reds)
+    ax.pcolor(x, y, data, vmax=1.0, cmap=plt.cm.Reds)
     ax.set_xlim([1.1*minx, 1.1*maxx])   # limit the plot space
     ax.set_ylim([1.1*miny, 1.1*maxy])   # limit the plot space
 
 
 
-
 def get_map_entropy(pmap_global,params_map):
     entropy_sum=0
-    pmap= 1-1./(1.0+np.exp(pmap_global))
+    # pmap= 1-1./(1.0+np.exp(pmap_global))
     for ix in range(params_map.xw-1):
         for iy in range(params_map.yw-1):
-            p =pmap[ix][iy]
+            p=1-1./(1.0+np.exp(pmap_global[ix][iy]))
+            # p=1-1./(1.0+pow(2,pmap_global[ix][iy]))
+            # p =pmap[ix][iy]
             # print("p: ", p)
             if p>0.0 and p<1.0:
                 entropy_sum+=(p*math.log(p)+(1-p)*math.log(1-p))
@@ -437,7 +434,36 @@ def update_occ_grid_map(state, local_map, params_local, global_map, params_globa
             # print("(ix_global, iy_global): ",ix_global, " , ", iy_global)
             meas = local_map[ix_local][iy_local]
             global_map[ix_global][iy_global] +=meas
+            updated_list.append([ix_global, iy_global])
 
+
+    # '''
+    #convert log odds to probability 
+    pmap= 1-1./(1.0+np.exp(global_map))
+    # pmap= 1-1./(1.0+pow(2,global_map))
+    # print(pmap)
+    # input()
+
+    # '''
+    for ix in range(params_global.xw-1):
+        for iy in range(params_global.yw-1):
+            if [ix,iy] in updated_list:
+                # print("ix: ", ix, ", iy:",  iy)
+                continue
+            else:
+                # prior=1-1./(1.0+np.exp(pmap_global[ix][iy]))
+                # print("no-----list- ix: ", ix, ", iy:",  iy)
+                # global_map[ix][iy]=global_map[ix][iy]*1.03
+                prior = pmap[ix][iy]
+                posterior = prior*0.999995+(1-prior)*0.000005
+                # if posterior<0.5:
+                global_map[ix][iy]= np.log(posterior/(1-posterior))
+                # if prior!=0.5:
+                    # print("prior: ", prior, ", Posterior:", posterior)
+                    # print("log-odd: ", np.log(posterior/(1-posterior)))
+                    # print("-----------------")
+                # global_map[ix][iy]+=l_same
+    # '''
     return global_map
 
 def initialize_global_occ_grid_map(params_map):
@@ -499,21 +525,11 @@ def plot_robot(pose, params):
     # axes[0].fill(np.array(sensor_outline[0, :]).flatten(),
              # np.array(sensor_outline[1, :]).flatten(),'y', alpha=0.25)
 
+
 def plot_map(pos_x,pos_y,way_x, way_y, waytimes):
     axes[0,0].scatter(pos_x[0], pos_y[0], facecolor='blue',edgecolor='blue')      #initial point
     axes[0,0].scatter(pos_x[-1], pos_y[-1], facecolor='red',edgecolor='red')      #final point
     # axes[0,0].plot(pos_x, pos_y, 'o', markersize = 20, fillstyle='none',color='black')             #trajectory point
-
-    # Plot the vertices of the human path
-    axes[0,0].scatter(-2.0, 2.0, facecolor='green',edgecolor='green')
-    axes[0,0].scatter(-2.0, -2.0, facecolor='green',edgecolor='green')
-    axes[0,0].scatter(-4.0, 2.0, facecolor='green',edgecolor='green')
-    axes[0,0].scatter(-4.0, -2.0, facecolor='green',edgecolor='green')
-
-    # Plot the vertices of the pedestrian path
-    axes[0,0].scatter(-2.0, -3.5, facecolor='black',edgecolor='black')
-    axes[0,0].scatter(2.0, -3.5, facecolor='black',edgecolor='black')
-
     axes[0,0].plot(way_x, way_y, '*', markersize= 10, fillstyle='none',color='red')             #trajectory point
     axes[0,0].set_xlabel("x[m]")
     axes[0,0].set_ylabel("y[m]")
@@ -567,6 +583,7 @@ def simple_motion(state, goal, params):
     if state[2] >= 2*math.pi: state[2] -= 2*math.pi
     if state[2] <= -2*math.pi: state[2] += 2*math.pi
     return state
+
 
 def Update_a(state, goal):
     dx = goal[0] - state[0]
@@ -700,8 +717,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-in",help="input file (default: input2.txt)",default="input2.txt")
     parser.add_argument("-load",help="load saved data? [y/n] (default: n)",default="n")
+    parser.add_argument("-animation",help="show animation? [y/n] (default: y)",default="y")
     args = vars(parser.parse_args())
-
 
     params = Params()
     params_globalmap =  map_params()
@@ -710,15 +727,17 @@ if __name__ == "__main__":
     human_params_localmap =  human_map_params()
 
     start_state, init_pos, obstacles, walls = read_inputfile(args['in'])
+    if args['animation']=="y":
+        show_animation = True
+    else:
+        show_animation = False
+
     # create obpoints
     obpoints=[]
     xyressol = 0.5
     for obs in obstacles:
         num_x = int(round((obs.x_max-obs.x_min)/(2*params_globalmap.xyreso)))+1
         num_y = int(round((obs.y_max-obs.y_min)/(2*params_globalmap.xyreso)))+1
-        # print("num_x", num_x)
-        # print("num_y", num_y)
-        # input()
         for i in range(num_x):
             for j in range(num_y):
                 obspoint_x = obs.x_min+i*2*params_globalmap.xyreso
@@ -727,34 +746,9 @@ if __name__ == "__main__":
     # print("obspoints:", obpoints)
 
 
-    # Writer = animation.writers['ffmpeg']
-    # writer = Writer(fps=20, metadata=dict(artist='Me'), bitrate=1800)
-    # writer = Writer(fps=20, metadata=dict(artist='Me'), bitrate=1800)
-
-
-    '''
-        # print("waypoints :way_x)
-        floatregex =re.compile('[-+]?\d*\.\d+|[-+]?\d+') 
-        obstacles = []                                  # list which will contain all obstacles
-        obstacle_coords = np.asarray(obsdf['obstacle'][0:])
-        # print("obstacle coords")
-        # print(obstacle_coords)
-        for i in range(len(obstacle_coords)):
-            nums = [float(k) for k in floatregex.findall(obstacle_coords[i])] #find integer value in string format '[ int, int ]'
-            # print(nums)
-            obs = Obstacle(nums[0]-1, nums[1]-1, nums[2], nums[3])          #xmin,ymin, 
-            obs.draw()
-            obstacles.append(obs)                                   # attach obstacle to obstacle list
-        # print("num ofobstacles:", len(obstacles))
-        print("---load completed")
-    '''
-
     #create cspace
-    # init_pos = start_state
-    # init_pos=[3.0,4.0]
     print("init_pos", init_pos)
-    goal_pos=[8.5, -2.0]
-    # cspace = configuration_space(args['in'])
+    goal_pos=[8.5, -2.0]                #temporary goal pose
     cspace=configuration_space()
     cspace.reset_environment(params_globalmap.boundaries,init_pos,goal_pos, obstacles)
     planner = VerticalCellDecomposition(cspace)
@@ -767,68 +761,74 @@ if __name__ == "__main__":
     # planner.construct_graph()
     # path, path_idx = planner.search(True, goal_pos)
 
-
     #Define four windows: 
     # axes[0,0] : robot, obstacle, goal_points, 
     # axes[1,0] : trajectories, region
     # axes[0,1] : local sensor_map
     # axes[1,1] : entropy_map
-    fig,axes=plt.subplots(nrows=2,ncols=2,figsize=(40,40))
-
+    # fig,axes=plt.subplots(nrows=2,ncols=2,figsize=(40,40))
     waypoint_vcd = planner.generate_waypoint(params_localmap)
-    planner.plot_regions(axes[1,0])
+
     #waypoint from vcd
     way_x=[]
     way_y=[]
     for point in waypoint_vcd:
         way_x.append(point[0])
         way_y.append(point[1])
-        # print("waypoints : (x,y ) = (", way_x,", ", way_y,")")
 
-    #plot figures 
-    axes[0,0].scatter(init_pos[0], init_pos[1], facecolor='blue',edgecolor='blue')      #initial point
-    axes[0,0].plot(init_pos[0], init_pos[1], 'o', markersize = 20, fillstyle='none',color='black')             #trajectory point
-    axes[1,0].plot(way_x, way_y, '*', markersize= 10, fillstyle='none',color='green')             #trajectory point
-    # Plot the vertices of the target path
-    axes[0,0].scatter(-2.0, 2.0, facecolor='green',edgecolor='green')
-    axes[0,0].scatter(-2.0, -2.0, facecolor='green',edgecolor='green')
-    axes[0,0].scatter(-4.0, 2.0, facecolor='green',edgecolor='green')
-    axes[0,0].scatter(-4.0, -2.0, facecolor='green',edgecolor='green')
-    # Plot the vertices of the pedestrian path
-    axes[0,0].scatter(-2.0, -3.5, facecolor='black',edgecolor='black')
-    axes[0,0].scatter(2.0, -3.5, facecolor='black',edgecolor='black')
-    # for i in range(len(waytimes)):
-        # axes[0].text(way_x[i], way_y[i]-1,str(waytimes[i]), color='g')
+    if show_animation:
 
-    area_size=13
-    axes[0,0].set_xlabel('x')
-    axes[0,0].set_ylabel('y')
-    axes[0,0].set_xlim([-area_size, area_size])   # limit the plot space
-    axes[0,0].set_ylim([-area_size, area_size])   # limit the plot space
-    axes[0,0].grid(True)
+        fig,axes=plt.subplots(nrows=2,ncols=2,figsize=(40,40))
+        planner.plot_regions(axes[1,0])
 
-    #simulation settings
-    goal_tol=0.3
-    # goali = 0                           #define goal from waypoints set
-    # goal = [way_x[goali], way_y[goali]]
-    goal =goal_pos                        #define goal from goal_pos(initial direction)
+        #plot figures 
+        axes[0,0].scatter(init_pos[0], init_pos[1], facecolor='blue',edgecolor='blue')      #initial point
+        axes[0,0].plot(init_pos[0], init_pos[1], 'o', markersize = 20, fillstyle='none',color='black')             #trajectory point
+        axes[1,0].plot(way_x, way_y, '*', markersize= 10, fillstyle='none',color='green')             #trajectory point
+        # for i in range(len(waytimes)):
+            # axes[0].text(way_x[i], way_y[i]-1,str(waytimes[i]), color='g')
+
+        area_size=params.area_size+1
+        axes[0,0].set_xlabel('x')
+        axes[0,0].set_ylabel('y')
+        axes[0,0].set_xlim([-area_size, area_size])   # limit the plot space
+        axes[0,0].set_ylim([-area_size, area_size])   # limit the plot space
+        axes[0,0].grid(True)
+
+        # Plot the vertices of the target path
+        axes[0,0].scatter(-2.0, 2.0, facecolor='green',edgecolor='green')
+        axes[0,0].scatter(-2.0, -2.0, facecolor='green',edgecolor='green')
+        axes[0,0].scatter(-4.0, 2.0, facecolor='green',edgecolor='green')
+        axes[0,0].scatter(-4.0, -2.0, facecolor='green',edgecolor='green')
+        # Plot the vertices of the pedestrian path
+        axes[0,0].scatter(-2.0, -3.5, facecolor='black',edgecolor='black')
+        axes[0,0].scatter(2.0, -3.5, facecolor='black',edgecolor='black')
+
+
+    # simulation settings
+    # initial state = [x(m), y(m), yaw(rad), v(m/s), omega(rad/s)]
+    state = np.array([init_pos[0],init_pos[1],0.0, 0.0,0.0])
+    target_state = np.array([-3.0, 0.0, -np.pi/2, 0.0])
+    pedestrian_state = np.array([2.0, 1.0, -np.pi/2, 0.0]) 
+    #temporary goal state
+    goal = goal_pos                        #define goal from goal_pos(initial direction)
     target_goal = [-2.0, -2.0]           # pre defined target goal
     pedestrian_goal = [2.0, -3.5]        # pre defined pedestrian goal
 
     target_goali = 0                       # used to determine next vertex of square trajectory
     pedestrian_goal_bool = True
 
-    # initial state = [x(m), y(m), yaw(rad), v(m/s), omega(rad/s)]
-    state = np.array([init_pos[0],init_pos[1],0.0, 0.0,0.0])
-    target_state = np.array([-3.0, 0.0, -np.pi/2, 0.0])
-    pedestrian_state = np.array([2.0, 1.0, -np.pi/2, 0.0]) 
-    # state = np.array(start_state)
-    
+    goal_tol = 0.1
+
     traj = state[:2]
     target_traj = target_state[:2]
     pedestrian_traj = pedestrian_state[:2]
     iter=0
     simtime=0.0
+
+    observation = Observation()
+
+    #parameters for logging
     times =[]
     entropys=[]
     pos_xs=[]
@@ -839,6 +839,16 @@ if __name__ == "__main__":
     goal_ys=[]
     obstacles_array = []
     wall_near_point_list = []
+
+    #Checking initial and final goal
+    print("initial state: ",state)
+    print("goal : ",goal)
+
+    t_prev_goal = time.time()
+    pmap_global = initialize_global_occ_grid_map(params_globalmap)
+    initial_entropy = get_map_entropy(pmap_global,params_globalmap)
+    print("initial entropy: ", initial_entropy )
+    inputs= np.array([0.0, 0.0])
 
     # Checking initial position and first goal
     print("robot initial state: ", state)
@@ -852,21 +862,14 @@ if __name__ == "__main__":
     print("pedestrian initial state: ", pedestrian_state)
     print("pedestrian initial goal : ", pedestrian_goal)
 
-    t_prev_goal = time.time()
-    pmap_global = initialize_global_occ_grid_map(params_globalmap)
-    initial_entropy = get_map_entropy(pmap_global,params_globalmap)
-    print("initial entropy: ", initial_entropy )
-    inputs= np.array([0.0, 0.0])
-
     flight_area_vertices = [ [-12.5, 12.5],
                              [12.5, 12.5],
                              [12.5, -12.5],
                              [-12.5, -12.5] ]
 
     gridmap = GridMap(flight_area_vertices, state[:2])
-
-    for i in range(len(obstacles)):
-        
+    # fill the obstacles_array
+    for i in range(len(obstacles)):    
         tmp = np.array([ obstacles[i].vertices[0], 
                          obstacles[i].vertices[1], 
                          obstacles[i].vertices[2], 
@@ -877,6 +880,7 @@ if __name__ == "__main__":
 
 
     for _ in range(params.numiters):
+        observation.get_obs(state, target_state, pedestrian_state, params, target_goal, pedestrian_goal, human_params_localmap, gridmap)
         state, inputs = motion_dwa(state, inputs, goal, obpoints, walls, params)
 
         target_bool = True
@@ -897,16 +901,19 @@ if __name__ == "__main__":
         pos_ys.append(state[1])
         yaws.append(state[2])
         velocities.append(state[3])
+
         if iter>0:
             goal_xs.append(goal[0])
             goal_ys.append(goal[1])
         if goal_dist < goal_tol:                                          # goal is reached
             print('Time from the previous reached goal:', t_current - t_prev_goal)
+            t_prev_goal = time.time()
 
             #setting next goal  --> start finding best trajectories
-            axes[1,0].cla()
-            axes[1,0].set_title('global & Local motion primitives')
-            planner.plot_regions(axes[1,0])
+            if show_animation:
+                axes[1,0].cla()
+                axes[1,0].set_title('global & Local motion primitives')
+                planner.plot_regions(axes[1,0])
             # sample_goals = random_sampling(params,8)
             # generate goal points from waypoints vcd
             sample_goals = random_sampling(params,6)
@@ -914,22 +921,20 @@ if __name__ == "__main__":
             sample_gols_total=[sample_goals,sample_goals2]
             # generate global trjs to each sample goal
             gtrjs= generating_globaltrjs(state, cspace,obstacles,sample_goals,params_globalmap)
-            sp_gtrjs = trjs_to_sample(gtrjs,axes[1,0])
-            plot_global_trjs(sp_gtrjs, axes[1,0])
+            sp_gtrjs = trjs_to_sample(gtrjs)
+            local_trjs = lane_state_sampling_test1(state,obstacles, params_globalmap)
             #local trajectories
             # local_trjs = lane_state_sampling_test1(state,obstacles, params_globalmap, axes[1,0])
             trjs_candidate =[]
             for gtrj in sp_gtrjs:
                 trjs_candidate.append(gtrj)
-            # for ltrj in local_trjs:
-                # trjs_candidate.append(ltrj)
+            for ltrj in local_trjs:
+                trjs_candidate.append(ltrj)
 
-            # print("lenth gtrjs: ", len(sp_gtrjs), ", lenth ltrjs: ", len(local_trjs))
-            # print("lenth trjs: ", len(trjs_candidate))
+            #Obtain best_trjaectory
             best_trj = calc_IG_trjs(trjs_candidate, entropymap , params_localmap, params_globalmap, params,horizon )
-            plot_best_trj(best_trj, horizon,axes[1,0])
 
-            t_prev_goal = time.time()
+            #Choose next goal point
             if len(best_trj[0])>horizon and horizon>0:
                 goal = [best_trj[0][horizon-1], best_trj[1][horizon-1]]
             else:
@@ -943,6 +948,11 @@ if __name__ == "__main__":
                 goal[1]=params_globalmap.ymax-0.5
             elif goal[1]< params_globalmap.ymin:
                 goal[1]=params_globalmap.ymin+0.5
+
+            if show_animation:
+                plot_local_trjs(local_trjs, axes[1,0])
+                plot_global_trjs(sp_gtrjs, axes[1,0])
+                plot_best_trj(best_trj, horizon,axes[1,0])
         
         robot_in_FOV = check_robot_in_FOV(target_state, state, human_params_localmap, gridmap)
         wall_in_FOV, wall_near_point_list = check_wall_in_FOV(target_state, human_params_localmap, gridmap, params_globalmap)
@@ -979,49 +989,39 @@ if __name__ == "__main__":
                         target_goali = 3
                     target_goal, target_goali = target_goal_update(target_goal, target_state, params, t_current, t_prev_goal, target_goali)
 
+        pmap_local, updated_grids, intersect_dic, obs_verticeid, closest_vertexid, params_localmap.xmin, params_localmap.xmax, params_localmap.ymin, params_localmap.ymax, params_localmap.xyreso, params_localmap.xw, params_localmap.yw= generate_ray_casting_grid_map(obstacles, walls, params_localmap, state[0],state[1], state[2])
+        pmap_global = update_occ_grid_map(state, pmap_local,params_localmap, pmap_global,params_globalmap)
+        entropymap = get_global_entropymap(pmap_global,params_globalmap)
+        curentropy = get_map_entropy(pmap_global, params_globalmap)
+        entropys.append(curentropy)
+
         #plot
-        if params.animate:
-            #figure1
+        if show_animation:
             axes[0,0].cla()
-            # plt.plot(goal[0], goal[1])
-            # plot_map(init_pos[0], init_pos[1],way_x,way_y,waytimes)
             axes[0,0].scatter(goal[0], goal[1], facecolor='red',edgecolor='red')
             traj = np.vstack([traj, state[:2]])
+            visualize(traj, state, obstacles, walls, params)
             target_traj = np.vstack([target_traj, target_state[:2]])
             pedestrian_traj = np.vstack([pedestrian_traj, pedestrian_state[:2]])
-            visualize(traj, state, obstacles, walls, params)
             visualize_humans(target_traj, target_state, obstacles, params, pedestrian_traj, pedestrian_state, axes[0,0])
 
             #figure2- local sensor window
             axes[0,1].cla()
             axes[0,1].set_title('local sesnor grid')
-            pmap_local, updated_grids, intersect_dic, obs_verticeid, closest_vertexid, params_localmap.xmin, params_localmap.xmax, params_localmap.ymin, params_localmap.ymax, params_localmap.xyreso, params_localmap.xw, params_localmap.yw= generate_ray_casting_grid_map(obstacles, walls, params_localmap, state[0],state[1], state[2])
+            # pmap_local, updated_grids, intersect_dic, obs_verticeid, closest_vertexid, params_localmap.xmin, params_localmap.xmax, params_localmap.ymin, params_localmap.ymax, params_localmap.xyreso, params_localmap.xw, params_localmap.yw= generate_ray_casting_grid_map(obstacles, walls, params_localmap, state[0],state[1], state[2])
             draw_occmap(pmap_local, params_localmap, params_globalmap, state[0],state[1], axes[0,1])
-            #draw sensor ray to obstacles
-            # for i in range(len(obstacles)):
-                # axes[0].plot([state[0], obstacles[i].vertices[obs_verticeid[i][0]][0]], [state[1], obstacles[i].vertices[obs_verticeid[i][0]][1]], color='orange')
-                # axes[0].plot([state[0], obstacles[i].vertices[obs_verticeid[i][1]][0]], [state[1], obstacles[i].vertices[obs_verticeid[i][1]][1]], color='orange')
-                # axes[0].plot([state[0], obstacles[i].vertices[closest_vertexid[i]][0]], [state[1], obstacles[i].vertices[closest_vertexid[i]][1]], color='orange')
-            #test intersection
-            # for angle,inter_point in intersect_dic.items():
-                # axes[0].plot(inter_point[0], inter_point[1], '*', markersize= 5, fillstyle='none',color='green')
-
-            # axes[0,1.plot(ox, oy, "xr")
 
             #figure3- global occupancy grid
             axes[1,1].cla()
             axes[1,1].set_title('global occupancy grid')
-            pmap_global = update_occ_grid_map(state, pmap_local,params_localmap, pmap_global,params_globalmap)
-            entropymap = get_global_entropymap(pmap_global,params_globalmap)
-            # draw_occmap_global(pmap_global,params_globalmap, axes[1,1])
-            draw_entropymap_global(pmap_global,params_globalmap, axes[1,1])
-            curentropy = get_map_entropy(pmap_global, params_globalmap)
-            entropys.append(curentropy)
+            # pmap_global = update_occ_grid_map(state, pmap_local,params_localmap, pmap_global,params_globalmap)
+            # entropymap = get_global_entropymap(pmap_global,params_globalmap)
+            draw_entropymap_global(entropymap,params_globalmap, axes[1,1])
+            # curentropy = get_map_entropy(pmap_global, params_globalmap)
+            # entropys.append(curentropy)
             # entropy_log[simtime]=curentropy
             # print(entropy_log)
             # print("----entropy : ", entropy)
-
-
             plt.pause(0.001)
             # plt.show()
 

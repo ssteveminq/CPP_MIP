@@ -59,7 +59,7 @@ def orientation_processing(angle):
         return angle 
     if -2.0*np.pi < angle < 0:
         angle += 2.0*np.pi
-    if 0 <= angle < np.2.0*pi:
+    if 0 <= angle < 2.0*np.pi:
         return angle
     if 2.0*np.pi <= angle:
         angle -= 2.0*np.pi
