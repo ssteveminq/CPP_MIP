@@ -884,10 +884,10 @@ if __name__ == "__main__":
         state, inputs = motion_dwa(state, inputs, goal, obpoints, walls, params)
 
         target_bool = True
-        target_state = human_motion(target_state, target_goal, human_params, goal_tol, target_bool) # human motion model
+        target_state = human_motion(target_state, target_goal, human_params, goal_tol, target_bool) # human target motion model
         target_state = collision_avoidance(target_state, gridmap, human_params)
         target_bool = False
-        pedestrian_state = human_motion(pedestrian_state, pedestrian_goal, human_params, goal_tol, target_bool) # human motion model
+        pedestrian_state = human_motion(pedestrian_state, pedestrian_goal, human_params, goal_tol, target_bool) # human ped motion model
         pedestrian_state = collision_avoidance(pedestrian_state, gridmap, human_params)
         
         goal_dist = distance(goal,state)                                    #distance to gaol

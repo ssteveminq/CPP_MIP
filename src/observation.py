@@ -147,7 +147,7 @@ class Observation:
         t_left_pt = min(target_pose_tl[0], target_pose_ll[0])
         t_right_pt = max(target_pose_tr[0], target_pose_lr[0])
         if self.count > 1:
-            if ped_dist <= target_dist: # Allows us to order our member variables based on distance
+            if self.ped_dist <= self.target_dist: # Allows us to order our member variables based on distance
                 self.human_FOV = np.vstack((pedestrian_FOV, target_FOV))
                 # determine if we are in pedestrian FOV
                 if p_left_pt <= pose_robot[0] <= p_right_pt and p_low_pt <= pose_robot[1] <= p_high_pt:
@@ -213,18 +213,21 @@ class Observation:
         left_pt = min(pose_tl[0], pose_ll[0])
         right_pt = max(pose_tr[0], pose_lr[0])
 
+        # ped_dist = distance(state, pedestrian_state)
+        # target_dist = distance(state, target_state)
+
         if left_pt <= pose_pedestrian[0] <= right_pt and low_pt <= pose_pedestrian[1] <= high_pt:
             # print("pedestrian in robot FOV")
             human_in_FOV = True
             pedestrian_in_FOV = True
             self.count += 1
-            ped_dist = distance(state, pedestrian_state)
+            self.ped_dist = distance(state, pedestrian_state)
         if left_pt <= pose_target[0] <= right_pt and low_pt <= pose_target[1] <= high_pt:
             # print("target in robot FOV")
             human_in_FOV = True
             target_in_FOV = True
             self.count += 1
-            target_dist = distance(state, target_state)
+            self.target_dist = distance(state, target_state)
 
         if human_in_FOV:                # Can only determine human awareness if we can see them
             self.get_awareness(target_in_FOV, pedestrian_in_FOV, gridmap, state, target_state, pedestrian_state, human_params_localmap)

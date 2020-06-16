@@ -448,7 +448,7 @@ def potential_goal_update(target_goal, target_state, state, params, t_current, t
     # print("y_avg = ", y_avg)
     # print("x_avg = ", x_avg)
     # print("slope = ",slope)
-    if slope == 0 and init.x < obstacles_array[0][0][0]:
+    if slope == 0 and init.x < obstacles_array[0][0][0]: ##FIXME ==? obstacle_array is not defined from above  by MK
         final.x = init.x - scaling_factor
         final.y = init.y
     elif slope == 0 and init.x > obstacles_array[0][1][0]:
