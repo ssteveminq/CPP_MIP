@@ -126,7 +126,67 @@ class Observation:
         self.distance_array = [] # array of distances to humans
         self.count = 0 # integer counter of # humans in FOV of Robot
 
-        # TODO: still need to resolve if right left front right front left ever switch at pi/4
+        
+    def get_awareness(self, target_in_FOV, pedestrian_in_FOV, gridmap, state, target_state, pedestrian_state, human_params_localmap):
+        pose_robot = gridmap.meters2grid(state[:2])
+
+        # get the FOV for target
+        target_lower_right, target_lower_left, target_top_right, target_top_left, target_pose_tr, target_pose_lr, target_pose_tl, target_pose_ll = get_agent_FOV(target_state, human_params_localmap, gridmap)
+        target_FOV = np.array([target_top_left, target_top_right, target_lower_right, target_lower_left])
+        # get the FOV for pedestrian
+        ped_lower_right, ped_lower_left, ped_top_right, ped_top_left, ped_pose_tr, ped_pose_lr, ped_pose_tl, ped_pose_ll = get_agent_FOV(pedestrian_state, human_params_localmap, gridmap)
+        pedestrian_FOV = np.array([ped_top_left, ped_top_right, ped_lower_right, ped_lower_left])
+        # get the max and min x and y of the ped FOV in grid terms
+        p_high_pt = max(ped_pose_tr[1], ped_pose_tl[1])
+        p_low_pt = min(ped_pose_ll[1], ped_pose_lr[1])
+        p_left_pt = min(ped_pose_tl[0], ped_pose_ll[0])
+        p_right_pt = max(ped_pose_tr[0], ped_pose_lr[0])
+        # get the max and min x and y of the target FOV in grid terms
+        t_high_pt = max(target_pose_tr[1], target_pose_tl[1])
+        t_low_pt = min(target_pose_ll[1], target_pose_lr[1])
+        t_left_pt = min(target_pose_tl[0], target_pose_ll[0])
+        t_right_pt = max(target_pose_tr[0], target_pose_lr[0])
+        if self.count > 1:
+            if ped_dist <= target_dist: # Allows us to order our member variables based on distance
+                self.human_FOV = np.vstack((pedestrian_FOV, target_FOV))
+                # determine if we are in pedestrian FOV
+                if p_left_pt <= pose_robot[0] <= p_right_pt and p_low_pt <= pose_robot[1] <= p_high_pt:
+                    self.human_awareness_array.append(True)
+                else:
+                    self.human_awareness_array.append(False)
+                # determine if we are in target FOV
+                if t_left_pt <= pose_robot[0] <= t_right_pt and t_low_pt <= pose_robot[1] <= t_high_pt:
+                    self.human_awareness_array.append(True)
+                else:
+                    self.human_awareness_array.append(False)
+            else: # if the target is closer
+                self.human_FOV = np.vstack((target_FOV, pedestrian_FOV))
+                # determine if we are in target FOV
+                if t_left_pt <= pose_robot[0] <= t_right_pt and t_low_pt <= pose_robot[1] <= t_high_pt:
+                    self.human_awareness_array.append(True)
+                else:
+                    self.human_awareness_array.append(False)
+                # determine if we are in pedestrian FOV
+                if p_left_pt <= pose_robot[0] <= p_right_pt and p_low_pt <= pose_robot[1] <= p_high_pt:
+                    self.human_awareness_array.append(True)
+                else:
+                    self.human_awareness_array.append(False)
+        else: # if only one human in FOV
+            if pedestrian_in_FOV:
+                self.human_FOV = np.vstack((pedestrian_FOV))
+                if p_left_pt <= pose_robot[0] <= p_right_pt and p_low_pt <= pose_robot[1] <= p_high_pt:
+                    self.human_awareness_array.append(True)
+                else:
+                    self.human_awareness_array.append(False)
+            elif target_in_FOV:
+                self.human_FOV = np.vstack((target_FOV))
+                if t_left_pt <= pose_robot[0] <= t_right_pt and t_low_pt <= pose_robot[1] <= t_high_pt:
+                    self.human_awareness_array.append(True)
+                else:
+                    self.human_awareness_array.append(False)
+        # print("human_FOV: ", human_FOV)
+
+
 
     def get_obs(self, state, target_state, pedestrian_state, params, target_goal, pedestrian_goal, params_localmap, human_params_localmap, gridmap):
         # Maybe give robot access to their goal point which simulates us having a "policy"
@@ -167,62 +227,7 @@ class Observation:
             target_dist = distance(state, target_state)
 
         if human_in_FOV:                # Can only determine human awareness if we can see them
-            # get the FOV for target
-            target_lower_right, target_lower_left, target_top_right, target_top_left, target_pose_tr, target_pose_lr, target_pose_tl, target_pose_ll = get_agent_FOV(target_state, human_params_localmap, gridmap)
-            target_FOV = np.array([target_top_left, target_top_right, target_lower_right, target_lower_left])
-            # get the FOV for pedestrian
-            ped_lower_right, ped_lower_left, ped_top_right, ped_top_left, ped_pose_tr, ped_pose_lr, ped_pose_tl, ped_pose_ll = get_agent_FOV(pedestrian_state, human_params_localmap, gridmap)
-            pedestrian_FOV = np.array([ped_top_left, ped_top_right, ped_lower_right, ped_lower_left])
-            # get the max and min x and y of the ped FOV in grid terms
-            p_high_pt = max(ped_pose_tr[1], ped_pose_tl[1])
-            p_low_pt = min(ped_pose_ll[1], ped_pose_lr[1])
-            p_left_pt = min(ped_pose_tl[0], ped_pose_ll[0])
-            p_right_pt = max(ped_pose_tr[0], ped_pose_lr[0])
-            # get the max and min x and y of the target FOV in grid terms
-            t_high_pt = max(target_pose_tr[1], target_pose_tl[1])
-            t_low_pt = min(target_pose_ll[1], target_pose_lr[1])
-            t_left_pt = min(target_pose_tl[0], target_pose_ll[0])
-            t_right_pt = max(target_pose_tr[0], target_pose_lr[0])
-            if self.count > 1:
-                if ped_dist <= target_dist: # Allows us to order our member variables based on distance
-                    self.human_FOV = np.vstack((pedestrian_FOV, target_FOV))
-                    # determine if we are in pedestrian FOV
-                    if p_left_pt <= pose_robot[0] <= p_right_pt and p_low_pt <= pose_robot[1] <= p_high_pt:
-                        self.human_awareness_array.append(True)
-                    else:
-                        self.human_awareness_array.append(False)
-                    # determine if we are in target FOV
-                    if t_left_pt <= pose_robot[0] <= t_right_pt and t_low_pt <= pose_robot[1] <= t_high_pt:
-                        self.human_awareness_array.append(True)
-                    else:
-                        self.human_awareness_array.append(False)
-                else: # if the target is closer
-                    self.human_FOV = np.vstack((target_FOV, pedestrian_FOV))
-                    # determine if we are in target FOV
-                    if t_left_pt <= pose_robot[0] <= t_right_pt and t_low_pt <= pose_robot[1] <= t_high_pt:
-                        self.human_awareness_array.append(True)
-                    else:
-                        self.human_awareness_array.append(False)
-                    # determine if we are in pedestrian FOV
-                    if p_left_pt <= pose_robot[0] <= p_right_pt and p_low_pt <= pose_robot[1] <= p_high_pt:
-                        self.human_awareness_array.append(True)
-                    else:
-                        self.human_awareness_array.append(False)
-            else: # if only one human in FOV
-                if pedestrian_in_FOV:
-                    self.human_FOV = np.vstack((pedestrian_FOV))
-                    if p_left_pt <= pose_robot[0] <= p_right_pt and p_low_pt <= pose_robot[1] <= p_high_pt:
-                        self.human_awareness_array.append(True)
-                    else:
-                        self.human_awareness_array.append(False)
-                elif target_in_FOV:
-                    self.human_FOV = np.vstack((target_FOV))
-                    if t_left_pt <= pose_robot[0] <= t_right_pt and t_low_pt <= pose_robot[1] <= t_high_pt:
-                        self.human_awareness_array.append(True)
-                    else:
-                        self.human_awareness_array.append(False)
-            # print("human_FOV: ", human_FOV)
-
+            self.get_awareness(target_in_FOV, pedestrian_in_FOV, gridmap, state, target_state, pedestrian_state, human_params_localmap)
             # determine if I am in their FOV (probably easiest to use gridmap)
             # if true, append to awareness_array
 
