@@ -880,7 +880,7 @@ if __name__ == "__main__":
 
 
     for _ in range(params.numiters):
-        observation.get_obs(state, target_state, pedestrian_state, params, target_goal, pedestrian_goal, human_params_localmap, gridmap)
+        observation.get_obs(state, target_state, pedestrian_state, params, target_goal, pedestrian_goal, params_localmap, human_params_localmap, gridmap)
         state, inputs = motion_dwa(state, inputs, goal, obpoints, walls, params)
 
         target_bool = True

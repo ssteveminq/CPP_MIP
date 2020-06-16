@@ -17,6 +17,8 @@ from matplotlib.patches import Polygon, Rectangle, Circle
 import matplotlib as mpl
 from grid_map import GridMap
 from humans_real_simulation import Update_phi, Update_a
+from tools import *
+from observation import *
 
 Krep = 10.0 # repulsive potential gain
 Katt = 5.0 # attractive potential gain
@@ -231,114 +233,6 @@ def human_motion(motion_state, goal, human_params, goal_tol, target_bool):
 
     return motion_state
 
-def get_human_FOV(human_state, human_params_localmap, gridmap):
-    # Return Value in Map Frame 
-    human_state[2] = orientation_processing(human_state[2])  
-    if human_state[2] >= 3*np.pi/2:
-        # get the vertices of the sensor field
-        temp = 2*np.pi - human_state[2]
-        ilx = human_params_localmap.sensor_range*np.cos(temp) + human_state[0]
-        ily = human_params_localmap.sensor_range*np.sin(temp) + human_state[1]
-        left = np.array([ilx, ily])
-        front_left = np.array([ilx + human_params_localmap.sensor_range*np.cos(temp), ily - human_params_localmap.sensor_range*np.sin(temp)])
-        irx = human_state[0] - human_params_localmap.sensor_range*np.cos(temp)
-        iry = human_state[1] - human_params_localmap.sensor_range*np.sin(temp)
-        right = np.array([irx, iry])
-        front_right = np.array([irx + human_params_localmap.sensor_range*np.cos(temp), iry - human_params_localmap.sensor_range*np.sin(temp)])
-        
-        # convert to grid space (map frame)
-        if human_state[2] <= 7.0*np.pi/4.0:
-            pose_tr = gridmap.meters2grid(left)
-            pose_lr = gridmap.meters2grid(front_left)
-            pose_tl = gridmap.meters2grid(right)
-            pose_ll = gridmap.meters2grid(front_right)
-            return front_left, front_right, left, right, pose_tr, pose_lr, pose_tl, pose_ll
-        else:
-            pose_tr = gridmap.meters2grid(front_left)
-            pose_lr = gridmap.meters2grid(front_right)
-            pose_tl = gridmap.meters2grid(left)
-            pose_ll = gridmap.meters2grid(right)
-            return front_right, right, front_left, left, pose_tr, pose_lr, pose_tl, pose_ll
-
-    elif np.pi <= human_state[2] < 3*np.pi/2:
-        # get the vertices of the sensor field
-        temp = human_state[2] - np.pi
-        ilx = human_params_localmap.sensor_range*np.cos(temp) + human_state[0]
-        ily = human_state[1] - human_params_localmap.sensor_range*np.sin(temp) 
-        left = np.array([ilx, ily])
-        front_left = np.array([ilx - human_params_localmap.sensor_range*np.cos(temp), ily - human_params_localmap.sensor_range*np.sin(temp)])
-        irx = human_state[0] - human_params_localmap.sensor_range*np.cos(temp)
-        iry = human_state[1] + human_params_localmap.sensor_range*np.sin(temp)
-        right = np.array([irx, iry])
-        front_right = np.array([irx - human_params_localmap.sensor_range*np.cos(temp), iry - human_params_localmap.sensor_range*np.sin(temp)])
-        
-        # convert to grid space (map frame)
-        if human_state[2] >= 5.0*np.pi/4.0:
-            pose_tr = gridmap.meters2grid(left)
-            pose_lr = gridmap.meters2grid(front_left)
-            pose_tl = gridmap.meters2grid(right)
-            pose_ll = gridmap.meters2grid(front_right)
-            return front_left, front_right, left, right, pose_tr, pose_lr, pose_tl, pose_ll
-        else:
-            pose_tr = gridmap.meters2grid(right)
-            pose_lr = gridmap.meters2grid(left)
-            pose_tl = gridmap.meters2grid(front_right)
-            pose_ll = gridmap.meters2grid(front_left)
-            return left, front_left, right, front_right, pose_tr, pose_lr, pose_tl, pose_ll
-
-    elif np.pi/2 <= human_state[2] < np.pi:
-        # get the vertices of the sensor field
-        temp = np.pi - human_state[2]
-        ilx = human_state[0] - human_params_localmap.sensor_range*np.cos(temp)
-        ily = human_state[1] - human_params_localmap.sensor_range*np.sin(temp) 
-        left = np.array([ilx, ily])
-        front_left = np.array([ilx - human_params_localmap.sensor_range*np.cos(temp), ily + human_params_localmap.sensor_range*np.sin(temp)])
-        irx = human_state[0] + human_params_localmap.sensor_range*np.cos(temp)
-        iry = human_state[1] + human_params_localmap.sensor_range*np.sin(temp)
-        right = np.array([irx, iry])
-        front_right = np.array([irx - human_params_localmap.sensor_range*np.cos(temp), iry + human_params_localmap.sensor_range*np.sin(temp)])
-
-        # convert to grid space (gridmap)
-        if human_state[2] <= 3.0*np.pi/4.0:
-            pose_tr = gridmap.meters2grid(front_right)
-            pose_lr = gridmap.meters2grid(right)
-            pose_tl = gridmap.meters2grid(front_left)
-            pose_ll = gridmap.meters2grid(left)
-            return right, left, front_right, front_left, pose_tr, pose_lr, pose_tl, pose_ll
-        else:
-            pose_tr = gridmap.meters2grid(right)
-            pose_lr = gridmap.meters2grid(left)
-            pose_tl = gridmap.meters2grid(front_right)
-            pose_ll = gridmap.meters2grid(front_left)
-            return left, front_left, right, front_right, pose_tr, pose_lr, pose_tl, pose_ll
-
-    elif 0 <= human_state[2] < np.pi/2:
-        # get the vertices of the sensor field
-        ilx = human_state[0] - human_params_localmap.sensor_range*np.cos(human_state[2])
-        ily = human_state[1] + human_params_localmap.sensor_range*np.sin(human_state[2]) 
-        left = np.array([ilx, ily])
-        front_left = np.array([ilx + human_params_localmap.sensor_range*np.cos(human_state[2]), ily + human_params_localmap.sensor_range*np.sin(human_state[2])])
-        irx = human_state[0] + human_params_localmap.sensor_range*np.cos(human_state[2])
-        iry = human_state[1] - human_params_localmap.sensor_range*np.sin(human_state[2])
-        right = np.array([irx, iry])
-        front_right = np.array([irx + human_params_localmap.sensor_range*np.cos(human_state[2]), iry + human_params_localmap.sensor_range*np.sin(human_state[2])])
-
-        # convert to grid space (gridmap)
-        if human_state[2] >= np.pi/4.0:
-            pose_tr = gridmap.meters2grid(front_right)
-            pose_lr = gridmap.meters2grid(right)
-            pose_tl = gridmap.meters2grid(front_left)
-            pose_ll = gridmap.meters2grid(left)
-            return right, left, front_right, front_left, pose_tr, pose_lr, pose_tl, pose_ll
-        else:
-            pose_tr = gridmap.meters2grid(front_left)
-            pose_lr = gridmap.meters2grid(front_right)
-            pose_tl = gridmap.meters2grid(left)
-            pose_ll = gridmap.meters2grid(right)
-            return front_right, right, front_left, left, pose_tr, pose_lr, pose_tl, pose_ll
-
-
-
 class Point:
     def __init__(self):
         self.x = 0.0
@@ -351,7 +245,7 @@ def check_robot_in_FOV(target_state, state, human_params_localmap, gridmap):
 
     target_state[2] = orientation_processing(target_state[2])
 
-    lower_right, lower_left, front_right, front_left, pose_tr, pose_lr, pose_tl, pose_ll = get_human_FOV(target_state, human_params_localmap, gridmap)
+    lower_right, lower_left, front_right, front_left, pose_tr, pose_lr, pose_tl, pose_ll = get_agent_FOV(target_state, human_params_localmap, gridmap)
     
     
 
