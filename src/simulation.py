@@ -12,7 +12,7 @@ from obstacle import Obstacle
 from raycasting_grid_map import generate_ray_casting_grid_map, calc_grid_map_config, atan_zero_to_twopi
 from state_lattice_planner import uniform_terminal_state_sampling_test1, lane_state_sampling_test1
 from utils.configuration_space import configuration_space
-from cubic_spline_planner import Spline2D 
+from utils.cubic_spline_planner import Spline2D 
 from  VCD import VerticalCellDecomposition
 import pandas as pd
 import os

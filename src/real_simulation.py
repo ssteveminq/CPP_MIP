@@ -13,7 +13,7 @@ from obstacle import Obstacle
 from raycasting_grid_map import generate_ray_casting_grid_map, calc_grid_map_config, atan_zero_to_twopi
 from state_lattice_planner import uniform_terminal_state_sampling_test1, lane_state_sampling_test1
 from utils.configuration_space import configuration_space
-from cubic_spline_planner import Spline2D 
+from utils.cubic_spline_planner import Spline2D 
 from utils.graph_utils import *
 from utils.dynamic_window_approach import *
 from  VCD import VerticalCellDecomposition
@@ -629,7 +629,6 @@ def motion_dwa(state, inputs, goal, obpoints, walls, params):
     if state[2] >= 2*math.pi: state[2] -= 2*math.pi
     if state[2] <= -2*math.pi: state[2] += 2*math.pi
 
-
     # print("after-state", state)
     # print("after-input", u)
     return state, u
@@ -703,7 +702,6 @@ def read_inputfile(FILE_NAME="input2.txt"):
     # print(obstacles)
 
     return start_state, init_pos, obstacles, walls
-
 
 
 if __name__ == "__main__":
@@ -801,6 +799,7 @@ if __name__ == "__main__":
     traj = state[:2]
     iter=0
     simtime=0.0
+    spline_explored = False
 
     #parameters for logging
     times =[]
@@ -811,6 +810,7 @@ if __name__ == "__main__":
     velocities=[]
     goal_xs=[]
     goal_ys=[]
+
 
     #Checking initial and final goal
     print("initial state: ",state)
@@ -843,55 +843,60 @@ if __name__ == "__main__":
             print('Time from the previous reached goal:', t_current - t_prev_goal)
             t_prev_goal = time.time()
 
-            #setting next goal  --> start finding best trajectories
-            if show_animation:
-                axes[1,0].cla()
-                axes[1,0].set_title('global & Local motion primitives')
-                planner.plot_regions(axes[1,0])
-            # sample_goals = random_sampling(params,8)
-            # generate goal points from waypoints vcd
-            sample_goals = random_sampling(params,6)
-            sample_goals2 = goal_sampling_VCD(waypoint_vcd, state[0],state[1], params_globalmap)
-            sample_gols_total=[sample_goals,sample_goals2]
-            # generate global trjs to each sample goal
-            gtrjs= generating_globaltrjs(state, cspace,obstacles,sample_goals,params_globalmap)
-            sp_gtrjs = trjs_to_sample(gtrjs)
-            local_trjs = lane_state_sampling_test1(state,obstacles, params_globalmap)
-            #local trajectories
-            # if show_animation:
-                # local_trjs = lane_state_sampling_test1(state,obstacles, params_globalmap, show_animation, axes[1,0])
-            # else:
-                # local_trjs = lane_state_sampling_test1(state,obstacles, params_globalmap, show_animation)
-            trjs_candidate =[]
-            for gtrj in sp_gtrjs:
-                trjs_candidate.append(gtrj)
-            for ltrj in local_trjs:
-                trjs_candidate.append(ltrj)
+            if spline_explored:
+                #setting next trjaectory--> start finding best trajectories
+                if show_animation:
+                    axes[1,0].cla()
+                    axes[1,0].set_title('global & Local motion primitives')
+                    planner.plot_regions(axes[1,0])
+                # sample_goals = random_sampling(params,8)
+                # generate goal points from waypoints vcd
+                sample_goals = random_sampling(params,6)
+                sample_goals2 = goal_sampling_VCD(waypoint_vcd, state[0],state[1], params_globalmap)
+                sample_gols_total=[sample_goals,sample_goals2]
+                # generate global trjs to each sample goal
+                gtrjs= generating_globaltrjs(state, cspace,obstacles,sample_goals,params_globalmap)
+                sp_gtrjs = trjs_to_sample(gtrjs)
+                local_trjs = lane_state_sampling_test1(state,obstacles, params_globalmap)
+                #local trajectories
+                # if show_animation:
+                    # local_trjs = lane_state_sampling_test1(state,obstacles, params_globalmap, show_animation, axes[1,0])
+                # else:
+                    # local_trjs = lane_state_sampling_test1(state,obstacles, params_globalmap, show_animation)
+                trjs_candidate =[]
+                for gtrj in sp_gtrjs:
+                    trjs_candidate.append(gtrj)
+                for ltrj in local_trjs:
+                    trjs_candidate.append(ltrj)
 
-            #Obtain best_trjaectory
-            best_trj = calc_IG_trjs(trjs_candidate, entropymap , params_localmap, params_globalmap, params,horizon )
+                #Obtain best_trjaectory
+                best_trj = calc_IG_trjs(trjs_candidate, entropymap , params_localmap, params_globalmap, params,horizon )
+                cx, cy, cyaw, ck, s = calc_spline_course_spline(best_trj, ds=0.2)
+                last_idx = len(cx) - 1
+                target_idx, _ = calc_target_index(state, cx, cy)
 
-            #Choose next goal point
-            if len(best_trj[0])>horizon and horizon>0:
-                goal = [best_trj[0][horizon-1], best_trj[1][horizon-1]]
-            else:
-                goal = [best_trj[0][-1], best_trj[1][-1]]
+                #Choose next goal point from trajectory
+                if len(best_trj[0])>horizon and horizon>0:
+                    goal = [best_trj[0][horizon-1], best_trj[1][horizon-1]]
+                else:
+                    goal = [best_trj[0][-1], best_trj[1][-1]]
 
-            if goal[0]> params_globalmap.xmax:
-                goal[0]=params_globalmap.xmax-0.5
-            elif goal[0]< params_globalmap.xmin:
-                goal[0]=params_globalmap.xmin+0.5
-            if goal[1]> params_globalmap.ymax:
-                goal[1]=params_globalmap.ymax-0.5
-            elif goal[1]< params_globalmap.ymin:
-                goal[1]=params_globalmap.ymin+0.5
+                if goal[0]> params_globalmap.xmax:
+                    goal[0]=params_globalmap.xmax-0.5
+                elif goal[0]< params_globalmap.xmin:
+                    goal[0]=params_globalmap.xmin+0.5
+                if goal[1]> params_globalmap.ymax:
+                    goal[1]=params_globalmap.ymax-0.5
+                elif goal[1]< params_globalmap.ymin:
+                    goal[1]=params_globalmap.ymin+0.5
 
-            if show_animation:
-                plot_local_trjs(local_trjs, axes[1,0])
-                plot_global_trjs(sp_gtrjs, axes[1,0])
-                plot_best_trj(best_trj, horizon,axes[1,0])
+                if show_animation:
+                    plot_local_trjs(local_trjs, axes[1,0])
+                    plot_global_trjs(sp_gtrjs, axes[1,0])
+                    plot_best_trj(best_trj, horizon,axes[1,0])
 
 
+        #sensing part
         pmap_local, updated_grids, intersect_dic, obs_verticeid, closest_vertexid, params_localmap.xmin, params_localmap.xmax, params_localmap.ymin, params_localmap.ymax, params_localmap.xyreso, params_localmap.xw, params_localmap.yw= generate_ray_casting_grid_map(obstacles, walls, params_localmap, state[0],state[1], state[2])
         pmap_global = update_occ_grid_map(state, pmap_local,params_localmap, pmap_global,params_globalmap)
         entropymap = get_global_entropymap(pmap_global,params_globalmap)
