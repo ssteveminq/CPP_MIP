@@ -1082,8 +1082,8 @@ if __name__ == "__main__":
 
             # plot_best_trj(best_trj, horizon, axes[1,0])
 
-            # goal_xs.append(goal[0])
-            # goal_ys.append(goal[1])
+            goal_xs.append(goal[0])
+            goal_ys.append(goal[1])
 
             # goal = [best_trj[0][30], best_trj[1][30]]
             # axes[0,0].scatter(goal[0],goal[1], facecolor='red',edgecolor='red')
@@ -1113,17 +1113,16 @@ if __name__ == "__main__":
             # print("ped_xs: ", np.asarray(ped_xs).shape)
             # print("ped_ys: ", np.asarray(ped_ys).shape)
             # print("ped_velocities: ", np.asarray(ped_velocities).shape)
-            # data=[times, pos_xs,pos_ys,yaws,velocities, entropys, goal_xs, goal_ys, target_xs, target_ys, target_yaws, target_velocities, ped_xs, ped_ys, ped_yaws, ped_velocities]
-            data=[times, pos_xs,pos_ys,yaws,velocities, entropys, goal_xs, goal_ys]
+            data=[times, pos_xs,pos_ys,yaws,velocities, entropys, goal_xs, goal_ys, target_xs, target_ys, target_yaws, target_velocities, ped_xs, ped_ys, ped_yaws, ped_velocities]
+            # data=[times, pos_xs,pos_ys,yaws,velocities, entropys, goal_xs, goal_ys]
             data = np.transpose(data)
+            print("data", data)
             # print("data[0]: ", np.asarray(data[0]).shape)
             # print(pd.__version__)
             # pd.show_version()
             # print(pd.show_version())
-            print("data", data)
-            input()
-            pd.DataFrame(data, columns=['time', 'pos_x', 'pos_y', 'yaw', 'velocity', 'entropy', 'goal_x', 'goal_y']).to_csv(file_name,header=True)
-            # pd.DataFrame(data, columns=['time', 'pos_x', 'pos_y', 'yaw', 'velocity', 'entropy', 'goal_x', 'goal_y', 'target_xs', 'target_ys', 'target_yaws', 'target_velocities', 'ped_xs', 'ped_ys', 'ped_yaws', 'ped_velocities']).to_csv(file_name,header=True)
+            # pd.DataFrame(data, columns=['time', 'pos_x', 'pos_y', 'yaw', 'velocity', 'entropy', 'goal_x', 'goal_y']).to_csv(file_name,header=True)
+            pd.DataFrame(data, columns=['time', 'pos_x', 'pos_y', 'yaw', 'velocity', 'entropy', 'goal_x', 'goal_y', 'target_xs', 'target_ys', 'target_yaws', 'target_velocities', 'ped_xs', 'ped_ys', 'ped_yaws', 'ped_velocities']).to_csv(file_name,header=True)
             print("entropy file saved")
             boolsaved =True
             input("done")
