@@ -1,6 +1,7 @@
 # !/usr/bin/env python3
 import argparse
 import pandas as pd
+# print(pd.__version__)
 from numpy import genfromtxt
 import numpy as np
 from math import *
@@ -839,6 +840,14 @@ if __name__ == "__main__":
     goal_ys=[]
     obstacles_array = []
     wall_near_point_list = []
+    target_xs = []
+    target_ys = []
+    target_yaws = []
+    target_velocities = []
+    ped_xs = []
+    ped_ys = []
+    ped_yaws = []
+    ped_velocities = []
 
     #Checking initial and final goal
     print("initial state: ",state)
@@ -901,6 +910,17 @@ if __name__ == "__main__":
         pos_ys.append(state[1])
         yaws.append(state[2])
         velocities.append(state[3])
+        # target
+        target_xs.append(target_state[0])
+        target_ys.append(target_state[1])
+        target_yaws.append(target_state[2])
+        target_velocities.append(target_state[3])
+        # pedestrian
+        ped_xs.append(pedestrian_state[0])
+        ped_ys.append(pedestrian_state[1])
+        ped_yaws.append(pedestrian_state[2])
+        ped_velocities.append(pedestrian_state[3])
+        
 
         if iter>0:
             goal_xs.append(goal[0])
@@ -922,23 +942,23 @@ if __name__ == "__main__":
             # generate global trjs to each sample goal
             gtrjs= generating_globaltrjs(state, cspace,obstacles,sample_goals,params_globalmap)
             sp_gtrjs = trjs_to_sample(gtrjs)
-            local_trjs = lane_state_sampling_test1(state,obstacles, params_globalmap)
+            # local_trjs = lane_state_sampling_test1(state,obstacles, params_globalmap)
             #local trajectories
             # local_trjs = lane_state_sampling_test1(state,obstacles, params_globalmap, axes[1,0])
-            trjs_candidate =[]
-            for gtrj in sp_gtrjs:
-                trjs_candidate.append(gtrj)
-            for ltrj in local_trjs:
-                trjs_candidate.append(ltrj)
+            # trjs_candidate =[]
+            # for gtrj in sp_gtrjs:
+            #     trjs_candidate.append(gtrj)
+            # for ltrj in local_trjs:
+            #     trjs_candidate.append(ltrj)
 
             #Obtain best_trjaectory
-            best_trj = calc_IG_trjs(trjs_candidate, entropymap , params_localmap, params_globalmap, params,horizon )
+            # best_trj = calc_IG_trjs(trjs_candidate, entropymap , params_localmap, params_globalmap, params,horizon )
 
             #Choose next goal point
-            if len(best_trj[0])>horizon and horizon>0:
-                goal = [best_trj[0][horizon-1], best_trj[1][horizon-1]]
-            else:
-                goal = [best_trj[0][-1], best_trj[1][-1]]
+            # if len(best_trj[0])>horizon and horizon>0:
+            #     goal = [best_trj[0][horizon-1], best_trj[1][horizon-1]]
+            # else:
+            #     goal = [best_trj[0][-1], best_trj[1][-1]]
 
             if goal[0]> params_globalmap.xmax:
                 goal[0]=params_globalmap.xmax-0.5
@@ -950,7 +970,7 @@ if __name__ == "__main__":
                 goal[1]=params_globalmap.ymin+0.5
 
             if show_animation:
-                plot_local_trjs(local_trjs, axes[1,0])
+                # plot_local_trjs(local_trjs, axes[1,0])
                 plot_global_trjs(sp_gtrjs, axes[1,0])
                 plot_best_trj(best_trj, horizon,axes[1,0])
         
@@ -994,6 +1014,8 @@ if __name__ == "__main__":
         entropymap = get_global_entropymap(pmap_global,params_globalmap)
         curentropy = get_map_entropy(pmap_global, params_globalmap)
         entropys.append(curentropy)
+        print("cur_etnropy", curentropy)
+        print(" % of exploration: ", float(curentropy/initial_entropy))
 
         #plot
         if show_animation:
@@ -1031,39 +1053,40 @@ if __name__ == "__main__":
         # if iter%20==1:
             
         if iter==1: #FixMe: it was 1
-            axes[1,0].cla()
-            axes[1,0].set_title('global & Local motion primitives')
-            planner.plot_regions(axes[1,0])
+            if show_animation:
+                axes[1,0].cla()
+                axes[1,0].set_title('global & Local motion primitives')
+                planner.plot_regions(axes[1,0])
             # sample_goals = random_sampling(params,8)
             # generate goal points from waypoints vcd
-            sample_goals = goal_sampling_VCD(waypoint_vcd, state[0],state[1], params_globalmap)
-            # generate global trjs to each sample goal
-            gtrjs= generating_globaltrjs(state, cspace,obstacles,sample_goals,params_globalmap)
-            sp_gtrjs = trjs_to_sample(gtrjs,axes[1,0])
-            plot_global_trjs(sp_gtrjs, axes[1,0])
-            #local trajectories
-            # local_trjs = lane_state_sampling_test1(state,obstacles, params_globalmap, axes[1,0])
-            trjs_candidate =[]
-            for gtrj in sp_gtrjs:
-                trjs_candidate.append(gtrj)
+            # sample_goals = goal_sampling_VCD(waypoint_vcd, state[0],state[1], params_globalmap)
+            # # generate global trjs to each sample goal
+            # gtrjs= generating_globaltrjs(state, cspace,obstacles,sample_goals,params_globalmap)
+            # sp_gtrjs = trjs_to_sample(gtrjs,axes[1,0])
+            # plot_global_trjs(sp_gtrjs, axes[1,0])
+            # #local trajectories
+            # # local_trjs = lane_state_sampling_test1(state,obstacles, params_globalmap, axes[1,0])
+            # trjs_candidate =[]
+            # for gtrj in sp_gtrjs:
+            #     trjs_candidate.append(gtrj)
             # for ltrj in local_trjs:
             #     trjs_candidate.append(ltrj)
 
             # print("lenth gtrjs: ", len(sp_gtrjs), ", lenth ltrjs: ", len(local_trjs))
             # print("lenth trjs: ", len(trjs_candidate))
-            best_trj = calc_IG_trjs(trjs_candidate, entropymap , params_localmap, params_globalmap, params)
-            if len(best_trj[0])>horizon:
-                goal = [best_trj[0][horizon-1], best_trj[1][horizon-1]]
-            else:
-                goal = [best_trj[0][-1], best_trj[1][-1]]
+            # best_trj = calc_IG_trjs(trjs_candidate, entropymap , params_localmap, params_globalmap, params)
+            # if len(best_trj[0])>horizon:
+            #     goal = [best_trj[0][horizon-1], best_trj[1][horizon-1]]
+            # else:
+            #     goal = [best_trj[0][-1], best_trj[1][-1]]
 
-            plot_best_trj(best_trj, horizon, axes[1,0])
+            # plot_best_trj(best_trj, horizon, axes[1,0])
 
-            goal_xs.append(goal[0])
-            goal_ys.append(goal[1])
+            # goal_xs.append(goal[0])
+            # goal_ys.append(goal[1])
 
             # goal = [best_trj[0][30], best_trj[1][30]]
-            axes[0,0].scatter(goal[0],goal[1], facecolor='red',edgecolor='red')
+            # axes[0,0].scatter(goal[0],goal[1], facecolor='red',edgecolor='red')
             # goal = [best_trj[0][-1], best_trj[1][-1]]
 
             # calc_IG_trjs
@@ -1079,10 +1102,28 @@ if __name__ == "__main__":
         if curentropy < 0.15*initial_entropy:
             horizon = -1
 
-        if curentropy < 0.05*initial_entropy and boolsaved==False:
+        if curentropy < 0.870*initial_entropy and boolsaved==False:
+            # print("pos_xs: ", np.asarray(pos_xs).shape)
+            # print("time: ", np.asarray(times).shape)
+            # print("target_yaws: ", np.asarray(target_yaws).shape)
+            # print("ped_yaws: ", np.asarray(ped_yaws).shape)
+            # print("target_xs: ", np.asarray(target_xs).shape)
+            # print("target_ys: ", np.asarray(target_ys).shape)
+            # print("target_velocities: ", np.asarray(target_velocities).shape)
+            # print("ped_xs: ", np.asarray(ped_xs).shape)
+            # print("ped_ys: ", np.asarray(ped_ys).shape)
+            # print("ped_velocities: ", np.asarray(ped_velocities).shape)
+            # data=[times, pos_xs,pos_ys,yaws,velocities, entropys, goal_xs, goal_ys, target_xs, target_ys, target_yaws, target_velocities, ped_xs, ped_ys, ped_yaws, ped_velocities]
             data=[times, pos_xs,pos_ys,yaws,velocities, entropys, goal_xs, goal_ys]
             data = np.transpose(data)
+            # print("data[0]: ", np.asarray(data[0]).shape)
+            # print(pd.__version__)
+            # pd.show_version()
+            # print(pd.show_version())
+            print("data", data)
+            input()
             pd.DataFrame(data, columns=['time', 'pos_x', 'pos_y', 'yaw', 'velocity', 'entropy', 'goal_x', 'goal_y']).to_csv(file_name,header=True)
+            # pd.DataFrame(data, columns=['time', 'pos_x', 'pos_y', 'yaw', 'velocity', 'entropy', 'goal_x', 'goal_y', 'target_xs', 'target_ys', 'target_yaws', 'target_velocities', 'ped_xs', 'ped_ys', 'ped_yaws', 'ped_velocities']).to_csv(file_name,header=True)
             print("entropy file saved")
             boolsaved =True
             input("done")
@@ -1090,9 +1131,5 @@ if __name__ == "__main__":
 
     plt.show()
     # plt.show(aspect='auto')
-
-
-
-
 
 
