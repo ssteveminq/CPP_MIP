@@ -190,9 +190,9 @@ def calc_spline_course(x, y, ds=0.1):
 
     return rx, ry, ryaw, rk, s
 
-def calc_spline_course_spline(sp, ds=0.1):
+def calc_spline_course_trj(trj, ds=0.1):
+    sp = Spline2D(trj[0],trj[1])
     s = list(np.arange(0, sp.s[-1], ds))
-
     rx, ry, ryaw, rk = [], [], [], []
     for i_s in s:
         ix, iy = sp.calc_position(i_s)

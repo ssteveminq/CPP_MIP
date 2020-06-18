@@ -8,19 +8,16 @@ author: Atsushi Sakai (@Atsushi_twi)
 from __future__ import division, print_function
 
 import sys
-
-sys.path.append("../../PathPlanning/CubicSpline/")
-
 import matplotlib.pyplot as plt
 import numpy as np
-
-import cubic_spline_planner
+# import cubic_spline_planner
 
 k = 0.5  # control gain
 Kp = 1.0  # speed propotional gain
 dt = 0.1  # [s] time difference
-L = 2.9  # [m] Wheel base of vehicle
-max_steer = np.radians(30.0)  # [rad] max steering angle
+# L = 2.9  # [m] Wheel base of vehicle
+L = 1.5  # [m] Wheel base of vehicle
+max_steer = np.radians(40.0)  # [rad] max steering angle
 
 show_animation = True
 
@@ -84,16 +81,26 @@ def stanley_control(state, cx, cy, cyaw, last_target_idx):
     :return: (float, int)
     """
     current_target_idx, error_front_axle = calc_target_index(state, cx, cy)
+    cur_goal_x = cx[current_target_idx]
+    cur_goal_y = cy[current_target_idx]
+    # des_phi = np.arctan2(cur_goal_y - state[1], cur_goal_x- state[0])
+    des_phi = np.arctan2(cur_goal_y - state[1], cur_goal_x- state[0])
+    if des_phi < 0.0:
+        des_phi += np.pi * 2.0
+
+    cur_yaw = state[2]
+    delta= 0.7*np.sin(des_phi-cur_yaw)
 
     if last_target_idx >= current_target_idx:
         current_target_idx = last_target_idx
 
     # theta_e corrects the heading error
-    theta_e = normalize_angle(cyaw[current_target_idx] - state.yaw)
+    # theta_e = normalize_angle(cyaw[current_target_idx] - state[2])
     # theta_d corrects the cross track error
-    theta_d = np.arctan2(k * error_front_axle, state.v)
+    # theta_d = np.arctan2(k * error_front_axle, state[3])
     # Steering control
-    delta = theta_e + theta_d
+    # delta = 0.2*theta_d
+    # delta = *delta
 
     return delta, current_target_idx
 
@@ -123,8 +130,8 @@ def calc_target_index(state, cx, cy):
     :return: (int, float)
     """
     # Calc front axle position
-    fx = state[0] + L * np.cos(state.yaw)
-    fy = state[1] + L * np.sin(state.yaw)
+    fx = state[0] + L * np.cos(state[2])
+    fy = state[1] + L * np.sin(state[2])
 
     # Search nearest point index
     dx = [fx - icx for icx in cx]
@@ -133,7 +140,7 @@ def calc_target_index(state, cx, cy):
     error_front_axle = min(d)
     target_idx = d.index(error_front_axle)
 
-    target_yaw = normalize_angle(np.arctan2(fy - cy[target_idx], fx - cx[target_idx]) - state.yaw)
+    target_yaw = normalize_angle(np.arctan2(fy - cy[target_idx], fx - cx[target_idx]) - state[2])
     if target_yaw > 0.0:
         error_front_axle = - error_front_axle
 

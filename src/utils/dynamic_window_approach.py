@@ -44,7 +44,6 @@ def motion(x, u, dt):
 
 
 def calc_dynamic_window(x, config):
-
     # Dynamic window from robot specification
     Vs = [config.min_speed, config.max_speed,
           -config.max_yawrate, config.max_yawrate]

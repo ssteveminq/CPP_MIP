@@ -13,7 +13,8 @@ from obstacle import Obstacle
 from raycasting_grid_map import generate_ray_casting_grid_map, calc_grid_map_config, atan_zero_to_twopi
 from state_lattice_planner import uniform_terminal_state_sampling_test1, lane_state_sampling_test1
 from utils.configuration_space import configuration_space
-from utils.cubic_spline_planner import Spline2D 
+from utils.cubic_spline_planner import Spline2D, calc_spline_course_trj
+from utils.stanley_controller import *
 from utils.graph_utils import *
 from utils.dynamic_window_approach import *
 from  VCD import VerticalCellDecomposition
@@ -75,7 +76,7 @@ class Params:
     def __init__(self):
         self.numiters = 4000
         self.dt = 0.2
-        self.goal_tol = 0.25
+        self.goal_tol = 0.4
         self.weight_entropy = 0.02
         self.max_vel = 0.8 # m/s
         self.min_vel = 0.0 # m/s
@@ -634,6 +635,31 @@ def motion_dwa(state, inputs, goal, obpoints, walls, params):
     return state, u
 
 
+def motion_sc(state, cx,cy,cyaw, target_idx,  params):
+    acc = pid_control(params.max_vel, state[3])
+    max_steer = np.radians(30.0)                # [rad] max steering angle
+
+    delta, target_idx = stanley_control(state, cx, cy, cyaw, target_idx)
+    delta = np.clip(delta, -max_steer, max_steer)
+
+    state[0] += state[3]* np.cos(state[2]) * dt
+    state[1] += state[3]* np.sin(state[2]) * dt
+    # state[2] += state[3]/ np.tan(delta) * dt
+    state[2] +=   delta * dt
+    state[3] += acc* dt
+
+
+    if state[3] >= params.max_speed: state[3] = params.max_speed
+    if state[3] <= params.min_speed: state[3] = params.min_speed
+
+    if state[2] >= 2*math.pi: state[2] -= 2*math.pi
+    if state[2] <= -2*math.pi: state[2] += 2*math.pi
+
+
+    return state
+
+
+
 def read_inputfile(FILE_NAME="input2.txt"):
 
     line_ctr = 0
@@ -822,9 +848,33 @@ if __name__ == "__main__":
     print("initial entropy: ", initial_entropy )
     inputs= np.array([0.0, 0.0])
 
+    #test stanley_controller
+    # sample_goals = goal_sampling_VCD(waypoint_vcd, state[0],state[1], params_globalmap)
+    # gtrjs= generating_globaltrjs(state, cspace,obstacles,sample_goals,params_globalmap)
+    # sp_gtrjs = trjs_to_sample(gtrjs)            #sampled_trajectories
+
+    pmap_local, updated_grids, intersect_dic, obs_verticeid, closest_vertexid, params_localmap.xmin, params_localmap.xmax, params_localmap.ymin, params_localmap.ymax, params_localmap.xyreso, params_localmap.xw, params_localmap.yw= generate_ray_casting_grid_map(obstacles, walls, params_localmap, state[0],state[1], state[2])
+    pmap_global = update_occ_grid_map(state, pmap_local,params_localmap, pmap_global,params_globalmap)
+    entropymap = get_global_entropymap(pmap_global,params_globalmap)
+    local_trjs = lane_state_sampling_test1(state,obstacles, params_globalmap)
+    trjs_candidate =[]
+    # for gtrj in sp_gtrjs:
+        # trjs_candidate.append(gtrj)
+    for ltrj in local_trjs:
+        trjs_candidate.append(ltrj)
+
+    best_trj = calc_IG_trjs(trjs_candidate, entropymap , params_localmap, params_globalmap, params)
+    print("best_trj",best_trj)
+    cx, cy, cyaw, ck, s = calc_spline_course_trj(best_trj, ds=0.1)
+    trj_last_idx = len(cx) - 1
+    trj_target_idx, _ = calc_target_index(state, cx, cy)
+    print("trj_target_idx", trj_target_idx)
+ 
+
     for _ in range(params.numiters):
-        state, inputs = motion_dwa(state, inputs, goal, obpoints, walls, params)
+        # state, inputs = motion_dwa(state, inputs, goal, obpoints, walls, params)
         # state = simple_motion(state, goal, params)                        #dynamics
+        state = motion_sc(state, cx,cy,cyaw, trj_target_idx,  params)
         goal_dist = distance(goal,state)                                    #distance to gaol
         # goal_dist = sqrt((goal[0] - state[0])**2+(goal[1] - state[1])**2) #distance to gaol
         simtime = simtime + dt
@@ -843,57 +893,56 @@ if __name__ == "__main__":
             print('Time from the previous reached goal:', t_current - t_prev_goal)
             t_prev_goal = time.time()
 
-            if spline_explored:
-                #setting next trjaectory--> start finding best trajectories
-                if show_animation:
-                    axes[1,0].cla()
-                    axes[1,0].set_title('global & Local motion primitives')
-                    planner.plot_regions(axes[1,0])
-                # sample_goals = random_sampling(params,8)
-                # generate goal points from waypoints vcd
-                sample_goals = random_sampling(params,6)
-                sample_goals2 = goal_sampling_VCD(waypoint_vcd, state[0],state[1], params_globalmap)
-                sample_gols_total=[sample_goals,sample_goals2]
-                # generate global trjs to each sample goal
-                gtrjs= generating_globaltrjs(state, cspace,obstacles,sample_goals,params_globalmap)
-                sp_gtrjs = trjs_to_sample(gtrjs)
-                local_trjs = lane_state_sampling_test1(state,obstacles, params_globalmap)
-                #local trajectories
-                # if show_animation:
-                    # local_trjs = lane_state_sampling_test1(state,obstacles, params_globalmap, show_animation, axes[1,0])
-                # else:
-                    # local_trjs = lane_state_sampling_test1(state,obstacles, params_globalmap, show_animation)
-                trjs_candidate =[]
-                for gtrj in sp_gtrjs:
-                    trjs_candidate.append(gtrj)
-                for ltrj in local_trjs:
-                    trjs_candidate.append(ltrj)
+            #setting next trjaectory--> start finding best trajectories
+            if show_animation:
+                axes[1,0].cla()
+                axes[1,0].set_title('global & Local motion primitives')
+                planner.plot_regions(axes[1,0])
+            # sample_goals = random_sampling(params,8)
+            # generate goal points from waypoints vcd
+            sample_goals = random_sampling(params,6)
+            sample_goals2 = goal_sampling_VCD(waypoint_vcd, state[0],state[1], params_globalmap)
+            sample_gols_total=[sample_goals,sample_goals2]
+            # generate global trjs to each sample goal
+            gtrjs= generating_globaltrjs(state, cspace,obstacles,sample_goals,params_globalmap)
+            sp_gtrjs = trjs_to_sample(gtrjs)
+            local_trjs = lane_state_sampling_test1(state,obstacles, params_globalmap)
+            #local trajectories
+            # if show_animation:
+                # local_trjs = lane_state_sampling_test1(state,obstacles, params_globalmap, show_animation, axes[1,0])
+            # else:
+                # local_trjs = lane_state_sampling_test1(state,obstacles, params_globalmap, show_animation)
+            trjs_candidate =[]
+            for gtrj in sp_gtrjs:
+                trjs_candidate.append(gtrj)
+            for ltrj in local_trjs:
+                trjs_candidate.append(ltrj)
 
-                #Obtain best_trjaectory
-                best_trj = calc_IG_trjs(trjs_candidate, entropymap , params_localmap, params_globalmap, params,horizon )
-                cx, cy, cyaw, ck, s = calc_spline_course_spline(best_trj, ds=0.2)
-                last_idx = len(cx) - 1
-                target_idx, _ = calc_target_index(state, cx, cy)
+            #Obtain best_trjaectory
+            best_trj = calc_IG_trjs(trjs_candidate, entropymap , params_localmap, params_globalmap, params,horizon )
+            cx, cy, cyaw, ck, s = calc_spline_course_trj(best_trj, ds=0.2)
+            last_idx = len(cx) - 1
+            trj_target_idx, _ = calc_target_index(state, cx, cy)
 
-                #Choose next goal point from trajectory
-                if len(best_trj[0])>horizon and horizon>0:
-                    goal = [best_trj[0][horizon-1], best_trj[1][horizon-1]]
-                else:
-                    goal = [best_trj[0][-1], best_trj[1][-1]]
+            #Choose next goal point from trajectory
+            if len(best_trj[0])>horizon and horizon>0:
+                goal = [best_trj[0][horizon-1], best_trj[1][horizon-1]]
+            else:
+                goal = [best_trj[0][-1], best_trj[1][-1]]
 
-                if goal[0]> params_globalmap.xmax:
-                    goal[0]=params_globalmap.xmax-0.5
-                elif goal[0]< params_globalmap.xmin:
-                    goal[0]=params_globalmap.xmin+0.5
-                if goal[1]> params_globalmap.ymax:
-                    goal[1]=params_globalmap.ymax-0.5
-                elif goal[1]< params_globalmap.ymin:
-                    goal[1]=params_globalmap.ymin+0.5
+            if goal[0]> params_globalmap.xmax:
+                goal[0]=params_globalmap.xmax-0.5
+            elif goal[0]< params_globalmap.xmin:
+                goal[0]=params_globalmap.xmin+0.5
+            if goal[1]> params_globalmap.ymax:
+                goal[1]=params_globalmap.ymax-0.5
+            elif goal[1]< params_globalmap.ymin:
+                goal[1]=params_globalmap.ymin+0.5
 
-                if show_animation:
-                    plot_local_trjs(local_trjs, axes[1,0])
-                    plot_global_trjs(sp_gtrjs, axes[1,0])
-                    plot_best_trj(best_trj, horizon,axes[1,0])
+            if show_animation:
+                plot_local_trjs(local_trjs, axes[1,0])
+                plot_global_trjs(sp_gtrjs, axes[1,0])
+                plot_best_trj(best_trj, horizon,axes[1,0])
 
 
         #sensing part
@@ -944,7 +993,7 @@ if __name__ == "__main__":
 
             sample_goals = goal_sampling_VCD(waypoint_vcd, state[0],state[1], params_globalmap)
             gtrjs= generating_globaltrjs(state, cspace,obstacles,sample_goals,params_globalmap)
-            sp_gtrjs = trjs_to_sample(gtrjs)
+            sp_gtrjs = trjs_to_sample(gtrjs)            #sampled_trajectories
             local_trjs = lane_state_sampling_test1(state,obstacles, params_globalmap)
             # if show_animation:
                 # local_trjs = lane_state_sampling_test1(state,obstacles, params_globalmap, show_animation, axes[1,0])
@@ -957,6 +1006,12 @@ if __name__ == "__main__":
                 trjs_candidate.append(ltrj)
 
             best_trj = calc_IG_trjs(trjs_candidate, entropymap , params_localmap, params_globalmap, params)
+            print("best_trj",best_trj)
+            cx, cy, cyaw, ck, s = calc_spline_course_trj(best_trj, ds=0.2)
+            trj_last_idx = len(cx) - 1
+            trj_target_idx, _ = calc_target_index(state, cx, cy)
+            print("trj_target_idx", trj_target_idx)
+
             if len(best_trj[0])>horizon:
                 goal = [best_trj[0][horizon-1], best_trj[1][horizon-1]]
             else:
@@ -1016,7 +1071,6 @@ if __name__ == "__main__":
             print("entropy file saved")
             boolsaved =True
             input("done")
-            # anisave('test_video.mp4', writer=writer)
 
         print("cur entropy: ", curentropy)
 
