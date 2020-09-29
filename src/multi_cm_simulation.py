@@ -35,6 +35,7 @@ l_free=np.log(0.05/0.95)
 l_same = np.log(0.9/0.1)
 l_diff= np.log(0.01/0.99)
 horizon=20
+shorthorizon=10
 boolsaved = False
 
 #pp control 
@@ -176,7 +177,7 @@ def calc_IG_trjs(trj_candidates, emap, params_local, params_global,params,  hori
                     ig+= get_entropy_infov([x,y],emap,params_local, params_global)
                     if i>0:
                         dx = trj[0][i]-trj[0][i-1]
-                        dy = trj[0][i]-trj[0][i-1]
+                        dy = trj[1][i]-trj[1][i-1]
                         travel+=(dx**2+dy**2)**0.5
                     
             else:                     #the infinite horizon case
@@ -187,7 +188,7 @@ def calc_IG_trjs(trj_candidates, emap, params_local, params_global,params,  hori
                 w_t=0.2
                 if i>0:
                     dx = trj[0][i]-trj[0][i-1]
-                    dy = trj[0][i]-trj[0][i-1]
+                    dy = trj[1][i]-trj[1][i-1]
                     travel+=(dx**2+dy**2)**0.5
 
 
@@ -202,6 +203,132 @@ def calc_IG_trjs(trj_candidates, emap, params_local, params_global,params,  hori
     # print("best information gain : ", sorted_ig[0][0])
     return trj_candidates[max_idx]
     #find maximum
+
+def calc_IG_trjs_leader(trj_candidates, best_trj, emap, params_local, params_global,params,  horizon=25):
+    # print("TODO")
+    #Calculating Information gain on trajectories
+    #1) calculating sampling point for time horizon 
+    #2) calculating FOV region over sampling points 
+    #3) Collecting IG gain for overlapped region
+    #Suppose we have maximum velocity/ arc length
+    #sampling points w.r.t distance 
+    igs=[]
+    for trj in trj_candidates:
+        ig=0
+        travel=0
+        # print("len_trj", len(trj[0]))
+        # for i in range(horizon):
+        for i in range(len(trj[0])):
+            if horizon>0:
+                if i<horizon:
+                    w_t=1.0
+                    x=trj[0][i]
+                    y=trj[1][i]
+                    # yaw=trj[2][i]
+                    ig+= get_entropy_infov([x,y],emap,params_local, params_global)
+                    if i>0:
+                        dx = trj[0][i]-trj[0][i-1]
+                        dy = trj[1][i]-trj[1][i-1]
+                        travel+=(dx**2+dy**2)**0.5
+                    
+            else:                     #the infinite horizon case
+                x=trj[0][i]
+                y=trj[1][i]
+                # yaw=trj[2][i]
+                ig+= get_entropy_infov_multi([x,y],emap,params_local, params_global, best_trj, 12.5)
+                w_t=0.2
+                if i>0:
+                    dx = trj[0][i]-trj[0][i-1]
+                    dy = trj[1][i]-trj[1][i-1]
+                    travel+=(dx**2+dy**2)**0.5
+
+
+        # print("ig: ", ig)
+        # print("travel:" , travel)
+        cost = params. weight_entropy*ig-w_t*travel
+        igs.append(cost)
+    # print(igs)
+    sorted_ig = sorted(((v,i) for i, v in enumerate(igs)),reverse=True)
+    max_idx = sorted_ig[0][1]
+    # print("best trj idx : ", max_idx)
+    # print("best information gain : ", sorted_ig[0][0])
+    return trj_candidates[max_idx]
+    #find maximum
+
+
+
+def calc_IG_trjs_follower(trj_candidates, best_trj, emap, params_local, params_local2, params_global,params,  horizon=15):
+    # print("TODO")
+    #Calculating Information gain on trajectories
+    #1) calculating sampling point for time horizon 
+    #2) calculating FOV region over sampling points 
+    #3) Collecting IG gain for overlapped region
+    #Suppose we have maximum velocity/ arc length
+    #sampling points w.r.t distance 
+    igs=[]
+    pairs =[]
+    # calculate each information gain from trajectory candidates
+    # print("calc_ig_multi-before")
+    for trj in trj_candidates:
+        ig=0
+        travel=0
+        for i in range(len(trj[0])):
+            if horizon>0 and i<horizon:             #The finite horizon case
+                w_t=1.0         #weight 
+                x=trj[0][i]
+                y=trj[1][i]
+                ig+= get_entropy_infov_multi([x,y],emap,params_local, params_global, best_trj)
+                if i>0:
+                    dx = trj[0][i]-trj[0][i-1]
+                    dy = trj[1][i]-trj[1][i-1]
+                    travel+=(dx**2+dy**2)**0.5
+
+        # print("ig: ", ig)
+        cost = params. weight_entropy*ig-w_t*travel
+        igs.append(cost)
+
+    # print("calc_ig_multi")
+    sorted_ig = sorted(((v,i) for i, v in enumerate(igs)),reverse=True)
+    max_idx = sorted_ig[0][1]
+    # print("best information gain : ", sorted_ig[0][0])
+    return trj_candidates[max_idx] 
+
+def calc_min_distance_from_trj(px,py, trj):
+    min_dist = 100
+    for i in range(len(trj[0])):
+        tempdist = sqrt((px - trj[0][i])**2+(py-trj[1][i])**2) #distance to gaol
+        if tempdist < min_dist:
+            min_dist = tempdist
+    return min_dist
+
+
+
+def get_entropy_infov_multi(state,entropy_map,params_local,params_global, trj, dist_th=5.0):
+
+    minx, miny, maxx, maxy, xw, yw = calc_grid_map_config(params_local.xyreso, state[0], state[1], params_local.sensor_range)
+    entropy_sum=0.0
+    for ix_local in range(xw-1):
+        for iy_local in range(yw-1):
+            px = minx+ix_local*params_local.xyreso
+            py = miny+iy_local*params_local.xyreso
+            # print("px: ", px, "py: ", py)
+            if px >= params_global.xmax or px <= params_global.xmin:
+                continue
+            if py >= params_global.ymax or py <= params_global.ymin:
+                continue
+
+            ix_global= math.floor((px-params_global.xmin)/params_global.xyreso)
+            iy_global= math.floor((py-params_global.ymin)/params_global.xyreso)
+            min_dist = calc_min_distance_from_trj(px,py,trj)
+            # print("(ix_global, iy_global): ",ix_global, " , ", iy_global)
+            # entropy_sum+= entropy_map[ix_local][iy_local]
+            if min_dist>dist_th:
+                entropy_sum+= entropy_map[ix_global][iy_global]
+
+    # print("entropy_sum", entropy_sum)
+    return entropy_sum
+
+
 
 
 def get_entropy_infov(state,entropy_map,params_local,params_global):
@@ -464,7 +591,6 @@ def update_occ_grid_map(state, local_map, params_local, global_map, params_globa
                     # print("-----------------")
                 # global_map[ix][iy]+=l_same
     return global_map
-
 
 
 def initialize_global_occ_grid_map(params_map):
@@ -769,7 +895,6 @@ if __name__ == "__main__":
     # print("obspoints:", obpoints)
 
 
-
     #create cspace
     print("init_poses", init_poses)
     goal_poses=[[2.5, -5.0],[5.5, 8.0]]                 #temporary goal pose
@@ -950,7 +1075,8 @@ if __name__ == "__main__":
             # sample_goals = random_sampling(params,8)
             # generate goal points from waypoints vcd
             # sample_goals = random_sampling(params,5)
-            sample_goals2 = goal_sampling_VCD(waypoint_vcd, states[0][0],states[0][1], params_globalmap)
+            sample_goals = goal_sampling_VCD(waypoint_vcd, states[0][0],states[0][1], params_globalmap)
+            sample_goals2 = goal_sampling_VCD(waypoint_vcd, states[1][0],states[1][1], params_globalmap)
             # sample_goals_total=[sample_goals,sample_goals2]
             # generate global trjs to each sample goal
             #agent1
@@ -977,8 +1103,10 @@ if __name__ == "__main__":
 
 
             #Obtain best_trjaectory
-            best_trj = calc_IG_trjs(trjs_candidate, entropymap , params_localmap, params_globalmap, params,horizon )
-            best_trj2 = calc_IG_trjs(trjs_candidate2, entropymap , params_localmap2, params_globalmap, params,horizon )
+            best_trj = calc_IG_trjs_leader(trjs_candidate, best_trj2, entropymap, params_localmap, params_globalmap, params,horizon )
+            # best_trj2 = calc_IG_trjs(trjs_candidate2, entropymap , params_localmap2, params_globalmap, params,horizon )
+            best_trj2 = calc_IG_trjs_follower(trjs_candidate2, best_trj, entropymap, params_localmap, params_localmap2, params_globalmap, params)
+
             # cx, cy, cyaw, ck, s = calc_spline_course_trj(best_trj, ds=0.2)
             # last_idx = len(cx) - 1
             # trj_target_idx, _ = calc_target_index(state, cx, cy)
@@ -1054,6 +1182,7 @@ if __name__ == "__main__":
                 planner.plot_regions(axes[1,0])
 
             sample_goals = goal_sampling_VCD(waypoint_vcd, states[0][0],states[0][1], params_globalmap)
+            sample_goals2 = goal_sampling_VCD(waypoint_vcd, states[1][0],states[1][1], params_globalmap)
 
             #agent1
             gtrjs= generating_globaltrjs(states[0], cspace,planner, obstacles,sample_goals,params_globalmap)
@@ -1066,8 +1195,9 @@ if __name__ == "__main__":
                 trjs_candidate.append(ltrj)
 
             best_trj = calc_IG_trjs(trjs_candidate, entropymap , params_localmap, params_globalmap, params)
-            #agent1
-            gtrjs2= generating_globaltrjs(states[1], cspace2,planner2, obstacles,sample_goals,params_globalmap)
+
+            #agent2
+            gtrjs2= generating_globaltrjs(states[1], cspace2,planner2, obstacles,sample_goals2,params_globalmap)
             sp_gtrjs2 = trjs_to_sample(gtrjs2)            #sampled_trajectories
             local_trjs2 = lane_state_sampling_test1(states[1],obstacles, params_globalmap)
             trjs_candidate2 =[]
@@ -1076,7 +1206,7 @@ if __name__ == "__main__":
             for ltrj in local_trjs2:
                 trjs_candidate2.append(ltrj)
 
-            best_trj2 = calc_IG_trjs(trjs_candidate2, entropymap , params_localmap, params_globalmap, params)
+            best_trj2 = calc_IG_trjs(trjs_candidate2, entropymap , params_localmap2, params_globalmap, params)
  
 
             goal = choose_goal_from_trj(best_trj, params_globalmap, horizon)
@@ -1098,13 +1228,10 @@ if __name__ == "__main__":
                 axes[0,0].scatter(goal2[0],goal2[1], facecolor='green',edgecolor='green')
 
         if curentropy < 0.4*initial_entropy:
-            horizon = 35
-            params.weight_entropy=0.01
+            horizon = 30
+            params.weight_entropy=0.05
 
-        # if curentropy < 0.2*initial_entropy:
-            # horizon = -1
-
-        if curentropy < 0.05*initial_entropy and boolsaved==False:
+        if curentropy < 0.10*initial_entropy and boolsaved==False:
             data=[times, pos_xs,pos_ys,yaws,velocities, pos_xs2, pos_ys2, entropys, goal_xs, goal_ys, goal_xs2, goal_ys2]
             data = np.transpose(data)
             pd.DataFrame(data, columns=['time', 'pos_x', 'pos_y', 'yaw', 'velocity', 'pos_xx', 'pos_yy', 'entropy', 'goal_x', 'goal_y', 'goal_xx', 'goal_yy']).to_csv(file_name,header=True)
@@ -1119,8 +1246,8 @@ if __name__ == "__main__":
             boolsaved =True
             input("done")
 
-
-        print("cur entropy: ", curentropy)
+        # print("cur entropy: ", curentropy)
+        print("exploration rate: ", float(curentropy/initial_entropy))
 
     plt.show()
     # plt.show(aspect='auto')

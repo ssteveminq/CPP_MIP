@@ -99,7 +99,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-in",help="input file (default: input2.txt)",default="input4.txt")
     parser.add_argument("-load",help="load saved data? [y/n] (default: n)",default="n")
-    parser.add_argument("-index",help="time index? [06111301] (default: 06111301)",default="06111301")
+    parser.add_argument("-index",help="time index? [06111301] (default: 06111301)",default="07150017")
     args = vars(parser.parse_args())
     start_state, init_pos, obstacles, walls = read_inputfile(args['in'])
     timeindex = args['index']
