@@ -868,18 +868,29 @@ if __name__ == "__main__":
     parser.add_argument("-in",help="input file (default: input2.txt)",default="input4.txt")
     parser.add_argument("-load",help="load saved data? [y/n] (default: n)",default="n")
     parser.add_argument("-animation",help="show animation? [y/n] (default: y)",default="y")
+    parser.add_argument("-num",help="agnet number ? [2/3] (default: 2)",default="2")
     args = vars(parser.parse_args())
 
     params = Params()
+    ##
     params_globalmap =  map_params()
     params_localmap =  map_params()
     params_localmap2 =  map_params()
 
+    #load starting pose and environment from text file
     start_states, init_poses, obstacles, walls = read_inputfile(args['in'])
     if args['animation']=="y":
         show_animation = True
     else:
         show_animation = False
+
+    num_agent =int(args['num'])
+    print("Simulation Setting")
+    print("input file: ", args['in'])
+    print("num of agents: ", num_agent)
+    print("show animation: ",args['animation'] )
+    # input("temproary test")
+
 
     # create obpoints
     obpoints=[]
