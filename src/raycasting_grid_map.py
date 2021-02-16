@@ -10,6 +10,26 @@ import matplotlib.pyplot as plt
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 
+class mapparams:
+    def __init__(self):
+        self.xyreso = 0.25  # x-y grid resolution [m]
+        self.yawreso = math.radians(6)  # yaw angle resolution [rad]
+        self.xmin=-12.5
+        self.xmax=12.5
+        self.ymin=-12.5
+        self.ymax=12.5
+        self.xw = int(round((self.xmax - self.xmin) / self.xyreso))
+        self.yw = int(round((self.ymax - self.ymin) / self.xyreso))
+        self.boundaries=[]
+        self.boundaries.append((self.xmin,self.ymin))
+        self.boundaries.append((self.xmax,self.ymin))
+        self.boundaries.append((self.xmax,self.ymax))
+        self.boundaries.append((self.xmin,self.ymax))
+        self.sensor_range=5
+
+
+
+
 EXTEND_AREA = 15.0
 show_animation = True
 l_occ = np.log(0.8/0.2)
@@ -82,8 +102,10 @@ def calc_grid_map_config(xyreso, agent_x,agent_y, sensor_range):
     maxx = agent_x + sensor_range
     miny = agent_y - sensor_range
     maxy = agent_y + sensor_range
-    xw = int(round((maxx - minx) / xyreso))
-    yw = int(round((maxy - miny) / xyreso))
+    # print("maxx", maxx)
+    # print("minx", minx)
+    xw = int((maxx - minx) / xyreso)
+    yw = int((maxy - miny) / xyreso)
 
     return minx, miny, maxx, maxy, xw, yw
 
@@ -514,7 +536,18 @@ def generate_ray_casting_grid_map(obstacles,walls, params, agent_x=0.0, agent_y=
                     updated_gridlist.append(min_grid)
 
 
-    return pmap, updated_gridlist, obsdict, obs_vertices, closest_vertices, minx, maxx, miny, maxy, xyreso, xw,yw
+
+    localmap = mapparams()
+    localmap.xyresom=xyreso
+    localmap.xmin=minx
+    localmap.xmax=maxx
+    localmap.ymin=miny
+    localmap.ymax=maxy
+    localmap.xw=xw
+    localmap.yw=yw
+
+    # return pmap, updated_gridlist, obsdict, obs_vertices, closest_vertices, minx, maxx, miny, maxy, xyreso, xw,yw
+    return pmap, updated_gridlist, obsdict, obs_vertices, closest_vertices, localmap 
 
 #shoulde be written in terms of radian
 def generate_fov_angle(agent_yaw, fov_range):

@@ -28,6 +28,7 @@ class GridMap:
         self.map_resolution_m = 0.5 # [m]
         self.flight_area_vertices = polygon_vertices
         # print("polygon_vertices = ",polygon_vertices)
+        print("point_inside_polygon", point_inside_polygon)
         
         self.create_borders_grid_map(point_inside_polygon)
 

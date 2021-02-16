@@ -37,8 +37,6 @@ l_diff= np.log(0.01/0.99)
 horizon=20
 shorthorizon=10
 boolsaved = False
-weight_entropy = 0.15
-weight_travel = 1.7
 
 #pp control 
 #test
@@ -51,30 +49,12 @@ dt = 0.2  # [s]
 L = 1.0  # [m] wheel base of vehicle
 AlphabetSet=['a','b','c','d','e','f','g','h','i','j','k','l','m', 
                 'n','o','p','q','r']
-ColorSet=['green', 'red', 'blue','yellow', 'black', 'cyan' ]
 Region_Boundary =12.5
 t = time.localtime()
 dir_path = os.path.dirname(os.path.realpath(__file__))
 dir_path=dir_path[:-4]
 timestamp =time.strftime('%m%d%H%M_', t)
 file_name =dir_path+"/results/entropy/entropy_" +timestamp+".csv"
-
-
-class map_info:
-    sensor_range=5
-    xmin=-5
-    xmax=5
-    ymin=-5
-    ymax=5
-    xyreso = 0.25
-    width = 10.0/0.25
-    legth = 10.0/0.25
-        
-    def __init__(self, x, y):
-        self.xmin = x-sensor_range
-        self.xmax = x+sensor_range
-        self.ymin = y-sensor_range
-        self.ymax = y+sensor_range
 
 
 class map_params:
@@ -173,7 +153,7 @@ def choose_goal_from_trj(best_trj, params_globalmap, horizon=20):
     return goal
 
 
-def calc_IG_trjs(trj_candidates, entropy_map, params_global, horizon=25):
+def calc_IG_trjs(trj_candidates, emap, params_local, params_global,params,  horizon=25):
     # print("TODO")
     #Calculating Information gain on trajectories
     #1) calculating sampling point for time horizon 
@@ -181,144 +161,99 @@ def calc_IG_trjs(trj_candidates, entropy_map, params_global, horizon=25):
     #3) Collecting IG gain for overlapped region
     #Suppose we have maximum velocity/ arc length
     #sampling points w.r.t distance 
-    # print("trj_candidates", trj_candidates)
-    # print("len trj_candidates", len(trj_candidates))
-
-    if len(trj_candidates)>0:
-        w_t=1.0
-        igs=[]
-        travels=[]
-        tpoints=[]
-        for j, trj in enumerate(trj_candidates):
-            ig=0
-            travel=0
-            #Set ref_x and ref_y as the first point of trajectory
-            ref_x = trj[0][0]
-            ref_y = trj[1][0]
-            for i in range(len(trj[0])):
-              #sparse sampling (add sampoing point for the last point of trajectory)
-              if i%10==0 or i==len(trj[0])-1:
-                  if horizon>0:
-                      if i<horizon:
-                        print("i: ", i, "x: ", trj[0][i], ", y: ", trj[1][i], ", ig:", ig)
-                        x=trj[0][i]
-                        y=trj[1][i]
-                        # print("x", x)
-                        # print("y", y)
-                        ig+= get_expected_entropy_infov([x, y], entropy_map, params_global)
-                        dx=trj[0][i]-ref_x
-                        dy=trj[1][i]-ref_y
+    igs=[]
+    for trj in trj_candidates:
+        ig=0
+        travel=0
+        # print("len_trj", len(trj[0]))
+        # for i in range(horizon):
+        for i in range(len(trj[0])):
+            if horizon>0:
+                if i<horizon:
+                    w_t=1.0
+                    x=trj[0][i]
+                    y=trj[1][i]
+                    # yaw=trj[2][i]
+                    ig+= get_entropy_infov([x,y],emap,params_local, params_global)
+                    if i>0:
+                        dx = trj[0][i]-trj[0][i-1]
+                        dy = trj[1][i]-trj[1][i-1]
                         travel+=(dx**2+dy**2)**0.5
-                        ref_x=trj[0][i]
-                        ref_y=trj[1][i]
-                        weight_travel=1.0
-                  else:                     #the infinite horizon case
-                      ig+= self.get_expected_entropy_infov([trj[0][i],trj[1][i]],entropy_map, params_global)
-                      dx=trj[0][i]-ref_x
-                      dy=trj[1][i]-ref_y
-                      travel+=(dx**2+dy**2)**0.5
-                      ref_x=trj[0][i]
-                      ref_y=trj[1][i]
-                      weight_travel=0.5
+                    
+            else:                     #the infinite horizon case
+                x=trj[0][i]
+                y=trj[1][i]
+                # yaw=trj[2][i]
+                ig+= get_entropy_infov([x,y],emap,params_local, params_global)
+                w_t=0.2
+                if i>0:
+                    dx = trj[0][i]-trj[0][i-1]
+                    dy = trj[1][i]-trj[1][i-1]
+                    travel+=(dx**2+dy**2)**0.5
 
-            # print("travel:" , travel)
-            # print("ig", ig, ", travel: ",travel)
-            cost = weight_entropy*ig-weight_travel*travel
-            igs.append(cost)
-            travels.append(travel)
-            tpoints.append([trj[0][-1], trj[1][-1]])
 
-        print("igs", igs)
-        print("travels", travels)
-        print("tpoints", tpoints)
-        sorted_ig = sorted(((v,i) for i, v in enumerate(igs)),reverse=True)
-        max_idx = sorted_ig[0][1]
-        print("best trj idx : ", max_idx, "total num of candidates: ", len(igs))
-        print("best_ig[] : ", igs[max_idx])
-        # print("best information gain : ", sorted_ig[0][0])
-        return trj_candidates[max_idx]
-    else:
-        print("no trajectory candidates")
+        # print("ig: ", ig)
+        # print("travel:" , travel)
+        cost = params. weight_entropy*ig-w_t*travel
+        igs.append(cost)
+    # print(igs)
+    sorted_ig = sorted(((v,i) for i, v in enumerate(igs)),reverse=True)
+    max_idx = sorted_ig[0][1]
+    # print("best trj idx : ", max_idx)
+    # print("best information gain : ", sorted_ig[0][0])
+    return trj_candidates[max_idx]
+    #find maximum
 
-def calc_IG_trjs_with_leadtrj(self, trj_candidates, entropy_map, lead_trj, params_global, horizon=20):
-    # w_t=1.0
-    if len(trj_candidates)>0:
-        igs=[]
-        for j, trj in enumerate(trj_candidates):
-            ig=0
-            travel=0
-            ref_x = trj[0][0]
-            ref_y = trj[1][0]
-            for i in range(len(trj[0])):
-
-                if i%10==0 or i==len(trj[0])-1:
-                    if horizon>0:
-                        if i<horizon:
-                            ig+= get_expected_entropy_infov_trj([trj[0][i],trj[1][i]],entropy_map,lead_trj, params_global)
-                            dx=trj[0][i]-ref_x
-                            dy=trj[1][i]-ref_y
-                            travel+=(dx**2+dy**2)**0.5
-                            ref_x=trj[0][i]
-                            ref_y=trj[1][i]
-                    else:                     #the infinite horizon case
-                        ig+= get_expected_entropy_infov_trj([trj[0][i],trj[1][i]],entropy_map, lead_trj, params_global)
-                        dx=trj[0][i]-ref_x
-                        dy=trj[1][i]-ref_y
+def calc_IG_trjs_leader(trj_candidates, best_trj, emap, params_local, params_global,params,  horizon=25):
+    # print("TODO")
+    #Calculating Information gain on trajectories
+    #1) calculating sampling point for time horizon 
+    #2) calculating FOV region over sampling points 
+    #3) Collecting IG gain for overlapped region
+    #Suppose we have maximum velocity/ arc length
+    #sampling points w.r.t distance 
+    igs=[]
+    for trj in trj_candidates:
+        ig=0
+        travel=0
+        # print("len_trj", len(trj[0]))
+        # for i in range(horizon):
+        for i in range(len(trj[0])):
+            if horizon>0:
+                if i<horizon:
+                    w_t=1.0
+                    x=trj[0][i]
+                    y=trj[1][i]
+                    # yaw=trj[2][i]
+                    ig+= get_entropy_infov([x,y],emap,params_local, params_global)
+                    if i>0:
+                        dx = trj[0][i]-trj[0][i-1]
+                        dy = trj[1][i]-trj[1][i-1]
                         travel+=(dx**2+dy**2)**0.5
-                        ref_x=trj[0][i]
-                        ref_y=trj[1][i]
-                        weight_travel=0.2
-
-            cost = weight_entropy*ig-weight_travel*travel
-            igs.append(cost)
-
-        sorted_ig = sorted(((v,i) for i, v in enumerate(igs)),reverse=True)
-        max_idx = sorted_ig[0][1]
-        return trj_candidates[max_idx]
-    else:
-        print("no trajectory candidates")
-        return None
-
-def calc_IG_trjs_hierarchy(self, trj_candidates, entropy_map, params_global, horizon=20, trjs, agentnum):
-    # w_t=1.0
-    if len(trj_candidates)>0:
-        igs=[]
-        for j, trj in enumerate(trj_candidates):
-            ig=0
-            travel=0
-            ref_x = trj[0][0]
-            ref_y = trj[1][0]
-            for i in range(len(trj[0])):
-
-                if i%10==0 or i==len(trj[0])-1:
-                    if horizon>0:
-                        if i<horizon:
-                            ig+= get_expected_entropy_infov_trj([trj[0][i],trj[1][i]],entropy_map,lead_trj, params_global)
-                            dx=trj[0][i]-ref_x
-                            dy=trj[1][i]-ref_y
-                            travel+=(dx**2+dy**2)**0.5
-                            ref_x=trj[0][i]
-                            ref_y=trj[1][i]
-                    else:                     #the infinite horizon case
-                        ig+= get_expected_entropy_infov_trj([trj[0][i],trj[1][i]],entropy_map, lead_trj, params_global)
-                        dx=trj[0][i]-ref_x
-                        dy=trj[1][i]-ref_y
-                        travel+=(dx**2+dy**2)**0.5
-                        ref_x=trj[0][i]
-                        ref_y=trj[1][i]
-                        weight_travel=0.2
-
-            cost = weight_entropy*ig-weight_travel*travel
-            igs.append(cost)
-
-        sorted_ig = sorted(((v,i) for i, v in enumerate(igs)),reverse=True)
-        max_idx = sorted_ig[0][1]
-        return trj_candidates[max_idx]
-    else:
-        print("no trajectory candidates")
-        return None
+                    
+            else:                     #the infinite horizon case
+                x=trj[0][i]
+                y=trj[1][i]
+                # yaw=trj[2][i]
+                ig+= get_entropy_infov_multi([x,y],emap,params_local, params_global, best_trj, 12.5)
+                w_t=0.2
+                if i>0:
+                    dx = trj[0][i]-trj[0][i-1]
+                    dy = trj[1][i]-trj[1][i-1]
+                    travel+=(dx**2+dy**2)**0.5
 
 
+        # print("ig: ", ig)
+        # print("travel:" , travel)
+        cost = params. weight_entropy*ig-w_t*travel
+        igs.append(cost)
+    # print(igs)
+    sorted_ig = sorted(((v,i) for i, v in enumerate(igs)),reverse=True)
+    max_idx = sorted_ig[0][1]
+    # print("best trj idx : ", max_idx)
+    # print("best information gain : ", sorted_ig[0][0])
+    return trj_candidates[max_idx]
+    #find maximum
 
 
 
@@ -366,83 +301,6 @@ def calc_min_distance_from_trj(px,py, trj):
             min_dist = tempdist
     return min_dist
 
-def Coord2CellIdx(self,x, y, map_info):
-    temp_x = x-map_info.origin.position.x
-    temp_y = y-map_info.origin.position.y
-    coord_x= math.floor(temp_x/map_info.resolution)
-    coord_y= math.floor(temp_y/map_info.resolution)
-    # print("coord_x:" ,coord_x, "coord_y:" ,coord_y )
-    idx= (int)(coord_x+map_info.width*coord_y)
-
-    return idx
-
-def Coord2CellIdx(x, y, params_searchmap):
-    temp_x = x-map_info.origin.position.x
-    temp_y = y-map_info.origin.position.y
-    coord_x= math.floor(temp_x/map_info.resolution)
-    coord_y= math.floor(temp_y/map_info.resolution)
-    # print("coord_x:" ,coord_x, "coord_y:" ,coord_y )
-    idx= (int)(coord_x+map_info.width*coord_y)
-
-    return idx
-
-
-
-def Idx2Coord(self, idx, map_info):
-    res = (int) (idx/map_info.width);
-    div = (int) (idx%map_info.width);
-    coord_x=(res+0.5)*map_info.resolution+map_info.origin.position.x;
-    coord_y=(div+0.5)*map_info.resolution+map_info.origin.position.y;
-
-    return coord_x, coord_y
-
-
-def get_impossible_indices(pos, entropymap, params_searchmap):
-    center_x=pos[0]
-    center_y=pos[1]
-    minx, miny, maxx, maxy, xw, yw = calc_grid_map_config(params_searchmap.xyreso
-                                        , center_x,center_y, params_searchmap.sensor_range)
-
-    precast = precasting(minx,miny, xw, yw, params_searchmap.xyreso,
-                        params_searchmap.yawreso, center_x,center_y)
-
-    #generate min_angle_map[angleid]=distance
-    min_angle_map={}
-    for ix_local in range(xw-1):
-        for iy_local in range(yw-1):
-            px = minx+ix_local*params_searchmap.xyreso
-            py = miny+iy_local*params_searchmap.xyreso
-
-            if px >= params_searchmap.xmax or px <= params_searchmap.xmin:
-                continue
-            if py >= params_searchmap.ymax or py <= params_searchmap.ymin:
-                continue
-
-            #check if there exists static obstacle
-            gmap_idx = Coord2CellIdx(px,py, self.global_map.info)
-            if global_map.data[gmap_idx]>0:
-                obs_angle = atan_zero_to_twopi(py-center_y,px-center_x)
-                angleid =  int(math.floor(obs_angle / params_searchmap.yawreso))
-                d= math.sqrt((px-center_x)**2 + (py-center_y)**2)
-                if angleid in min_angle_map:
-                    if d<min_angle_map[angleid]:
-                        min_angle_map[angleid]=d
-                else:
-                    min_angle_map[angleid]=d
-
-    #check feasible index (output: set of infeasible map_indices )
-    impossible_idx=[]
-    for angle_id, min_dist in min_angle_map.items():
-        gridlist = precast[angleid]
-        for grid in gridlist:
-            if grid.d > min_dist:
-                search_idx = Coord2CellIdx(grid.px, grid.py,params_searchmap)
-                impossible_idx.append(search_idx)
-
-    return impossible_idx
-
-
-
 
 
 def get_entropy_infov_multi(state,entropy_map,params_local,params_global, trj, dist_th=5.0):
@@ -469,121 +327,6 @@ def get_entropy_infov_multi(state,entropy_map,params_local,params_global, trj, d
 
     # print("entropy_sum", entropy_sum)
     return entropy_sum
-
-
-def get_expected_entropy_infov(pos, entropymap, params_searchmap):
-
-        center_x=pos[0]
-        center_y=pos[1]
-        minx, miny, maxx, maxy, xw, yw = calc_grid_map_config(params_searchmap.xyreso
-                                            , center_x,center_y, params_searchmap.sensor_range)
-
-        # impossible_idx= get_impossible_indices(pos, entropymap, params_searchmap)
-        impossible_idx= []
-        # print("impossible_idx", impossible_idx)
-        #iteration for calculating entropy_map
-        entropy_sum=0.0
-        cell_count=0
-        for ix_local in range(xw-1):
-            for iy_local in range(yw-1):
-                px = minx+ix_local*params_searchmap.xyreso
-                py = miny+iy_local*params_searchmap.xyreso
-                if px >= params_searchmap.xmax or px <= params_searchmap.xmin:
-                    continue
-                if py >= params_searchmap.ymax or py <= params_searchmap.ymin:
-                    continue
-
-                # search_idx = Coord2CellIdx(px,py,entropymap)
-                ix_global= math.floor((px-params_searchmap.xmin)/params_searchmap.xyreso)
-                iy_global= math.floor((py-params_searchmap.ymin)/params_searchmap.xyreso)
-                # print("entropy_map", entropymap)
-                # input("stop")
-                if entropymap[ix_global][iy_global]>0:
-                    cell_count=cell_count+1
-                    # entropy_sum+= entropy_map[ix_global][iy_global]
- 
-                #convert log-occ to probability
-                # if search_idx not in impossible_idx:
-                    #count unknown cells 
-                    # if search_region.data[search_idx]==0:
-                    #if self.search_region.data[search_idx]!=int(l_occ) and self.search_region.data[search_idx]!=int(l_free):
-                        # cell_count=cell_count+1
-                    #p= 1-1./(1.0+np.exp(self.search_region.data[search_idx]))
-                    #jf p>0.0 and p<1.0:                 
-                    #    entropy_sum+=-(p*math.log(p)+(1-p)*math.log(1-p))
-        print("cell counts: ", cell_count)
-        entropy_sum=cell_count*0.693147
-
-        return entropy_sum
-
-   
-
-def get_expected_entropy_infov_trj(pos, entropy_map, leader_trj, params_searchmap, dist_th=5.0):
-
-        center_x=pos[0]
-        center_y=pos[1]
-        minx, miny, maxx, maxy, xw, yw = calc_grid_map_config(params_searchmap.xyreso
-                                            , center_x,center_y, params_searchmap.sensor_range)
-
-        impossible_idx= self.get_impossible_indices(pos, params_searchmap)
-        #iteration for calculating entropy_map
-        entropy_sum=0.0
-        cell_count=0
-        for ix_local in range(xw-1):
-            for iy_local in range(yw-1):
-                px = minx+ix_local*params_searchmap.xyreso
-                py = miny+iy_local*params_searchmap.xyreso
-                if px >= params_searchmap.xmax or px <= params_searchmap.xmin:
-                    continue
-                if py >= params_searchmap.ymax or py <= params_searchmap.ymin:
-                    continue
-
-                search_idx = self.Coord2CellIdx(px,py, self.search_region.info)
-                min_dist = self.calc_min_distance_from_trj(px,py,leader_trj)
-                #convert log-occ to probability
-                if search_idx not in impossible_idx and (min_dist>dist_th):
-                    #count unknown cells 
-                    if self.search_region.data[search_idx]==0:
-                        cell_count=cell_count+1
-
-        # print("cell counts: ", cell_count)
-        entropy_sum=cell_count*0.693147
-
-        return entropy_sum
-
-
-def get_expected_entropy_infov_trjs(pos, entropy_map, other_trjs, params_searchmap, dist_th=5.0):
-
-        center_x=pos[0]
-        center_y=pos[1]
-        minx, miny, maxx, maxy, xw, yw = calc_grid_map_config(params_searchmap.xyreso
-                                            , center_x,center_y, params_searchmap.sensor_range)
-
-        impossible_idx= get_impossible_indices(pos, params_searchmap)
-        #iteration for calculating entropy_map
-        entropy_sum=0.0
-        cell_count=0
-        for ix_local in range(xw-1):
-            for iy_local in range(yw-1):
-                px = minx+ix_local*params_searchmap.xyreso
-                py = miny+iy_local*params_searchmap.xyreso
-                if px >= params_searchmap.xmax or px <= params_searchmap.xmin:
-                    continue
-                if py >= params_searchmap.ymax or py <= params_searchmap.ymin:
-                    continue
-
-                search_idx = self.Coord2CellIdx(px,py, self.search_region.info)
-                min_dist = self.calc_min_distance_from_trj(px,py,leader_trj)
-                #convert log-occ to probability
-                if search_idx not in impossible_idx and (min_dist>dist_th):
-                    #count unknown cells 
-                    if self.search_region.data[search_idx]==0:
-                        cell_count=cell_count+1
-
-        # print("cell counts: ", cell_count)
-        entropy_sum=cell_count*0.693147
-
-        return entropy_sum
 
 
 
@@ -1046,13 +789,7 @@ def motion_sc(state, cx,cy,cyaw, target_idx,  params):
 
 
 
-def read_inputfile(num_agent=2, FILE_NAME="input4.txt"):
-    # input file format #
-    #---bounary--------
-    #--obstacles--
-    #--obstacles--
-    #--initial postion of agents--
-    #--initial goal position of agents--
+def read_inputfile(FILE_NAME="input4.txt"):
 
     line_ctr = 0
     polygons=[]
@@ -1063,31 +800,16 @@ def read_inputfile(num_agent=2, FILE_NAME="input4.txt"):
             line_ctr += 1
             if line_ctr == 1:
                 boundary = list(ast.literal_eval(l))
-            elif line_ctr in range(2,num_lines-1):
+            elif line_ctr in range(2,num_lines):
                 polygons.append(list(ast.literal_eval(l)))
-            elif line_ctr ==num_lines-1:
-                temp = list(ast.literal_eval(l))
-                # num_agent = len(temp)
-                # print(temp)
-                # print("gent num:", len(temp))
-                start_states =[]
-                init_poses=[]
-                for i in range(num_agent):
-                    init_poses.append([temp[i][0], temp[i][1]])
-                    start_states.append(np.array([init_poses[i][0],init_poses[i][1],0.0, 0.0,0.0]))
-                # start_states = [temp[0],temp[1], temp[2], temp[3]]
-                # init_poses = [[temp[0][0],temp[0][1]],[temp[1][0],temp[1][1]]]
-                # print(init_poses )
-                # goal_state = temp[1]
-
-                print("init_poses", init_poses)
             else:
                 temp = list(ast.literal_eval(l))
-                num_agent = len(temp)
-                goal_poses=[]
-                for i in range(num_agent):
-                    goal_poses.append([temp[i][0], temp[i][1]])
-                print("goal_poses", goal_poses)
+                print(temp)
+                start_states = [temp[0],temp[1]]
+                # start_states = [temp[0],temp[1], temp[2], temp[3]]
+                init_poses = [[temp[0][0],temp[0][1]],[temp[1][0],temp[1][1]]]
+                print(init_poses )
+                # goal_state = temp[1]
 
     #Create wall objects
     walls=[]
@@ -1136,7 +858,7 @@ def read_inputfile(num_agent=2, FILE_NAME="input4.txt"):
         obstacles.append(tmp)                       # attach obstacle to obstacle list
     # print(obstacles)
 
-    return start_states, init_poses, goal_poses, obstacles, walls
+    return start_states, init_poses, obstacles, walls
 
 
 if __name__ == "__main__":
@@ -1149,51 +871,33 @@ if __name__ == "__main__":
     parser.add_argument("-num",help="agnet number ? [2/3] (default: 2)",default="2")
     args = vars(parser.parse_args())
 
-    #set the num_agent
-    num_agent =int(args['num'])
     #load starting pose and environment from text file
-    states, init_poses, goal_poses,obstacles, walls = read_inputfile(num_agent, args['in'])
-
+    start_states, init_poses, obstacles, walls = read_inputfile(args['in'])
     if args['animation']=="y":
         show_animation = True
     else:
         show_animation = False
 
+    num_agent =int(args['num'])
     print("Simulation Setting")
     print("input file: ", args['in'])
     print("num of agents: ", num_agent)
     print("show animation: ",args['animation'] )
+    # input("temproary test")
 
     params = Params()
     params_globalmap =  map_params()
-    params_local_map=map_params()
     ##
     localgrids=[]
     for i in range(num_agent):
-        params_local_map=map_params()
-        localgrids.append(params_local_map)
+        params_local_map=
+
+        localgrids.append()
 
     params_localmap =  map_params()
-    # params_localmap2 =  map_params()
+    params_localmap2 =  map_params()
 
-    #simulation settings
-    # initial state = [x(m), y(m), yaw(rad), v(m/s), omega(rad/s)]
-    # state = np.array([init_pos[0],init_pos[1],0.0, 0.0,0.0])
 
-    # states=[]
-    # states.append(np.array([init_poses[0][0],init_poses[0][1],0.0, 0.0,0.0]))
-    # states.append(np.array([init_poses[1][0],init_poses[1][1],0.0, 0.0,0.0]))
-    #temporary goal state
-    # goal_poses=[[2.5, -5.0],[5.5, 8.0], [-4, -4]]                 #temporary goal pose
-    goal =goal_poses[0]                        #define goal from goal_pos(initial direction)
-    goal2 =goal_poses[1]                        #define goal from goal_pos(initial direction)
-    goal3 =goal_poses[2]                        #define goal from goal_pos(initial direction)
-    # state = np.array(start_state)
-    traj = states[0][:2]
-    traj2 = states[1][:2]
-    iter=0
-    simtime=0.0
-    spline_explored = False
 
     # create obpoints
     obpoints=[]
@@ -1207,9 +911,11 @@ if __name__ == "__main__":
                 obspoint_y = obs.y_min+j*2*params_globalmap.xyreso
                 obpoints.append([obspoint_x, obspoint_y])
     # print("obspoints:", obpoints)
+
+
     #create cspace
-    # print("init_poses", init_poses)
-    # goal_poses=[[2.5, -5.0],[5.5, 8.0]]                 #temporary goal pose
+    print("init_poses", init_poses)
+    goal_poses=[[2.5, -5.0],[5.5, 8.0]]                 #temporary goal pose
     cspace=configuration_space()
     cspace.reset_environment(params_globalmap.boundaries,init_poses[0],goal_poses[0], obstacles)
     planner = VerticalCellDecomposition(cspace)
@@ -1226,6 +932,7 @@ if __name__ == "__main__":
 
 
 
+
     # planner.generate_waypoint(params_localmap)
     # planner.plot_regions()
     # cspace.plot_config_space()
@@ -1239,7 +946,7 @@ if __name__ == "__main__":
     # axes[1,1] : entropy_map
     # fig,axes=plt.subplots(nrows=2,ncols=2,figsize=(40,40))
     waypoint_vcd = planner.generate_waypoint(params_localmap)
-    # waypoint_vcd2 = planner2.generate_waypoint(params_localmap2)
+    waypoint_vcd2 = planner2.generate_waypoint(params_localmap2)
     
 
     #waypoint from vcd
@@ -1271,7 +978,6 @@ if __name__ == "__main__":
 
 
     #simulation settings
-    '''
     # initial state = [x(m), y(m), yaw(rad), v(m/s), omega(rad/s)]
     # state = np.array([init_pos[0],init_pos[1],0.0, 0.0,0.0])
     states=[]
@@ -1280,52 +986,39 @@ if __name__ == "__main__":
     #temporary goal state
     goal =goal_poses[0]                        #define goal from goal_pos(initial direction)
     goal2 =goal_poses[1]                        #define goal from goal_pos(initial direction)
+    # state = np.array(start_state)
     traj = states[0][:2]
     traj2 = states[1][:2]
     iter=0
     simtime=0.0
     spline_explored = False
-    '''
 
     #parameters for logging
     times =[]
     entropys=[]
-    #pose_set environment
-
-    poses_xset=[]
-    poses_yset=[]
-    goal_xset=[]
-    goal_yset=[]
-    yawset=[]
+    pos_xs=[]
+    pos_ys=[]
+    pos_xs2=[]
+    pos_ys2=[]
+    yaws=[]
     velocities=[]
-    inputsets=[]
-    goals=[]
-    
-    
-    #inputs= np.zeros((num_agent,2))
-    inputs= []
-    poses_xs=np.zeros(num_agent, dtype=float)
-    poses_ys=np.zeros(num_agent, dtype=float)
-    yaws=np.zeros(num_agent, dtype=float)
-    goal_xs=np.zeros(num_agent, dtype=float)
-    goal_ys=np.zeros(num_agent, dtype=float)
-    velocity=np.zeros(num_agent, dtype=float)
-    #velocity=np.zeros(num_agent)
-    for i in range(num_agent):
-        inputs.append([0.0, 0.0])
+    goal_xs=[]
+    goal_ys=[]
+    goal_xs2=[]
+    goal_ys2=[]
 
-
-    #inputs= np.array([0.0, 0.0])
-    #inputs2= np.array([0.0, 0.0])
-    #inputs3= np.array([0.0, 0.0])
 
     #Checking initial and final goal
     print("initial state: ",states)
     # print("goal : ",goal)
+
     t_prev_goal = time.time()
     pmap_global = initialize_global_occ_grid_map(params_globalmap)
     initial_entropy = get_map_entropy(pmap_global,params_globalmap)
     print("initial entropy: ", initial_entropy )
+    inputs= np.array([0.0, 0.0])
+    inputs2= np.array([0.0, 0.0])
+
     #########################################
     #test stanley_controller
     # sample_goals = goal_sampling_VCD(waypoint_vcd, state[0],state[1], params_globalmap)
@@ -1359,72 +1052,40 @@ if __name__ == "__main__":
     # trj_target_idx, _ = calc_target_index(states[0], cx, cy)
     # trj_target_idx2, _ = calc_target_index(states[1], cx2, cy2)
     #########################################
-    goal_dist = np.zeros(num_agent)
 
+ 
 
     for _ in range(params.numiters):
-
-        poses_xs=np.zeros(num_agent, dtype=float)
-        poses_ys=np.zeros(num_agent, dtype=float)
-        for i in range(num_agent):
-            states[i], inputs[i] = motion_dwa(states[i], inputs[i], goal_poses[i], obpoints, walls, params)
-            goal_dist[i]=distance(goal,states[i])   
-
-            # poses_xset[i].append(states[i][0])
-            # poses_yset[i].append(states[i][1])
-            poses_xs[i]=states[i][0]
-            poses_ys[i]=states[i][1]
-            yaws[i]=states[i][2]
-            velocity[i]=states[i][3]
-            # print("states", states[i])
-
-        #states[1], inputs2 = motion_dwa(states[1], inputs2, goal2, obpoints, walls, params)
+        states[0], inputs = motion_dwa(states[0], inputs, goal, obpoints, walls, params)
+        states[1], inputs2 = motion_dwa(states[1], inputs2, goal2, obpoints, walls, params)
         # state = simple_motion(state, goal, params)                        #dynamics
         # state = motion_sc(state, cx,cy,cyaw, trj_target_idx,  params)
-        #logs
+        goal_dist = distance(goal,states[0])                                    #distance to gaol
+        goal_dist2 = distance(goal2,states[1])                                    #distance to gaol
+        # goal_dist = sqrt((goal[0] - state[0])**2+(goal[1] - state[1])**2) #distance to gaol
         simtime = simtime + dt
         times.append(simtime)
         t_current = time.time()
-        #poses_xset
-        poses_xset.append(poses_xs)
-        poses_yset.append(poses_ys)
-        yawset.append(yaws)
-        velocities.append(velocity)
-        #pos_xs.append(states[0][0])
-        #pos_ys.append(states[0][1])
-        #pos_xs2.append(states[1][0])
-        #pos_ys2.append(states[1][1])
+        pos_xs.append(states[0][0])
+        pos_ys.append(states[0][1])
+        pos_xs2.append(states[1][0])
+        pos_ys2.append(states[1][1])
         # pos_xs.append(state[0])
         # pos_ys.append(state[1])
-        # yaws.append(states[0][2])
-        # velocities.append(states[0][3])
+        yaws.append(states[0][2])
+        velocities.append(states[0][3])
 
         if iter>0:
-            for i in range(num_agent):
-                goal_xs[i]=goal_poses[i][0]
-                goal_ys[i]=goal_poses[i][1]
+            goal_xs.append(goal[0])
+            goal_ys.append(goal[1])
+            goal_xs2.append(goal2[0])
+            goal_ys2.append(goal2[1])
 
-            goal_xset.append(goal_xs)
-            goal_yset.append(goal_ys)
- 
-
-        #check if one of the agent reaches to to it's goal
-        goal_reached = False
-        for i in range(num_agent):
-            if goal_dist[i]< params.goal_tol:
-                goal_reached =True
-
-        # if goal is reached, start cacluating new positions
-        sample_goalset=[];
-        trjs_candidateset=[];
-        best_trjs=[]
-        goals=[]
-
-        if goal_reached :                                          # goal is reached
+        if goal_dist < params.goal_tol or goal_dist2< params.goal_tol:                                          # goal is reached
             print('Time from the previous reached goal:', t_current - t_prev_goal)
             t_prev_goal = time.time()
 
-            #setting paths--> start finding best trajectories
+            #setting next trjaectory--> start finding best trajectories
             if show_animation:
                 axes[1,0].cla()
                 axes[1,0].set_title('global & Local motion primitives')
@@ -1432,66 +1093,45 @@ if __name__ == "__main__":
             # sample_goals = random_sampling(params,8)
             # generate goal points from waypoints vcd
             # sample_goals = random_sampling(params,5)
-            best_trjs=[]
-            for i in range(num_agent):
-                sample_goalset.append(goal_sampling_VCD(waypoint_vcd, states[i][0],states[i][1], params_globalmap))
-            # sample_goals2 = goal_sampling_VCD(waypoint_vcd, states[1][0],states[1][1], params_globalmap)
+            sample_goals = goal_sampling_VCD(waypoint_vcd, states[0][0],states[0][1], params_globalmap)
+            sample_goals2 = goal_sampling_VCD(waypoint_vcd, states[1][0],states[1][1], params_globalmap)
             # sample_goals_total=[sample_goals,sample_goals2]
             # generate global trjs to each sample goal
             #agent1
-            # input("stop")
-        
-                gtrjs= generating_globaltrjs(states[i], cspace,planner, obstacles,sample_goalset[i],params_globalmap)
-                sp_gtrjs = trjs_to_sample(gtrjs)
-                local_trjs = lane_state_sampling_test1(states[i],obstacles, params_globalmap)
-                trjs_candidate =[]
-                for gtrj in sp_gtrjs:
-                    trjs_candidate.append(gtrj)
-                for ltrj in local_trjs:
-                    trjs_candidate.append(ltrj)
-
-                trjs_candidateset.append(trjs_candidate)
-
-
-                # if i==1:
-                
-                best_trj = calc_IG_trjs_hierarchy(trjs_candidateset[i], entropymap,  params_globalmap, horizon, best_trjs, i)
-                best_trjs.append(best_trj)
-                # else:
-                    # best_trj = calc_IG_trjs(trjs_candidateset[i], entropymap,  params_globalmap, horizon )
-
+            gtrjs= generating_globaltrjs(states[0], cspace,planner, obstacles,sample_goals2,params_globalmap)
+            sp_gtrjs = trjs_to_sample(gtrjs)
+            local_trjs = lane_state_sampling_test1(states[0],obstacles, params_globalmap)
+            trjs_candidate =[]
+            for gtrj in sp_gtrjs:
+                trjs_candidate.append(gtrj)
+            for ltrj in local_trjs:
+                trjs_candidate.append(ltrj)
 
             #agent2
-            # gtrjs2= generating_globaltrjs(states[1], cspace2,planner2, obstacles,sample_goals2,params_globalmap)
-            # sp_gtrjs2 = trjs_to_sample(gtrjs2)
-            # local_trjs2 = lane_state_sampling_test1(states[1],obstacles, params_globalmap)
-            # trjs_candidate2 =[]
-            # for gtrj in sp_gtrjs2:
-                # trjs_candidate2.append(gtrj)
-            # for ltrj in local_trjs2:
-                # trjs_candidate2.append(ltrj)
+            sample_goals2 = goal_sampling_VCD(waypoint_vcd2, states[1][0],states[1][1], params_globalmap)
+            # sample_goals_total=[sample_goals,sample_goals2]
+            gtrjs2= generating_globaltrjs(states[1], cspace2,planner2, obstacles,sample_goals2,params_globalmap)
+            sp_gtrjs2 = trjs_to_sample(gtrjs2)
+            local_trjs2 = lane_state_sampling_test1(states[1],obstacles, params_globalmap)
+            trjs_candidate2 =[]
+            for gtrj in sp_gtrjs2:
+                trjs_candidate2.append(gtrj)
+            for ltrj in local_trjs2:
+                trjs_candidate2.append(ltrj)
+
 
             #Obtain best_trjaectory
-            # best_trj = calc_IG_trjs(trjs_candidate, entropymap,  params_globalmap, horizon )
-            # best_trj=self.calc_IG_trjs(trjs_candidate, self.params_searchmap, self.horizon)
-            # best_trj = calc_IG_trjs(trjs_candidate, best_trj2, entropymap, params_localmap, params_globalmap, params,horizon )
+            best_trj = calc_IG_trjs_leader(trjs_candidate, best_trj2, entropymap, params_localmap, params_globalmap, params,horizon )
             # best_trj2 = calc_IG_trjs(trjs_candidate2, entropymap , params_localmap2, params_globalmap, params,horizon )
-            # best_trj2 = calc_IG_trjs_with_leadtrj(trjs_candidate2, best_trj, entropymap, params_globalmap, params)
-            # best_trj2 = calc_IG_trjs_wfollower(trjs_candidate2, best_trj, entropymap, params_localmap, params_localmap2, params_globalmap, params)
+            best_trj2 = calc_IG_trjs_follower(trjs_candidate2, best_trj, entropymap, params_localmap, params_localmap2, params_globalmap, params)
 
             # cx, cy, cyaw, ck, s = calc_spline_course_trj(best_trj, ds=0.2)
             # last_idx = len(cx) - 1
             # trj_target_idx, _ = calc_target_index(state, cx, cy)
 
             #Choose next goal point from trajectory
-                goal = choose_goal_from_trj(best_trj, params_globalmap, horizon)
-
-                goal_xs[i]=goal[0]
-                goal_ys[i]=goal[1]
-
-            goal_xset.append(goal_xs)
-            goal_yset.append(goal_ys)
-            # goal2 = choose_goal_from_trj(best_trj2, params_globalmap, horizon)
+            goal = choose_goal_from_trj(best_trj, params_globalmap, horizon)
+            goal2 = choose_goal_from_trj(best_trj2, params_globalmap, horizon)
 
             if show_animation:
                 plot_local_trjs(local_trjs, axes[1,0])
@@ -1502,25 +1142,12 @@ if __name__ == "__main__":
                 plot_best_trj(best_trj2, horizon,axes[1,0])
 
 
-            # pmap_local, updated_grids, intersect_dic, obs_verticeid, closest_vertexid, params_localmap.xmin, params_localmap.xmax, params_localmap.ymin, params_localmap.ymax, params_localmap.xyreso, params_localmap.xw, params_localmap.yw= generate_ray_casting_grid_map(obstacles, walls, params_localmap, states[0][0],states[0][1], states[0][2])
-            # pmap_local2, updated_grids2, intersect_dic2, obs_verticeid2, closest_vertexid, params_localmap2.xmin, params_localmap2.xmax, params_localmap2.ymin, params_localmap2.ymax, params_localmap2.xyreso, params_localmap2.xw, params_localmap2.yw= generate_ray_casting_grid_map(obstacles, walls, params_localmap, states[1][0],states[1][1], states[1][2])
-            # pmap_global = update_occ_grid_map(states[0], pmap_local,params_localmap, pmap_global,params_globalmap)
-            # pmap_global = update_occ_grid_map(states[1], pmap_local2,params_localmap2, pmap_global,params_globalmap)
-            # entropymap = get_global_entropymap(pmap_global,params_globalmap)
-            # curentropy = get_map_entropy(pmap_global, params_globalmap)
 
-        # print("states", states)
-        # print("states[0][0]", states[0][0])
-        # print("states[0][2]", states[0][2])
         #sensing part
-        for i in range(num_agent):
-            pmap_local, updated_grids, intersect_dic, obs_verticeid, closest_vertexid, localmap= generate_ray_casting_grid_map(obstacles, walls, params_localmap, states[i][0],states[i][1], states[i][2])
-            pmap_global = update_occ_grid_map(states[i], pmap_local, localmap, pmap_global,params_globalmap)
-            # pmap_local2, updated_grids2, intersect_dic2, obs_verticeid2, closest_vertexid, localmap2= generate_ray_casting_grid_map(obstacles, walls, params_localmap, states[1][0],states[1][1], states[1][2])
-            # pmap_local2, updated_grids2, intersect_dic2, obs_verticeid2, closest_vertexid, params_localmap2.xmin, params_localmap2.xmax, params_localmap2.ymin, params_localmap2.ymax, params_localmap2.xyreso, params_localmap2.xw, params_localmap2.yw= generate_ray_casting_grid_map(obstacles, walls, params_localmap, states[1][0],states[1][1], states[1][2])
-
-        # pmap_global = update_occ_grid_map(states[1], pmap_local2,localmap2, pmap_global,params_globalmap)
-
+        pmap_local, updated_grids, intersect_dic, obs_verticeid, closest_vertexid, params_localmap.xmin, params_localmap.xmax, params_localmap.ymin, params_localmap.ymax, params_localmap.xyreso, params_localmap.xw, params_localmap.yw= generate_ray_casting_grid_map(obstacles, walls, params_localmap, states[0][0],states[0][1], states[0][2])
+        pmap_local2, updated_grids2, intersect_dic2, obs_verticeid2, closest_vertexid, params_localmap2.xmin, params_localmap2.xmax, params_localmap2.ymin, params_localmap2.ymax, params_localmap2.xyreso, params_localmap2.xw, params_localmap2.yw= generate_ray_casting_grid_map(obstacles, walls, params_localmap, states[1][0],states[1][1], states[1][2])
+        pmap_global = update_occ_grid_map(states[0], pmap_local,params_localmap, pmap_global,params_globalmap)
+        pmap_global = update_occ_grid_map(states[1], pmap_local2,params_localmap2, pmap_global,params_globalmap)
         entropymap = get_global_entropymap(pmap_global,params_globalmap)
         curentropy = get_map_entropy(pmap_global, params_globalmap)
         entropys.append(curentropy)
@@ -1572,63 +1199,41 @@ if __name__ == "__main__":
                 axes[1,0].set_title('global & Local motion primitives')
                 planner.plot_regions(axes[1,0])
 
-            for i in range(num_agent):
-                sample_goalset.append(goal_sampling_VCD(waypoint_vcd, states[i][0],states[i][1], params_globalmap))
-                # sample_goalset[i]= goal_sampling_VCD(waypoint_vcd, states[i][0],states[i][1], params_globalmap)
-
-                gtrjs= generating_globaltrjs(states[i], cspace,planner, obstacles,sample_goalset[i],params_globalmap)
-                sp_gtrjs = trjs_to_sample(gtrjs)
-                local_trjs = lane_state_sampling_test1(states[i],obstacles, params_globalmap)
-                trjs_candidate =[]
-                for gtrj in sp_gtrjs:
-                    trjs_candidate.append(gtrj)
-                for ltrj in local_trjs:
-                    trjs_candidate.append(ltrj)
-
-                trjs_candidateset.append(trjs_candidate)
-
-                best_trj = calc_IG_trjs(trjs_candidateset[i], entropymap,  params_globalmap, horizon )
-                goal = choose_goal_from_trj(best_trj, params_globalmap, horizon)
-                # goals.append(goal)
-                goal_xs[i]=goal[0]
-                goal_ys[i]=goal[1]
-
-            goal_xset.append(goal_xs)
-            goal_yset.append(goal_ys)
-
-            # sample_goals = goal_sampling_VCD(waypoint_vcd, states[0][0],states[0][1], params_globalmap)
-            # sample_goals2 = goal_sampling_VCD(waypoint_vcd, states[1][0],states[1][1], params_globalmap)
+            sample_goals = goal_sampling_VCD(waypoint_vcd, states[0][0],states[0][1], params_globalmap)
+            sample_goals2 = goal_sampling_VCD(waypoint_vcd, states[1][0],states[1][1], params_globalmap)
 
             #agent1
-            # gtrjs= generating_globaltrjs(states[0], cspace,planner, obstacles,sample_goals,params_globalmap)
-            # sp_gtrjs = trjs_to_sample(gtrjs)            #sampled_trajectories
-            # local_trjs = lane_state_sampling_test1(states[0],obstacles, params_globalmap)
-            # trjs_candidate =[]
-            # for gtrj in sp_gtrjs:
-                # trjs_candidate.append(gtrj)
-            # for ltrj in local_trjs:
-                # trjs_candidate.append(ltrj)
+            gtrjs= generating_globaltrjs(states[0], cspace,planner, obstacles,sample_goals,params_globalmap)
+            sp_gtrjs = trjs_to_sample(gtrjs)            #sampled_trajectories
+            local_trjs = lane_state_sampling_test1(states[0],obstacles, params_globalmap)
+            trjs_candidate =[]
+            for gtrj in sp_gtrjs:
+                trjs_candidate.append(gtrj)
+            for ltrj in local_trjs:
+                trjs_candidate.append(ltrj)
 
-            # best_trj = calc_IG_trjs(trjs_candidate, entropymap , params_globalmap)
+            best_trj = calc_IG_trjs(trjs_candidate, entropymap , params_localmap, params_globalmap, params)
 
             #agent2
-            # gtrjs2= generating_globaltrjs(states[1], cspace2,planner2, obstacles,sample_goals2,params_globalmap)
-            # sp_gtrjs2 = trjs_to_sample(gtrjs2)            #sampled_trajectories
-            # local_trjs2 = lane_state_sampling_test1(states[1],obstacles, params_globalmap)
-            # trjs_candidate2 =[]
-            # for gtrj in sp_gtrjs2:
-                # trjs_candidate2.append(gtrj)
-            # for ltrj in local_trjs2:
-                # trjs_candidate2.append(ltrj)
+            gtrjs2= generating_globaltrjs(states[1], cspace2,planner2, obstacles,sample_goals2,params_globalmap)
+            sp_gtrjs2 = trjs_to_sample(gtrjs2)            #sampled_trajectories
+            local_trjs2 = lane_state_sampling_test1(states[1],obstacles, params_globalmap)
+            trjs_candidate2 =[]
+            for gtrj in sp_gtrjs2:
+                trjs_candidate2.append(gtrj)
+            for ltrj in local_trjs2:
+                trjs_candidate2.append(ltrj)
 
-            # best_trj2 = calc_IG_trjs_with_leadtrj(trjs_candidate2, entropymap, best_trj, params_globalmap)
-            # goal = choose_goal_from_trj(best_trj, params_globalmap, horizon)
-            # goal2 = choose_goal_from_trj(best_trj2, params_globalmap, horizon)
+            best_trj2 = calc_IG_trjs(trjs_candidate2, entropymap , params_localmap2, params_globalmap, params)
+ 
 
-            # goal_xs.append(goal[0])
-            # goal_ys.append(goal[1])
-            # goal_xs2.append(goal2[0])
-            # goal_ys2.append(goal2[1])
+            goal = choose_goal_from_trj(best_trj, params_globalmap, horizon)
+            goal2 = choose_goal_from_trj(best_trj2, params_globalmap, horizon)
+
+            goal_xs.append(goal[0])
+            goal_ys.append(goal[1])
+            goal_xs2.append(goal2[0])
+            goal_ys2.append(goal2[1])
 
             if show_animation:
                 plot_local_trjs(local_trjs, axes[1,0])
@@ -1644,21 +1249,10 @@ if __name__ == "__main__":
             horizon = 30
             params.weight_entropy=0.05
 
-        if curentropy < 0.15*initial_entropy and boolsaved==False:
-            # data=[times, pos_xs,pos_ys,yaws,velocities, pos_xs2, pos_ys2, entropys, goal_xs, goal_ys, goal_xs2, goal_ys2]
-            # data=[times, entropys]
-            # for i in range(num_agent):
-                # data.append(poses_xset[i])
-                # data.append(poses_yset[i])
-                # data.append(goal_xset[i])
-                # data.append(goal_yset[i])
-            # print("data", data) 
-            data=np.array([times, entropys, poses_xset, poses_yset, goal_xset, goal_yset])
-            # data = np.transpose(data)
-            # print("data", data)
-            columns=['time', 'entropy', 'pos_x', 'pos_y', 'goal_x', 'goal_y']
-            pd.DataFrame(data, columns).to_csv(file_name,float_format='%2f', header=True)
-            # pd.DataFrame(data, columns=['time', 'pos_x', 'pos_y', 'yaw', 'velocity', 'pos_xx', 'pos_yy', 'entropy', 'goal_x', 'goal_y', 'goal_xx', 'goal_yy']).to_csv(file_name,header=True)
+        if curentropy < 0.10*initial_entropy and boolsaved==False:
+            data=[times, pos_xs,pos_ys,yaws,velocities, pos_xs2, pos_ys2, entropys, goal_xs, goal_ys, goal_xs2, goal_ys2]
+            data = np.transpose(data)
+            pd.DataFrame(data, columns=['time', 'pos_x', 'pos_y', 'yaw', 'velocity', 'pos_xx', 'pos_yy', 'entropy', 'goal_x', 'goal_y', 'goal_xx', 'goal_yy']).to_csv(file_name,header=True)
             print("entropy file saved")
             boolsaved =True
             input("done")

@@ -656,7 +656,9 @@ def read_inputfile(FILE_NAME="input2.txt"):
                 polygons.append(list(ast.literal_eval(l)))
             else:
                 temp = list(ast.literal_eval(l))
-                start_state = [temp[0],temp[1], temp[2], temp[3]]
+                print("temp", temp)
+                input("here")
+                start_state = [temp[0],temp[1]]
                 init_pos = [temp[0],temp[1]]
                 # goal_state = temp[1]
 
