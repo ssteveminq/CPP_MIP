@@ -163,7 +163,7 @@ def calc_obstacle_cost(traj, ob, config):
             # print("dx: ", dx, ", dy: ", dy, "r = ", r)
 
             if r <= config.robot_radius:
-                print("collison!!")
+                # print("collison!!")
                 # input()
                 # return float(10000.0)  # collisiton
                 return float("Inf")  # collisiton

@@ -32,10 +32,10 @@ class mapparams:
 
 EXTEND_AREA = 15.0
 show_animation = True
-l_occ = np.log(0.8/0.2)
-l_free = np.log(0.2/0.8)
-l_occ_math = math.log(0.8/0.2)
-l_free_math = math.log(0.2/0.8)
+l_occ = np.log(0.95/0.05)
+l_free = np.log(0.05/0.95)
+l_occ_math = math.log(0.95/0.05)
+l_free_math = math.log(0.05/0.95)
 
 def polygon_contains_point(point, obstacle):
 

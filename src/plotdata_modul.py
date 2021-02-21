@@ -118,7 +118,8 @@ if __name__ == "__main__":
     # df = pd.read_csv(file_name, delimiter=',', names = ['time','pos_x', 'pos_y', 'yaw', 'velocity', 'pos_xx', 'pos_yy','entropy', 'goal_x', 'goal_y', 'goal_xx', 'goal_yy'])
 
     # print("df", df)
-    times = np.asarray(df.head(1))
+    timess = np.asarray(df.head(1))
+    # times =df.head(1)
     entropy= np.asarray(df.loc[1])
     pos_xs= np.asarray(df.loc[2])
     pos_ys= np.asarray(df.loc[3])
@@ -126,15 +127,54 @@ if __name__ == "__main__":
     goal_ys= np.asarray(df.loc[5])
     # print("times", times[0])
     # print("lentimes", len(times[0]))
-    timess= times[0]
+
+    # print("times", timess[0][1])
+    times= timess[0][1]
+    times_str= re.split(",",times)
+    for i, time_ele in enumerate(times_str):
+        if '[' in time_ele:
+            # print("time_ele", time_ele)
+            times_str[i]=time_ele.replace('[','')
+            print("time_ele", time_ele)
+        if ']' in time_ele:
+            times_str[i]=time_ele.replace(']','')
+            print("time_ele", time_ele)
+        if ' ' in time_ele:
+            times_str[i]=time_ele.replace(' ','')
+
+    # times_str2= re.split("[",times_str)
+    print("times", times_str)
+    print("times_str[0]", times_str[0])
+    input("time-test")
+    entropys= entropy[1]
     # entropys= entropy[0]
-    len_data = len(times[0])-1
-    print("len_data", len_data)
-    print("timess", timess)
-    print("entropys", entropy)
+    len_data = len(times)-1
+    len_data2 = len(entropys)-1
+    # print("len_data", len_data)
+    # print("len_data2", len_data2)
+    # print("00----------------------------00")
+    # print("timess", timess)
+    entropys_str= re.split(",",entropys)
+    print("entropys", entropys_str)
+    input("entropy---")
+    for i, ent_ele in enumerate(entropys_str):
+        if '[' in ent_ele:
+            # print("ent_ele", ent_ele)
+            entropys_str[i]=ent_ele.replace('[','')
+            print("ent_ele", ent_ele)
+        if ']' in ent_ele:
+            entropys_str[i]=ent_ele.replace(']','')
+            print("ent_ele", ent_ele)
+        if ' ' in ent_ele:
+            entropys_str[i]=ent_ele.replace(' ','')
+
+
 
     #set num_agent
-    num_agent =  int(len(pos_xs[5])/11) 
+    print("pos_xs", pos_xs)
+    # input("hi")
+    # num_agent =  int(len(pos_xs[5])/11) 
+    num_agent = 2
     print("Num", num_agent)
     index_set=[1,12]
 
@@ -150,10 +190,12 @@ if __name__ == "__main__":
 
     times_t=np.zeros(len_data)
     entropy_t=np.zeros(len_data)
-    for i in range(len(timess)):
+    for i in range(len(entropys_str)):
         if i>0:
-            times_t[i-1]=float(timess[i])
-            entropy_t[i-1]=float(entropy[i])
+            print("times[", i,"] ", times_str[i])
+            # print("entropys[", i,"] ", entropys_str[i])
+            times_t[i-1]=float(times_str[i])
+            entropy_t[i-1]=float(entropys_str[i])
     print("times_t", times_t) 
     print("entropy_t", entropy_t) 
 
