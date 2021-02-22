@@ -590,7 +590,7 @@ def get_expected_entropy_infov_trj(pos, entropy_map, leader_trj, params_searchma
 		return entropy_sum
 
 
-def get_expected_entropy_infov_trjs(pos, entropy_map, other_trjs, params_searchmap, dist_th=5.0):
+def get_expected_entropy_infov_trjs(pos, entropy_map, other_trjs, params_searchmap, dist_th=6.0):
 
 		center_x=pos[0]
 		center_y=pos[1]
@@ -1725,12 +1725,12 @@ if __name__ == "__main__":
 			horizon = 30
 			params.weight_entropy=0.05
 
-		if curentropy < 0.35*initial_entropy and boolsaved==False:
+		if curentropy < 0.18*initial_entropy and boolsaved==False:
 			# data=[times, pos_xs,pos_ys,yaws,velocities, pos_xs2, pos_ys2, entropys, goal_xs, goal_ys, goal_xs2, goal_ys2]
 			# data=[times, entropys]
 			# for i in range(num_agent):
 				# data.append(poses_xset[i])
-				# data.append(poses_yset[i])
+				# d
 				# data.append(goal_xset[i])
 				# data.append(goal_yset[i])
 			# print("data", data) 

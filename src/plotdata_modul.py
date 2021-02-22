@@ -26,7 +26,7 @@ def read_inputfile(FILE_NAME="input4.txt"):
             line_ctr += 1
             if line_ctr == 1:
                 boundary = list(ast.literal_eval(l))
-            elif line_ctr in range(2,num_lines):
+            elif line_ctr in range(2,num_lines-1):
                 polygons.append(list(ast.literal_eval(l)))
             else:
                 temp = list(ast.literal_eval(l))
@@ -66,6 +66,8 @@ def read_inputfile(FILE_NAME="input4.txt"):
 
 
     #Create obstacle objects
+    print("polygons", polygons)
+    input("check-polygon")
     obstacles=[]
     for obs in polygons:
         xmin=100
@@ -145,23 +147,17 @@ if __name__ == "__main__":
 
     # times_str2= re.split("[",times_str)
     print("times", times_str)
-    times_str[97]=times_str[97].replace(']','')
-    # print("times[97]", times_str[97])
-    # print("times_str[0]", times_str[0])
-    input("time-test")
+    len_data = len(times_str)
+    times_str[len_data-1]=times_str[len_data-1].replace(']','')
     entropys= entropy[1]
     # entropys= entropy[0]
     # len_data = len(times)-1
     # len_data2 = len(entropys)-1
     # print("len_data", len_data)
     # print("len_data2", len_data2)
-    # print("00----------------------------00")
-    # print("timess", timess)
     entropys_str= re.split(",",entropys)
     print("len_data2", len(entropys_str))
-    len_data = len(entropys_str)
-    # print("entropys", entropys_str)
-    # input("entropy---")
+    # len_data = len(entropys_str)
     for i, ent_ele in enumerate(entropys_str):
         if '[' in ent_ele:
             # print("ent_ele", ent_ele)
@@ -173,7 +169,8 @@ if __name__ == "__main__":
         if ' ' in ent_ele:
             entropys_str[i]=ent_ele.replace(' ','')
 
-    entropys_str[97]=entropys_str[97].replace(']','')
+    len_data = len(entropys_str)
+    entropys_str[len_data-1]=entropys_str[len_data-1].replace(']','')
 
 
     #set num_agent
@@ -202,8 +199,8 @@ if __name__ == "__main__":
     # temp2 = float(pos_xs[1][7:12])
     # print("temp2", temp2)
 
-    times_t=np.zeros(len_data)
-    entropy_t=np.zeros(len_data)
+    times_t=np.zeros(len_data-1)
+    entropy_t=np.zeros(len_data-1)
     for i in range(len(entropys_str)):
         if i>0:
             # print("times[", i,"] ", times_str[i])
@@ -212,6 +209,7 @@ if __name__ == "__main__":
             entropy_t[i-1]=float(entropys_str[i])
     print("times_t", times_t) 
     print("entropy_t", entropy_t) 
+    input("check-entropy")
 
     agent_poses_x=np.zeros((num_agent,len_data))
     agent_poses_y=np.zeros((num_agent,len_data))
@@ -290,7 +288,6 @@ if __name__ == "__main__":
     # print("goal_poses_y", goal_poses_y)
     # input("wow")
                 
-    
     fig =plt.figure(figsize=(9,6))
     spec = gridspec.GridSpec(ncols=2, nrows=1, width_ratios=[2,1])
     ax0=fig.add_subplot(spec[0])
@@ -307,7 +304,6 @@ if __name__ == "__main__":
     # ax0.plot(goal_x2, goal_y2, '*', markersize = 18, fillstyle='none',color='yellow', label="goal")             #trajectory point
     plot_obstacles(obstacles,walls)
 
-    input("hi")
     area_size=13
     locs, labels = plt.xticks()
     locs, labels = plt.yticks()
@@ -321,7 +317,6 @@ if __name__ == "__main__":
     plt.ylim([-area_size, area_size])   # limit the plot space
     plt.grid(True)
 
-    input("hi2")
     # fig2 = plt.subplot(1, 2, 2)
     # ax1=plt.subplot(gs[1])
     ax1 = fig.add_subplot(spec[1])
@@ -332,7 +327,6 @@ if __name__ == "__main__":
     plt.ylabel('entropy')
     plt.grid(True)
 
-    input("hi3")
 
     plt.savefig(imgfile_name)                   # save the resulting plot
 
