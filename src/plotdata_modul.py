@@ -121,7 +121,8 @@ if __name__ == "__main__":
     timess = np.asarray(df.head(1))
     # times =df.head(1)
     entropy= np.asarray(df.loc[1])
-    pos_xs= np.asarray(df.loc[2])
+    # pos_xs= np.asarray(df.loc[2])
+    pos_xs= df.loc[2]
     pos_ys= np.asarray(df.loc[3])
     goal_xs= np.asarray(df.loc[4])
     goal_ys= np.asarray(df.loc[5])
@@ -138,25 +139,29 @@ if __name__ == "__main__":
             print("time_ele", time_ele)
         if ']' in time_ele:
             times_str[i]=time_ele.replace(']','')
-            print("time_ele", time_ele)
+            print("time_ele", times_str[i])
         if ' ' in time_ele:
             times_str[i]=time_ele.replace(' ','')
 
     # times_str2= re.split("[",times_str)
     print("times", times_str)
-    print("times_str[0]", times_str[0])
+    times_str[97]=times_str[97].replace(']','')
+    # print("times[97]", times_str[97])
+    # print("times_str[0]", times_str[0])
     input("time-test")
     entropys= entropy[1]
     # entropys= entropy[0]
-    len_data = len(times)-1
-    len_data2 = len(entropys)-1
+    # len_data = len(times)-1
+    # len_data2 = len(entropys)-1
     # print("len_data", len_data)
     # print("len_data2", len_data2)
     # print("00----------------------------00")
     # print("timess", timess)
     entropys_str= re.split(",",entropys)
-    print("entropys", entropys_str)
-    input("entropy---")
+    print("len_data2", len(entropys_str))
+    len_data = len(entropys_str)
+    # print("entropys", entropys_str)
+    # input("entropy---")
     for i, ent_ele in enumerate(entropys_str):
         if '[' in ent_ele:
             # print("ent_ele", ent_ele)
@@ -168,10 +173,19 @@ if __name__ == "__main__":
         if ' ' in ent_ele:
             entropys_str[i]=ent_ele.replace(' ','')
 
+    entropys_str[97]=entropys_str[97].replace(']','')
 
 
     #set num_agent
+    pos_xs=pos_xs[1]
+    pos_ys=pos_ys[1]
     print("pos_xs", pos_xs)
+    # print("pos_xs[0]", pos_xs[0])
+    # print("pos_xs[1]", pos_xs[1])
+
+    pos_xs=re.findall(r"[-+]?\d*\.\d+|\d+", pos_xs)
+    pos_ys=re.findall(r"[-+]?\d*\.\d+|\d+", pos_ys)
+    # print("pos_xs2", pos_xs)
     # input("hi")
     # num_agent =  int(len(pos_xs[5])/11) 
     num_agent = 2
@@ -192,8 +206,8 @@ if __name__ == "__main__":
     entropy_t=np.zeros(len_data)
     for i in range(len(entropys_str)):
         if i>0:
-            print("times[", i,"] ", times_str[i])
-            # print("entropys[", i,"] ", entropys_str[i])
+            # print("times[", i,"] ", times_str[i])
+            print("entropys[", i,"] ", entropys_str[i])
             times_t[i-1]=float(times_str[i])
             entropy_t[i-1]=float(entropys_str[i])
     print("times_t", times_t) 
@@ -203,7 +217,21 @@ if __name__ == "__main__":
     agent_poses_y=np.zeros((num_agent,len_data))
     goal_poses_x=np.zeros((num_agent,len_data))
     goal_poses_y=np.zeros((num_agent,len_data))
-    
+
+
+
+    for i, pose in enumerate(pos_xs):
+        for j in range(num_agent):
+            idx=2*(i)+j
+            print("j: ", j," i: ", i)
+            # print("idx", idx)
+            # input("debug--")
+            # print("pos_xs[ " ,idx, " ] ", pos_xs[idx])
+            if i<len_data:
+                agent_poses_x[j,i]=float(pos_xs[idx])
+                agent_poses_y[j,i]=float(pos_ys[idx])
+            # agent_poses_y[j,i-1]=temp4
+    ''' 
     for i, pose in enumerate(pos_xs):
         if i>0:
             for j in range(num_agent):
@@ -212,13 +240,23 @@ if __name__ == "__main__":
                 if j==0:
                     idx = 1
                     idxy= 1
+                    print("idx", idx)
+                    print("idxy", idxy)
+
                 else:
                     idx = pos_xs[i][2:].find(' ')+3
                     idxy = pos_ys[i][2:].find(' ')+3
+                    print("idx", idx)
                     print("idxy", idxy)
+                    
+                # print("idx", idx)
+                # print("idxy", idxy)
+                
+                input("here-stop")
 
-                # print("pos_xs[i]", pos_xs[i])
+                print("pos_xs[i]", pos_xs[i])
                 print("pos_ys[i]", pos_ys[i])
+                input("here")
                 if i==1:
                     temp3= float(pos_xs[i][idx:idx+3])
                     temp4 = float(pos_ys[i][idxy:idxy+3])
@@ -231,25 +269,26 @@ if __name__ == "__main__":
                     print("temp4", temp4)
                 agent_poses_x[j,i-1]=temp3
                 agent_poses_y[j,i-1]=temp4
+    '''
     print("agent_poses_x", agent_poses_x)
     print("agent_poses_y", agent_poses_y)
+    input("_")
     # print("goal_xs[1]", goal_xs[1])
     # temp = float(goal_xs[1][1:3])
     # print("temp", temp)
     # temp2 = float(goal_xs[1][5:8])
     # print("temp2", temp2)
-    for i, pose in enumerate(goal_xs):
-        if i>0:
-            for j in range(num_agent):
-                idx = 5*(j-1)+1
-                temp = float(goal_xs[i][idx:idx+3])
-                temp2 = float(goal_ys[i][idx:idx+3])
-                # print("temp", temp)
-                goal_poses_x[j,i-1]=temp
-                goal_poses_y[j,i-1]=temp2
-    print("goal_poses_x", goal_poses_x)
-    print("goal_poses_y", goal_poses_y)
-    input("wow")
+    # for i, pose in enumerate(goal_xs):
+        # if i>0:
+            # for j in range(num_agent):
+                # idx = 5*(j-1)+1
+                # temp = float(goal_xs[i][idx:idx+3])
+                # temp2 = float(goal_ys[i][idx:idx+3])
+                # goal_poses_x[j,i-1]=temp
+                # goal_poses_y[j,i-1]=temp2
+    # print("goal_poses_x", goal_poses_x)
+    # print("goal_poses_y", goal_poses_y)
+    # input("wow")
                 
     
     fig =plt.figure(figsize=(9,6))
