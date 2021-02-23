@@ -292,11 +292,11 @@ def calc_IG_trjs_hierarchy( trj_candidates, entropy_map, params_global, trjs, ag
 		print("trjs", trjs)
 		# input("enter here")
 		for i, trj in enumerate(trjs):
-			if i<=agentnum:
-				considered_trjs.append(trj)
+                    if i<=agentnum:
+                        considered_trjs.append(trj)
 
-		print("agent_num", agentnum)        
-		print("considered_trjs", len(considered_trjs))
+		# print("agent_num", agentnum)        
+		# print("considered_trjs", len(considered_trjs))
 
 		for j, trj in enumerate(trj_candidates):
 			ig=0
@@ -625,7 +625,8 @@ def get_expected_entropy_infov_trjs(pos, entropy_map, other_trjs, params_searchm
 						cell_count=cell_count+1
 
 		# print("cell counts: ", cell_count)
-		entropy_sum=cell_count*0.693147
+		# entropy_sum=cell_count*0.693147
+		entropy_sum=cell_count*1.0
 
 		return entropy_sum
 
@@ -1725,7 +1726,7 @@ if __name__ == "__main__":
 			horizon = 30
 			params.weight_entropy=0.05
 
-		if curentropy < 0.18*initial_entropy and boolsaved==False:
+		if curentropy < 0.13*initial_entropy and boolsaved==False:
 			# data=[times, pos_xs,pos_ys,yaws,velocities, pos_xs2, pos_ys2, entropys, goal_xs, goal_ys, goal_xs2, goal_ys2]
 			# data=[times, entropys]
 			# for i in range(num_agent):
@@ -1743,6 +1744,16 @@ if __name__ == "__main__":
 			print("entropy file saved")
 			boolsaved =True
 			input("done")
+		if curentropy < 0.08*initial_entropy:
+			data=np.array([times, entropys, poses_xset, poses_yset, goal_xset, goal_yset])
+			columns=['time', 'entropy', 'pos_x', 'pos_y', 'goal_x', 'goal_y']
+			file_name=file_name+"_2"
+			pd.DataFrame(data, columns).to_csv(file_name,float_format='%2f', header=True)
+			# pd.DataFrame(data, columns=['time', 'pos_x', 'pos_y', 'yaw', 'velocity', 'pos_xx', 'pos_yy', 'entropy', 'goal_x', 'goal_y', 'goal_xx', 'goal_yy']).to_csv(file_name,header=True)
+			print("entropy file2 saved")
+			boolsaved =True
+			input("done")
+
 		if params.numiters>2 and params.numiters%300==1:
 			data=[times, pos_xs,pos_ys,yaws,velocities, pos_xs2, pos_ys2, entropys, goal_xs, goal_ys, goal_xs2, goal_ys2]
 			data = np.transpose(data)
