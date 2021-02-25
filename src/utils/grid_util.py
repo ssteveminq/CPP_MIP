@@ -196,8 +196,6 @@ def nhood8(idx, gridmap, map_info):
     return points
 
 
-
-
 def frontier_search(px,py, pmap,  param_map):
     print("frontier search with px, py", px, ", " , py)
 

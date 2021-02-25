@@ -138,24 +138,24 @@ def random_sampling(params, nums):
 
 def goal_sampling_VCD(waypoints, agent_x, agent_y, params_global):
 	#nums = the number of sample we need
-		dist_threshold = 2.0
+		dist_threshold = 3.0
 		agent_pos = [agent_x, agent_y]
 		goals = []
 
 		for waypoint in waypoints:
-                    temppos=[0,0]
-                    if distance(waypoint, agent_pos)> dist_threshold:
-                        temppos[0]=waypoint[0]+random.uniform(-1.0,1.0)
-                        temppos[1]=waypoint[1]+random.uniform(-1.0,1.0)
-                        if temppos[0] > params_global.xmax or temppos[0] < params_global.xmin:
-                            temppos[0]=waypoint[0]
-                        if temppos[1] > params_global.ymax or temppos[1] < params_global.ymin:
-                            temppos[1]=waypoint[1]
-                        goals.append(temppos)
+					temppos=[0,0]
+					if distance(waypoint, agent_pos)> dist_threshold:
+						temppos[0]=waypoint[0]+random.uniform(-1.0,1.0)
+						temppos[1]=waypoint[1]+random.uniform(-1.0,1.0)
+						if temppos[0] > params_global.xmax or temppos[0] < params_global.xmin:
+							temppos[0]=waypoint[0]
+						if temppos[1] > params_global.ymax or temppos[1] < params_global.ymin:
+							temppos[1]=waypoint[1]
+						goals.append(temppos)
 
 		return goals
 
-def goal_sampling_uniform( agent_x, agent_y, pmap_global, params_map):
+def goal_sampling_uniform(waypoints, agent_x, agent_y, pmap_global, params_map):
 	#nums = the number of sample we need
 	agent_pos = [agent_x, agent_y]
 	goals = []
@@ -163,26 +163,37 @@ def goal_sampling_uniform( agent_x, agent_y, pmap_global, params_map):
 	reso= (2*params_map.xmax)/(nums+1)
 	x = np.arange(0.9*params_map.xmin, 0.9*params_map.xmax, reso)
 	sample_xy=[]
-	for i in range(len(x)-1):
-		# print("i", i)
-		temp_x= random.uniform(x[i],x[i+1])
-		temp_y= random.uniform(0.9*params_map.ymin,0.9*params_map.ymax)
-		frontierset=frontier_search(temp_x,temp_y,pmap_global, params_map)
-		for frontier in frontierset:
-                    sample_xy.append([frontier.centroid_x,frontier.centroid_y])
-                    print("(centroid_x, centroid_y)", frontier.centroid_x,", ", frontier.centroid_y)
+
+	for waypoint in waypoints:
+            temppos=[0,0]
+            temppos[0]=waypoint[0]+random.uniform(-1.0,1.0)
+            temppos[1]=waypoint[1]+random.uniform(-1.0,1.0)
+            frontierset=frontier_search(temppos[0],temppos[1],pmap_global, params_map)
+            for frontier in frontierset:
+                sample_xy.append([frontier.centroid_x,frontier.centroid_y])
+                # print("(centroid_x, centroid_y)", frontier.centroid_x,", ", frontier.centroid_y)
+		
+
+	# for i in range(len(x)-1):
+                # print("i", i)
+		# temp_x= random.uniform(x[i],x[i+1])
+		# temp_y= random.uniform(0.9*params_map.ymin,0.9*params_map.ymax)
+		# frontierset=frontier_search(temp_x,temp_y,pmap_global, params_map)
+		# for frontier in frontierset:
+					# sample_xy.append([frontier.centroid_x,frontier.centroid_y])
+					# print("(centroid_x, centroid_y)", frontier.centroid_x,", ", frontier.centroid_y)
 	return sample_xy
 
 
-        #frontiers
-        # frontierset=frontier_search(agent_x,agent_y,pmap_global, params_map)
-        
-        # for frontier in frontierset:
-            # print("frontier", frontier.size)
-            # print("frontier.cent_x: ", frontier.centroid_x)
-            # print("frontier.cent_y: ", frontier.centroid_y)
-        # print("frontierset", frontierset)
-        # input("check frontier")
+		#frontiers
+		# frontierset=frontier_search(agent_x,agent_y,pmap_global, params_map)
+		
+		# for frontier in frontierset:
+			# print("frontier", frontier.size)
+			# print("frontier.cent_x: ", frontier.centroid_x)
+			# print("frontier.cent_y: ", frontier.centroid_y)
+		# print("frontierset", frontierset)
+		# input("check frontier")
 
 		# pos_idx =Coord2CellIdx_global(agent_x,agent_y, params_map)
 		# sidx= nearestCellIdx(pos_idx, 0,0, pmap_global, params_map)
@@ -629,7 +640,7 @@ def get_expected_entropy_infov_trj(pos, entropy_map, leader_trj, params_searchma
 		return entropy_sum
 
 
-def get_expected_entropy_infov_trjs(pos, entropy_map, other_trjs, params_searchmap, dist_th=6.0):
+def get_expected_entropy_infov_trjs(pos, entropy_map, other_trjs, params_searchmap, dist_th=6.5):
 
 		center_x=pos[0]
 		center_y=pos[1]
@@ -718,7 +729,7 @@ def generating_globaltrjs(cur_state, cspace, planner, obstacles,goals, params_gl
 def trjs_to_sample(trjs, num_points=60, showplot=True):
 	spline_trjs=[]
 	for i, sp in enumerate(trjs):
-		ds = 0.75                            # [m] distance of each intepolated points
+		ds = 0.6                            # [m] distance of each intepolated points
 		s = np.arange(0, sp.s[-1], ds)
 		rx, ry, ryaw, rk = [], [], [], []
 		s_iter=0
@@ -738,6 +749,23 @@ def plot_local_trjs(trjs, ax=None):
 			plt.plot(trj[0], trj[1], "-r")
 		else:
 			ax.plot(trj[0], trj[1], "-r")
+
+def plot_sample_goals(goals, color_='g', ax=None):
+	
+	for i,goal in enumerate(goals):
+		if ax==None:
+			# plt.plot(trj[0][1:70], trj[1][1:70], color='g', label="spline")
+			plt.plot(goal[0], goal[1], color=color_, label="goal")
+		else:
+			# ax.plot(trj[0][1:70], trj[1][1:70], color='g', label="spline")
+			print("goal", goal)
+                        
+                        
+			ax.plot(goal[0], goal[1], color=color_, label="goal")
+			# ax.plot(rx[1:80], ry[1:80], color='g', label="spline")
+	input("goal_plot")
+
+
 
 
 def plot_global_trjs(trjs, ax=None):
@@ -858,8 +886,8 @@ def get_map_entropy2(pmap_global,params_map):
 	for ix in range(params_map.xw):
 		for iy in range(params_map.yw):
 			# if pmap_global[ix][iy]!=l_free and pmap_global[ix][iy]!=l_occ:
-                        if pmap_global[ix][iy]==0.0:
-                            entropy_sum=entropy_sum+1
+						if pmap_global[ix][iy]==0.0:
+							entropy_sum=entropy_sum+1
 			# p=1-1./(1.0+np.exp(pmap_global[ix][iy]))
 			# p=1-1./(1.0+pow(2,pmap_global[ix][iy]))
 			# p =pmap[ix][iy]
@@ -1551,10 +1579,11 @@ if __name__ == "__main__":
 			# sample_goals = random_sampling(params,5)
 			best_trjs=[]
 			for i in range(num_agent):
-				# sample_goalset.append(goal_sampling_uniform( states[i][0],states[i][1], pmap_global, params_globalmap))
+				# sample_goalset.append(goal_sampling_uniform(waypoint_vcd, states[i][0],states[i][1], pmap_global, params_globalmap))
 				sample_goalset.append(goal_sampling_VCD(waypoint_vcd, states[i][0],states[i][1], params_globalmap))
-                                # sample_goalset.append(goal_sampling_uniform( states[i][0],states[i][1], pmap_global, params_globalmap))
                                 # sample_goalset.append(goal_sampling_VCD(waypoint_vcd, states[i][0],states[i][1], params_globalmap))
+								# sample_goalset.append(goal_sampling_uniform( states[i][0],states[i][1], pmap_global, params_globalmap))
+								# sample_goalset.append(goal_sampling_VCD(waypoint_vcd, states[i][0],states[i][1], params_globalmap))
 			# sample_goals2 = goal_sampling_VCD(waypoint_vcd, states[1][0],states[1][1], params_globalmap)
 			# sample_goals_total=[sample_goals,sample_goals2]
 			# generate global trjs to each sample goal
@@ -1563,12 +1592,14 @@ if __name__ == "__main__":
 		
 				gtrjs= generating_globaltrjs(states[i], cspace,planner, obstacles,sample_goalset[i],params_globalmap)
 				sp_gtrjs = trjs_to_sample(gtrjs)
-                                # local_trjs = lane_state_sampling_test1(states[i],obstacles, params_globalmap)
+				local_trjs = lane_state_sampling_test1(states[i],obstacles, params_globalmap)
 				trjs_candidate =[]
 				for gtrj in sp_gtrjs:
 					trjs_candidate.append(gtrj)
-				# for ltrj in local_trjs:
-					# trjs_candidate.append(ltrj)
+				for ltrj in local_trjs:
+					trjs_candidate.append(ltrj)
+                                # for ltrj in local_trjs:
+                                        # trjs_candidate.append(ltrj)
 
 				trjs_candidateset.append(trjs_candidate)
 
@@ -1612,10 +1643,19 @@ if __name__ == "__main__":
 					plot_local_trjs(local_trjs, axes[1,0])
 					plot_global_trjs(sp_gtrjs, axes[1,0])
 					plot_best_trj(best_trj, horizon,axes[1,0])
+					# plot_sample_goals(sample_goalset[i], ColorSet[i], axes[1,0])
+
+
 
 			goal_xset.append(goal_xs)
 			goal_yset.append(goal_ys)
 			# goal2 = choose_goal_from_trj(best_trj2, params_globalmap, horizon)
+
+			# if show_animation:
+				# for i in range(num_agent):
+					    # plot_sample_goals(sample_goalset[i], ColorSet[i], axes[1,0])
+
+
 
 			
 				# plot_local_trjs(local_trjs2, axes[1,0])
@@ -1696,8 +1736,10 @@ if __name__ == "__main__":
 
 			best_trjs=[]        
 			for i in range(num_agent):
-				# sample_goalset.append(goal_sampling_VCD(waypoint_vcd, states[i][0],states[i][1], params_globalmap))
-				sample_goalset.append(goal_sampling_uniform( states[i][0],states[i][1], pmap_global, params_globalmap))
+				sample_goalset.append(goal_sampling_VCD(waypoint_vcd, states[i][0],states[i][1], params_globalmap))
+                                # sample_goalset.append(goal_sampling_uniform(waypoint_vcd, states[i][0],states[i][1], pmap_global, params_globalmap))
+                                # sample_goalset.append(goal_sampling_VCD(waypoint_vcd, states[i][0],states[i][1], params_globalmap))
+				# sample_goalset.append(goal_sampling_uniform(waypoint_vcd, states[i][0],states[i][1], pmap_global, params_globalmap))
 
 				gtrjs= generating_globaltrjs(states[i], cspace,planner, obstacles,sample_goalset[i],params_globalmap)
 				sp_gtrjs = trjs_to_sample(gtrjs)
