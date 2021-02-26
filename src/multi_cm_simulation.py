@@ -87,6 +87,10 @@ class map_params:
 		self.xmax=12.5
 		self.ymin=-12.5
 		self.ymax=12.5
+		# self.xmin=-12.5
+		# self.xmax=12.5
+		# self.ymin=-12.5
+		# self.ymax=12.5
 		self.xw = int(round((self.xmax - self.xmin) / self.xyreso))
 		self.yw = int(round((self.ymax - self.ymin) / self.xyreso))
 		self.boundaries=[]
@@ -95,9 +99,26 @@ class map_params:
 		self.boundaries.append((self.xmax,self.ymax))
 		self.boundaries.append((self.xmin,self.ymax))
 		self.sensor_range=5
+	def set_boundaries(self, boundaries):
+		self.xmin=boundaries[0]
+		self.xmax=boundaries[1]
+		self.ymin=boundaries[2]
+		self.ymax=boundaries[3]
+		# self.xmin=-12.5
+		# self.xmax=12.5
+		# self.ymin=-12.5
+		# self.ymax=12.5
+		self.xw = int(round((self.xmax - self.xmin) / self.xyreso))
+		self.yw = int(round((self.ymax - self.ymin) / self.xyreso))
+		self.boundaries=[]
+		self.boundaries.append((self.xmin,self.ymin))
+		self.boundaries.append((self.xmax,self.ymin))
+		self.boundaries.append((self.xmax,self.ymax))
+		self.boundaries.append((self.xmin,self.ymax))
+
 
 class Params:
-	def __init__(self):
+	def __init__(self, xmax):
 		self.numiters = 4000
 		self.dt = 0.2
 		self.goal_tol = 1.0
@@ -107,7 +128,7 @@ class Params:
 		self.min_vel = 0.0 # m/s
 		self.sensor_range_m = 0.5 # m
 		# self.animate = 1
-		self.area_size=13
+		self.area_size=xmax
 		#dwa parameters
 		self.max_yawrate = 45.0 * math.pi / 180.0  # [rad/s]
 		self.max_accel = 0.3  # [m/ss]
@@ -120,6 +141,7 @@ class Params:
 		self.to_goal_cost_gain = 1.0
 		self.speed_cost_gain = 1.0
 		self.robot_radius = 1.0  # [m]
+
 
 		# self.time_to_switch_goal = 5.0 # sec #inactive for now
 
@@ -338,7 +360,7 @@ def calc_IG_trjs_with_leadtrj( trj_candidates, entropy_map, lead_trj, params_glo
 		print("no trajectory candidates")
 		return None
 
-def calc_IG_trjs_hierarchy( trj_candidates, entropy_map, params_global, trjs, agentnum, horizon=20):
+def calc_IG_trjs_hierarchy( trj_candidates, entropy_map, params_global, trjs, agentnum, horizon=25):
 	# w_t=1.0
 	# w_t=1.0
 	weight_entropy=0.5
@@ -1249,6 +1271,8 @@ def read_inputfile(num_agent=2, FILE_NAME="input4.txt"):
 			ymax = point[1]
 
 	print("xmin: " , xmin , ", xmax: ", xmax, ", ymin", ymin, ", ymax: ", ymax)
+	mapboundaries=[xmin,xmax,ymin,ymax]
+        # mapboundaries=[xmin,xmax,ymin,ymax]
 	wall = Obstacle(xmin, xmin, ymin, ymax,True)          
 	walls.append(wall)
 	wall = Obstacle(xmin, xmax, ymin, ymin,True)          
@@ -1279,14 +1303,14 @@ def read_inputfile(num_agent=2, FILE_NAME="input4.txt"):
 		obstacles.append(tmp)                       # attach obstacle to obstacle list
 	# print(obstacles)
 
-	return start_states, init_poses, goal_poses, obstacles, walls
+	return start_states, init_poses, goal_poses, obstacles, walls, mapboundaries
 
 
 if __name__ == "__main__":
 
 	# dir_path = os.path.dirname(os.path.realpath(__file__))
 	parser = argparse.ArgumentParser()
-	parser.add_argument("-in",help="input file (default: input2.txt)",default="input4.txt")
+	parser.add_argument("-in",help="input file (default: input4.txt)",default="input4.txt")
 	parser.add_argument("-load",help="load saved data? [y/n] (default: n)",default="n")
 	parser.add_argument("-animation",help="show animation? [y/n] (default: y)",default="y")
 	parser.add_argument("-num",help="agnet number ? [2/3] (default: 2)",default="2")
@@ -1295,7 +1319,7 @@ if __name__ == "__main__":
 	#set the num_agent
 	num_agent =int(args['num'])
 	#load starting pose and environment from text file
-	states, init_poses, goal_poses,obstacles, walls = read_inputfile(num_agent, args['in'])
+	states, init_poses, goal_poses,obstacles, walls, mapboundaries = read_inputfile(num_agent, args['in'])
 
 	if args['animation']=="y":
 		show_animation = True
@@ -1307,16 +1331,20 @@ if __name__ == "__main__":
 	print("num of agents: ", num_agent)
 	print("show animation: ",args['animation'] )
 
-	params = Params()
+	params = Params(mapboundaries[1])
 	params_globalmap =  map_params()
+	params_globalmap.set_boundaries(mapboundaries)
 	params_local_map=map_params()
+	params_local_map.set_boundaries(mapboundaries)
 	##
 	localgrids=[]
 	for i in range(num_agent):
 		params_local_map=map_params()
+		params_local_map.set_boundaries(mapboundaries)
 		localgrids.append(params_local_map)
 
-	params_localmap =  map_params()
+	params_localmap=  map_params()
+	params_localmap.set_boundaries(mapboundaries)
 	# params_localmap2 =  map_params()
 
 	#simulation settings
@@ -1808,10 +1836,10 @@ if __name__ == "__main__":
 			goal_yset.append(goal_ys)
 
 		if curentropy < 0.4*initial_entropy:
-			horizon = 40
+			horizon = 50
 			params.weight_entropy=0.05
 
-		if curentropy < 0.13*initial_entropy and boolsaved==False:
+		if curentropy < 0.15*initial_entropy and boolsaved==False:
 			# data=[times, pos_xs,pos_ys,yaws,velocities, pos_xs2, pos_ys2, entropys, goal_xs, goal_ys, goal_xs2, goal_ys2]
 			# data=[times, entropys]
 			# for i in range(num_agent):

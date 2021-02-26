@@ -13,6 +13,7 @@ import os
 import re
 import ast
 
+ColorSet=['blue','red','green','yellow','cyan','brown','navy','gray','orange','purple']
 
 #import numpy as np
 def read_inputfile(FILE_NAME="input4.txt"):
@@ -55,6 +56,8 @@ def read_inputfile(FILE_NAME="input4.txt"):
             ymax = point[1]
 
     print("xmin: " , xmin , ", xmax: ", xmax, ", ymin", ymin, ", ymax: ", ymax)
+
+    mapboundaries=[xmin,xmax,ymin,ymax]
     wall = Obstacle(xmin, xmin, ymin, ymax,True)          
     walls.append(wall)
     wall = Obstacle(xmin, xmax, ymin, ymin,True)          
@@ -66,8 +69,8 @@ def read_inputfile(FILE_NAME="input4.txt"):
 
 
     #Create obstacle objects
-    print("polygons", polygons)
-    input("check-polygon")
+    # print("polygons", polygons)
+    # input("check-polygon")
     obstacles=[]
     for obs in polygons:
         xmin=100
@@ -88,7 +91,7 @@ def read_inputfile(FILE_NAME="input4.txt"):
         obstacles.append(tmp)                       # attach obstacle to obstacle list
     # print(obstacles)
 
-    return start_states, init_poses, obstacles, walls
+    return start_states, init_poses, obstacles, walls,mapboundaries 
 
 def plot_obstacles(obstacles, walls):
     for obs in obstacles:
@@ -105,7 +108,7 @@ if __name__ == "__main__":
     parser.add_argument("-index",help="time index? [06111301] (default: 06111301)",default="07150017")
     parser.add_argument("-num",help="number of agent? [1-10] (default: 2)",default="2")
     args = vars(parser.parse_args())
-    start_state, init_pos, obstacles, walls = read_inputfile(args['in'])
+    start_state, init_pos, obstacles, walls, mapboundaries = read_inputfile(args['in'])
     timeindex = args['index']
     num_agent =int(args['num'])
 
@@ -209,9 +212,11 @@ if __name__ == "__main__":
             print("entropys[", i,"] ", entropys_str[i])
             times_t[i-1]=float(times_str[i])
             entropy_t[i-1]=float(entropys_str[i])
-    print("times_t", times_t) 
-    print("entropy_t", entropy_t) 
-    input("check-entropy")
+    # print("times_t", times_t) 
+    # print("entropy_t", entropy_t) 
+    # input("check-entropy")
+
+    len_data=len_data-20
 
     agent_poses_x=np.zeros((num_agent,len_data))
     agent_poses_y=np.zeros((num_agent,len_data))
@@ -270,9 +275,9 @@ if __name__ == "__main__":
                 agent_poses_x[j,i-1]=temp3
                 agent_poses_y[j,i-1]=temp4
     '''
-    print("agent_poses_x", agent_poses_x)
-    print("agent_poses_y", agent_poses_y)
-    input("_")
+    # print("agent_poses_x", agent_poses_x)
+    # print("agent_poses_y", agent_poses_y)
+    # input("_")
     # print("goal_xs[1]", goal_xs[1])
     # temp = float(goal_xs[1][1:3])
     # print("temp", temp)
@@ -298,21 +303,56 @@ if __name__ == "__main__":
     # ax0=plt.subplot(gs[0])
     # fig,axes=plt.subplots(nrows=1,ncols=2,figsize=(20,40))
     # ax = plt.axes()
-    ax0.scatter(agent_poses_x[0][0], agent_poses_y[0][0],s=200, marker="s", facecolor='blue',edgecolor='blue')      #initial point
-    ax0.scatter(agent_poses_x[1][0], agent_poses_y[1][0],s=200, marker="s", facecolor='red',edgecolor='red')      #initial point
-    if num_agent>2:
-        ax0.scatter(agent_poses_x[2][0], agent_poses_y[2][0],s=200, marker="s", facecolor='green',edgecolor='green')      #initial point
+    # ax0.scatter(agent_poses_x[0][0], agent_poses_y[0][0],s=200, marker="s", facecolor='blue',edgecolor='blue')      #initial point
+    # ax0.scatter(agent_poses_x[1][0], agent_poses_y[1][0],s=200, marker="s", facecolor='red',edgecolor='red')      #initial point
 
     ax0.plot(agent_poses_x[0], agent_poses_y[0], 'o', markersize = 8, fillstyle='none',color='blue', alpha=0.5, label="robot trajectory")             #trajectory point
     ax0.plot(agent_poses_x[1], agent_poses_y[1], 'o', markersize = 8, fillstyle='none',color='red', alpha=0.5, label="robot trajectory")             #trajectory point
-    if num_agent>2:
+
+    if num_agent==3:
+        ax0.scatter(agent_poses_x[2][0], agent_poses_y[2][0],s=200, marker="s", facecolor='green',edgecolor='green')      #initial point
         ax0.plot(agent_poses_x[2], agent_poses_y[2], 'o', markersize = 8, fillstyle='none',color='green', alpha=0.5, label="robot trajectory")             #trajectory point
+
+    elif num_agent==4:
+        ax0.scatter(agent_poses_x[2][0], agent_poses_y[2][0],s=200, marker="s", facecolor='green',edgecolor='green')      #initial point
+        # ax0.scatter(agent_poses_x[3][0], agent_poses_y[3][0],s=200, marker="s", facecolor='yellow',edgecolor='yellow')      #initial point
+        ax0.plot(agent_poses_x[2], agent_poses_y[2], 'o', markersize = 8, fillstyle='none',color='green', alpha=0.5, label="robot trajectory")             #trajectory point
+        ax0.plot(agent_poses_x[3], agent_poses_y[3], 'o', markersize = 8, fillstyle='none',color='yellow', alpha=0.5, label="robot trajectory")             #trajectory point
+    elif num_agent==5:
+        # ax0.scatter(agent_poses_x[2][0], agent_poses_y[2][0],s=200, marker="s", facecolor='green',edgecolor='green')      #initial point
+        # ax0.scatter(agent_poses_x[3][0], agent_poses_y[3][0],s=200, marker="s", facecolor='yellow',edgecolor='yellow')      #initial point
+        # ax0.scatter(agent_poses_x[4][0], agent_poses_y[4][0],s=200, marker="s", facecolor='cyan',edgecolor='cyan')      #initial point
+        ax0.plot(agent_poses_x[2], agent_poses_y[2], 'o', markersize = 8, fillstyle='none',color='green', alpha=0.5, label="robot trajectory")             #trajectory point
+        ax0.plot(agent_poses_x[3], agent_poses_y[3], 'o', markersize = 8, fillstyle='none',color='yellow', alpha=0.5, label="robot trajectory")             #trajectory point
+        ax0.plot(agent_poses_x[4], agent_poses_y[4], 'o', markersize = 8, fillstyle='none',color='cyan', alpha=0.5, label="robot trajectory")             #trajectory point
+
+    elif num_agent==6:
+        # ax0.scatter(agent_poses_x[2][0], agent_poses_y[2][0],s=200, marker="s", facecolor='green',edgecolor='green')      #initial point
+        # ax0.scatter(agent_poses_x[3][0], agent_poses_y[3][0],s=200, marker="s", facecolor='yellow',edgecolor='yellow')      #initial point
+        # ax0.scatter(agent_poses_x[4][0], agent_poses_y[4][0],s=200, marker="s", facecolor='cyan',edgecolor='cyan')      #initial point
+        ax0.plot(agent_poses_x[2], agent_poses_y[2], 'o', markersize = 8, fillstyle='none',color='green', alpha=0.5, label="robot trajectory")             #trajectory point
+        ax0.plot(agent_poses_x[3], agent_poses_y[3], 'o', markersize = 8, fillstyle='none',color='yellow', alpha=0.5, label="robot trajectory")             #trajectory point
+        ax0.plot(agent_poses_x[4], agent_poses_y[4], 'o', markersize = 8, fillstyle='none',color='cyan', alpha=0.5, label="robot trajectory")             #trajectory point
+        ax0.plot(agent_poses_x[5], agent_poses_y[5], 'o', markersize = 8, fillstyle='none',color='brown', alpha=0.5, label="robot trajectory")             #trajectory point
+
+    elif num_agent==10:
+        # ax0.scatter(agent_poses_x[2][0], agent_poses_y[2][0],s=200, marker="s", facecolor='green',edgecolor='green')      #initial point
+        # ax0.scatter(agent_poses_x[3][0], agent_poses_y[3][0],s=200, marker="s", facecolor='yellow',edgecolor='yellow')      #initial point
+        # ax0.scatter(agent_poses_x[4][0], agent_poses_y[4][0],s=200, marker="s", facecolor='cyan',edgecolor='cyan')      #initial point
+        for i in range(2, num_agent):
+            ax0.plot(agent_poses_x[i], agent_poses_y[i], 'o', markersize = 8, fillstyle='none',color=ColorSet[i], alpha=0.5, label="robot trajectory")             #trajectory point
+        # ax0.plot(agent_poses_x[4], agent_poses_y[4], 'o', markersize = 8, fillstyle='none',color='cyan', alpha=0.5, label="robot trajectory")             #trajectory point
+        # ax0.plot(agent_poses_x[5], agent_poses_y[5], 'o', markersize = 8, fillstyle='none',color='brown', alpha=0.5, label="robot trajectory")             #trajectory point
+
+
+
+
         # ax0.scatter(agent_poses_x[1][0], agent_poses_y[1][0],s=200, marker="s", facecolor='red',edgecolor='red')      #initial point
     # ax0.plot(goal_x, goal_y, '*', markersize = 18, fillstyle='none',color='green', label="goal")             #trajectory point
     # ax0.plot(goal_x2, goal_y2, '*', markersize = 18, fillstyle='none',color='yellow', label="goal")             #trajectory point
     plot_obstacles(obstacles,walls)
 
-    area_size=13
+    area_size=mapboundaries[1]
     locs, labels = plt.xticks()
     locs, labels = plt.yticks()
     plt.xticks(np.arange(-area_size,area_size,1.0))
