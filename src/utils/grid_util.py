@@ -7,9 +7,11 @@ Author: Minkyu Kim
 import math
 import numpy as np
 import bisect
+from math import *
 
 l_occ=np.log(0.95/0.05)
 l_free=np.log(0.05/0.95)
+l_unknown=0.0
 
 def Coord2CellIdx_global(x, y, params_searchmap):
     #change coordinates w.r.t global frame
@@ -17,8 +19,8 @@ def Coord2CellIdx_global(x, y, params_searchmap):
     temp_y = y-params_searchmap.ymin
     coord_x= math.floor(temp_x/params_searchmap.xyreso)
     coord_y= math.floor(temp_y/params_searchmap.xyreso)
-    # print("coord_x:" ,coord_x, "coord_y:" ,coord_y )
-    idx= (int)(coord_x+params_searchmap.xw*coord_y)
+    idx= (coord_x+params_searchmap.xw*coord_y)
+    # print("xw: ", params_searchmap.xw,",  coord_x:" ,coord_x, "coord_y:" ,coord_y, ", ---idx: ", idx)
 
     return idx
 
@@ -46,8 +48,8 @@ class Frontier:
         self.centroid_y=0.0
                 
 def Idx2Pose(idx, params_map):
-    res = (int) (idx/params_map.xw);
-    div = (int) (idx%params_map.xw);
+    res = (int) (idx%params_map.xw);
+    div = (int) (idx/params_map.xw);
     coord_x=(res+0.5)*params_map.xyreso+params_map.xmin;
     coord_y=(div+0.5)*params_map.xyreso+params_map.ymin;
 
@@ -96,6 +98,7 @@ def nearestCellIdx(start, val, gridmap, map_info):
         # visited and enqueue it
         ix = (int) (s % size_x_)
         iy = (int) (s / size_y_)
+        # print("ix: ", ix, "iy: ", iy)
 
         if gridmap[ix][iy]==val:
             result = s
@@ -196,10 +199,20 @@ def nhood8(idx, gridmap, map_info):
     return points
 
 
-def frontier_search(px,py, pmap,  param_map):
-    print("frontier search with px, py", px, ", " , py)
+# def get_frontier_map(px,py, pmap,  param_map):
+    # frontiermap = [False] * (map_size)
+    # for i in range(param_map.xw):
+        # for j in range(param_map.yw):
+            # print("i,j: ", i, j)
+            # idx=j*param_map.xw+i
+            # if pmap[i][j]!=0.0:
+                # fron
 
-    min_frontier_size_=2
+def frontier_search(px,py, pmap,  param_map):
+    print("before-frontier search with px, py", px, ", " , py)
+    # input("check frontier")
+
+    min_frontier_size_=1
     #find the closest free cell to start search
     map_size=param_map.xw * param_map.yw
     visited = [False] * (map_size)
@@ -209,9 +222,13 @@ def frontier_search(px,py, pmap,  param_map):
     queue = []
 
     pos_idx =Coord2CellIdx_global(px,py, param_map)
-    cell_idx= nearestCellIdx(pos_idx, l_free, pmap, param_map)
+    cell_idx= nearestCellIdx(pos_idx, l_free, pmap, param_map) #looking for unknown cell
+    # cellx,celly=Idx2Pose(cell_idx, param_map)
+    # print("px: ", px, ", py: ", py)
     # print("pos_idx", pos_idx)
     # print("cell_idx", cell_idx)
+    # print("cellx: ", cellx, ", celly: ", celly)
+    # print("------------")
     # input("check-pos-cell-idx")
     if cell_idx==False:
         print("Could not find the nearest start idx")
@@ -227,11 +244,25 @@ def frontier_search(px,py, pmap,  param_map):
         # print (s, end = " ")
         # has not been visited, then mark it
         # visited and enqueue it
-        for n_idx in nhood4(cell_idx, pmap,  param_map):
+
+        sx,sy=Idx2Pose(s, param_map)
+        # print("s_idx", s)
+        # print("sx: ", sx, "sy: ", sy)
+        for n_idx in nhood4(s, pmap,  param_map):
+            nbrx,nbry=Idx2Pose(n_idx, param_map)
+            # print("n_idx", n_idx)
+            # print("nbrx: ", nbrx, "nbry: ", nbry)
             if visited[n_idx] == False:
                 queue.append(n_idx)
                 visited[n_idx] = True
             elif isNewFrontier(n_idx,pmap, frontiermap, param_map):
+
+                fx,fy=Idx2Pose(n_idx, param_map)
+                # print("--------------------", n_idx)
+                # print("n_idx", n_idx)
+                # print("fx: ", fx, "fy: ", fy)
+                # print("--------------------", n_idx)
+                # input("found frontier")
                 frontiermap[n_idx] = True
                 new_frontier = buildnewfrontier(n_idx, pmap, frontiermap, param_map);
 
@@ -243,7 +274,6 @@ def frontier_search(px,py, pmap,  param_map):
         
     print("frontier_list", frontier_list)
 
-
     return frontier_list
 
 def isNewFrontier(idx, pmap, frontier_map, param_map):
@@ -251,20 +281,131 @@ def isNewFrontier(idx, pmap, frontier_map, param_map):
 
     ix = (int) (idx % param_map.xw)
     iy = (int) (idx / param_map.xw)
+    # print("idx: ", idx, ", ix: ", ix, ", iy:", iy)
 
-    if pmap[ix][iy] != 0.0 or frontier_map[idx]:
+    if pmap[ix][iy] != 0.0 or frontier_map[idx]==True:
         return False
     
     #frontier cells should have at least one cell in 4-connected neighbourhood that is free
 
     for n_idx in nhood4(idx, pmap,  param_map):
-
-        ix = (int) (n_idx % param_map.xw)
-        iy = (int) (n_idx / param_map.xw)
+        ix = math.floor(n_idx % param_map.xw)
+        iy = math.floor(n_idx / param_map.xw)
+    
         if pmap[ix][iy]==l_free:
+            print("!!--frontier--!!")
+            px, py = Idx2Pose(n_idx, param_map)
+            print("n_idx: ", n_idx, "px: ",px, "py: ", py, ", pmap[ix][iy]: ",pmap[ix][iy])
             return True
+        else:
+            print("!!--frontier--!!")
+            print("n_idx: ", n_idx, "ix: ",ix, "iy: ", iy, ", pmap[ix][iy]: ",pmap[ix][iy])
+
+    # input("newfrontier completed")
 
     return False
+
+def Unknown_search(px,py, pmap,  param_map):
+    print("before-unknown search with px, py", px, ", " , py)
+    # input("check frontier")
+    min_frontier_size_=10
+    #find the closest free cell to start search
+    map_size=param_map.xw * param_map.yw
+    visited = [False] * (map_size)
+    frontiermap = [False] * (map_size)
+    frontier_list = []
+    # Create a queue for BFS
+    queue = []
+
+    pos_idx =Coord2CellIdx_global(px,py, param_map)
+    cell_idx= nearestCellIdx(pos_idx, 0.0, pmap, param_map) #looking for unknown cell
+    cellx,celly=Idx2Pose(cell_idx, param_map)
+    print("px: ", px, ", py: ", py)
+    # print("pos_idx", pos_idx)
+    print("cell_idx", cell_idx)
+    print("cellx: ", cellx, ", celly: ", celly)
+   
+    if cell_idx==False:
+        print("Could not find the nearest start idx")
+        return False
+
+    # visited and enqueue it
+    queue.append(cell_idx)
+    visited[cell_idx] = True
+
+    while queue:
+        s = queue.pop(0)
+        # print (s, end = " ")
+        # has not been visited, then mark it
+        sx,sy=Idx2Pose(s, param_map)
+        # print("s_idx", s)
+        # print("sx: ", sx, "sy: ", sy)
+        # input('check s')
+        for n_idx in nhood4(s, pmap,  param_map):
+            nbrx,nbry=Idx2Pose(n_idx, param_map)
+            # print("n_idx", n_idx)
+            # print("nbrx: ", nbrx, "nbry: ", nbry)
+            if isNewUnknown(n_idx,pmap, frontiermap, param_map) and visited[n_idx]==False:
+                fx,fy=Idx2Pose(n_idx, param_map)
+                # print("--------------------", n_idx)
+                # print("n_idx", n_idx)
+                # print("fx: ", fx, "fy: ", fy)
+                # print("--------------------", n_idx)
+                # input("found frontier")
+                frontiermap[n_idx] = True
+                new_frontier, frontiermap, visited = buildnewUnknownfrontier(n_idx, pmap, frontiermap,visited, param_map);
+
+                if new_frontier.size > min_frontier_size_:
+                    frontier_list.append(new_frontier)
+                    print("size is satisfied")
+                else:
+                    print("size is not satisfied")
+            if visited[n_idx] == False:
+                queue.append(n_idx)
+                visited[n_idx] = True
+
+        
+    print("frontier_list", frontier_list)
+
+    return frontier_list
+
+
+
+
+
+
+def isNewUnknown(idx, pmap, frontier_map, param_map):
+    #check that cell is unknown and not already marked as frontier
+    ix = (int) (idx % param_map.xw)
+    iy = (int) (idx / param_map.xw)
+    # print("idx: ", idx, ", ix: ", ix, ", iy:", iy)
+
+    if pmap[ix][iy] != 0.0 or frontier_map[idx]==True:
+        return False
+    
+    #Unknown cells should have at all cell in 4-connected neighbourhood that is unknown
+
+    for n_idx in nhood4(idx, pmap,  param_map):
+        ix = math.floor(n_idx % param_map.xw)
+        iy = math.floor(n_idx / param_map.xw)
+        # check all nhood is unknown
+    
+        if pmap[ix][iy]!=l_unknown:
+            # print("!!--frontier--!!")
+            px, py = Idx2Pose(n_idx, param_map)
+            # print("n_idx: ", n_idx, "px: ",px, "py: ", py, ", pmap[ix][iy]: ",pmap[ix][iy])
+            return False
+        # else:
+            # print("!!--frontier--!!")
+            # print("n_idx: ", n_idx, "ix: ",ix, "iy: ", iy, ", pmap[ix][iy]: ",pmap[ix][iy])
+
+    return True
+
+    # input("newfrontier completed")
+
+    # return False
+
+
 
 
 def buildnewfrontier(start_cell, pmap, frontiermap, param_map):
@@ -292,7 +433,7 @@ def buildnewfrontier(start_cell, pmap, frontiermap, param_map):
 
         s = queue.pop(0)
         # visited and enqueue it
-        nsets = nhood8(s, pmap,  param_map)
+        # nsets = nhood8(s, pmap,  param_map)
         # print("nbrs", nsets)
         # input("hmm")
         for n_idx in nhood8(s, pmap,  param_map):
@@ -307,7 +448,61 @@ def buildnewfrontier(start_cell, pmap, frontiermap, param_map):
                 frt.centroid_x = frt.centroid_x+pt.x
                 frt.centroid_y = frt.centroid_y+pt.y
 
-                frontiermap[n_idx] = True
+                dist=distance_point2D(agent_pt,pt)
+                if dist < frt.min_distance: 
+                    frt.min_distance=dist
+
+                queue.append(n_idx)
+
+
+    print("found frontiers: ", frt.size)
+    frt.centroid_x /= frt.size;
+    frt.centroid_y /= frt.size;
+
+    return frt
+
+def buildnewUnknownfrontier(start_cell, pmap, frontiermap, visited, param_map):
+
+    frt = Frontier()
+    size_x_=param_map.xw
+    size_y_=param_map.yw
+    if start_cell>(size_x_*size_y_ -1):
+        print("Evaluating nhood for offmap point")
+        return -1
+    map_size=size_x_*size_y_ 
+
+    # visited = [False] * (map_size)
+    # frontiermap = [False] * (map_size)
+    queue = []
+    # Mark the source node as 
+    # visited and enqueue it
+    queue.append(start_cell)
+    visited[start_cell] = True
+    agent_pt=Point2D()
+    agent_pt.x, agent_pt.y = Idx2Pose(start_cell, param_map)
+
+    while queue:
+
+        s = queue.pop(0)
+        # visited and enqueue it
+        # nsets = nhood8(s, pmap,  param_map)
+        # print("nbrs", nsets)
+        # input("hmm")
+        for n_idx in nhood8(s, pmap,  param_map):
+            if frt.size>400:
+                print("max size reached")
+                break
+            elif isNewUnknown(n_idx,pmap, frontiermap, param_map) and visited[n_idx]==False:
+                # print("n_idx", n_idx, "--newfrontier")
+                frontiermap[n_idx] = True;
+                visited[n_idx]=True
+
+                pt = Point2D()
+                pt.x, pt.y = Idx2Pose(n_idx, param_map)
+                frt.points.append(pt)
+                frt.size=frt.size+1
+                frt.centroid_x = frt.centroid_x+pt.x
+                frt.centroid_y = frt.centroid_y+pt.y
 
                 dist=distance_point2D(agent_pt,pt)
                 if dist < frt.min_distance: 
@@ -316,9 +511,12 @@ def buildnewfrontier(start_cell, pmap, frontiermap, param_map):
                 queue.append(n_idx)
 
 
+    print("found frontiers: ", frt.size)
     frt.centroid_x /= frt.size;
     frt.centroid_y /= frt.size;
 
-    return frt
+    return frt, frontiermap,visited
+
+
 
 
