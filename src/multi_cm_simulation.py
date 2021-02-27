@@ -58,7 +58,7 @@ t = time.localtime()
 dir_path = os.path.dirname(os.path.realpath(__file__))
 dir_path=dir_path[:-4]
 timestamp =time.strftime('%m%d%H%M_', t)
-file_name =dir_path+"/results/entropy/entropy_" +timestamp+".csv"
+# file_name =dir_path+"/results/entropy/entropy_" +timestamp+".csv"
 
 
 class map_info:
@@ -1083,9 +1083,9 @@ if __name__ == "__main__":
     parser.add_argument("-animation",help="show animation? [y/n] (default: y)",default="y")
     parser.add_argument("-num",help="agnet number ? [2/3] (default: 2)",default="2")
     args = vars(parser.parse_args())
-
     #set the num_agent
     num_agent =int(args['num'])
+    file_name =dir_path+"/results/entropy/entropy_" +timestamp+"_"+args['num']+".csv"
     #load starting pose and environment from text file
     states, init_poses, goal_poses,obstacles, walls, mapboundaries = read_inputfile(num_agent, args['in'])
 
