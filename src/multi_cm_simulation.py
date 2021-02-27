@@ -1538,7 +1538,7 @@ if __name__ == "__main__":
             horizon = 50
             params.weight_entropy=0.05
 
-        if curentropy < 0.15*initial_entropy and boolsaved==False:
+        if curentropy < 0.1*initial_entropy and boolsaved==False:
             # data=[times, pos_xs,pos_ys,yaws,velocities, pos_xs2, pos_ys2, entropys, goal_xs, goal_ys, goal_xs2, goal_ys2]
             # data=[times, entropys]
             # for i in range(num_agent):
