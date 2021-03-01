@@ -118,7 +118,7 @@ if __name__ == "__main__":
     # timeindex = "06111301"
     cm =plt.get_cmap('gist_rainbow')
 
-    file_name =dir_path+"/results/entropy/entropy_"+timeindex+"_"+args['num']+".csv"
+    file_name =dir_path+"/results/entropy/entropy_"+timeindex+"__"+args['num']+".csv"
     imgfile_name =dir_path+"/results/entropy/entropy_"+timeindex+"_"+args['num']+".png"
     # df = pd.read_csv(file_name, delimiter=',', names = ['index','time','entropy', 'pos_x', 'pos_y', 'goal_x', 'goal_y']).T
     df = pd.read_csv(file_name, delimiter=',')
@@ -209,14 +209,14 @@ if __name__ == "__main__":
     for i in range(len(entropys_str)):
         if i>0:
             # print("times[", i,"] ", times_str[i])
-            print("entropys[", i,"] ", entropys_str[i])
+            # print("entropys[", i,"] ", entropys_str[i])
             times_t[i-1]=float(times_str[i])
             entropy_t[i-1]=float(entropys_str[i])
     # print("times_t", times_t) 
     # print("entropy_t", entropy_t) 
     # input("check-entropy")
 
-    len_data=len_data-20
+    len_data=len_data-30
 
     agent_poses_x=np.zeros((num_agent,len_data))
     agent_poses_y=np.zeros((num_agent,len_data))
@@ -228,7 +228,7 @@ if __name__ == "__main__":
     for i, pose in enumerate(pos_xs):
         for j in range(num_agent):
             idx=num_agent*(i)+j
-            print("j: ", j," i: ", i)
+            # print("j: ", j," i: ", i)
             # print("idx", idx)
             # input("debug--")
             # print("pos_xs[ " ,idx, " ] ", pos_xs[idx])

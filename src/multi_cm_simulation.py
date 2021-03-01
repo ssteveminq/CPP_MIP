@@ -120,7 +120,7 @@ class Params:
     def __init__(self, xmax):
         self.numiters = 4000
         self.dt = 0.2
-        self.goal_tol = 3.0
+        self.goal_tol = 0.75
         # self.goal_tol = 3.0
         self.weight_entropy = 0.02
         self.weight_travel =1.6

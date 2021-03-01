@@ -489,8 +489,8 @@ def buildnewUnknownfrontier(start_cell, pmap, frontiermap, visited, param_map):
         # print("nbrs", nsets)
         # input("hmm")
         for n_idx in nhood8(s, pmap,  param_map):
-            if frt.size>400:
-                print("max size reached")
+            if frt.size>500:
+                # print("max size reached")
                 break
             elif isNewUnknown(n_idx,pmap, frontiermap, param_map) and visited[n_idx]==False:
                 # print("n_idx", n_idx, "--newfrontier")
@@ -511,7 +511,7 @@ def buildnewUnknownfrontier(start_cell, pmap, frontiermap, visited, param_map):
                 queue.append(n_idx)
 
 
-    print("found frontiers: ", frt.size)
+    # print("found frontiers: ", frt.size)
     frt.centroid_x /= frt.size;
     frt.centroid_y /= frt.size;
 
