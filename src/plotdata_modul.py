@@ -295,14 +295,14 @@ if __name__ == "__main__":
     # print("goal_poses_y", goal_poses_y)
     # input("wow")
                 
-    fig =plt.figure(figsize=(9,6))
+    fig =plt.figure(figsize=(10,10))
     spec = gridspec.GridSpec(ncols=2, nrows=1, width_ratios=[2,1])
     ax0=fig.add_subplot(spec[0])
     # gs = gridspec.GridSpec(1,2, width_ratios=[2,1])
     # fig1 = plt.subplot(1,2,1)
     # ax0=plt.subplot(gs[0])
     # fig,axes=plt.subplots(nrows=1,ncols=2,figsize=(20,40))
-    # ax = plt.axes()
+    # ax0 = plt.axes()
     # ax0.scatter(agent_poses_x[0][0], agent_poses_y[0][0],s=200, marker="s", facecolor='blue',edgecolor='blue')      #initial point
     # ax0.scatter(agent_poses_x[1][0], agent_poses_y[1][0],s=200, marker="s", facecolor='red',edgecolor='red')      #initial point
 
@@ -355,8 +355,8 @@ if __name__ == "__main__":
     area_size=mapboundaries[1]
     locs, labels = plt.xticks()
     locs, labels = plt.yticks()
-    plt.xticks(np.arange(-area_size,area_size,1.0))
-    plt.yticks(np.arange(-area_size,area_size,1.0))
+    plt.xticks(np.arange(-area_size,area_size,5.0))
+    plt.yticks(np.arange(-area_size,area_size,5.0))
     # ax = plt.axes()
 
     plt.xlabel('x')
@@ -367,6 +367,7 @@ if __name__ == "__main__":
 
     # fig2 = plt.subplot(1, 2, 2)
     # ax1=plt.subplot(gs[1])
+    # '''
     ax1 = fig.add_subplot(spec[1])
 
     ax1.plot(times_t,entropy_t, linewidth=3.0, color='k')
@@ -374,6 +375,7 @@ if __name__ == "__main__":
     plt.xlabel('time')
     plt.ylabel('entropy')
     plt.grid(True)
+    # '''
 
 
     plt.savefig(imgfile_name)                   # save the resulting plot

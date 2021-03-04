@@ -179,7 +179,7 @@ def goal_sampling_uniform(waypoints, agent_x, agent_y, pmap_global, params_map):
     #nums = the number of sample we need
     agent_pos = [agent_x, agent_y]
     goals = []
-    nums = 4
+    nums = 5
     reso= (2*params_map.xmax)/(nums+1)
     x = np.arange(0.9*params_map.xmin, 0.9*params_map.xmax, reso)
     sample_xy=[]
@@ -200,7 +200,8 @@ def goal_sampling_uniform(waypoints, agent_x, agent_y, pmap_global, params_map):
         frontierset=Unknown_search(temp_x,temp_y,pmap_global, params_map)
         # print("num of frontiers: ", len(frontierset))
         for frontier in frontierset:
-            sample_xy.append([frontier.centroid_x,frontier.centroid_y])
+            if frontier.size>300:
+                sample_xy.append([frontier.centroid_x,frontier.centroid_y])
             # print("(centroid_x, centroid_y)", frontier.centroid_x,", ", frontier.centroid_y)
         # input()
 
@@ -254,11 +255,11 @@ def choose_goal_from_trj(best_trj, params_globalmap, horizon=20):
     return goal
 
 
-def calc_IG_trjs_hierarchy( trj_candidates, entropy_map, params_global, trjs, agentnum, horizon=25):
+def calc_IG_trjs_hierarchy( trj_candidates, entropy_map, params_global, trjs, agentnum, horizon=30):
     # w_t=1.0
     # w_t=1.0
     weight_entropy=0.5
-    weight_travel=0.05
+    weight_travel=0.15
     print("weight_entropy", weight_entropy)
     print("weight_travel", weight_travel)
 
@@ -441,7 +442,7 @@ def get_expected_entropy_infov_trj(pos, entropy_map, leader_trj, params_searchma
         return entropy_sum
 
 
-def get_expected_entropy_infov_trjs(pos, entropy_map, other_trjs, params_searchmap, dist_th=6.5):
+def get_expected_entropy_infov_trjs(pos, entropy_map, other_trjs, params_searchmap, dist_th=8.5):
 
         center_x=pos[0]
         center_y=pos[1]
@@ -1383,8 +1384,8 @@ if __name__ == "__main__":
                 trjs_candidate =[]
                 for gtrj in sp_gtrjs:
                     trjs_candidate.append(gtrj)
-                for ltrj in local_trjs:
-                    trjs_candidate.append(ltrj)
+                # for ltrj in local_trjs:
+                    # trjs_candidate.append(ltrj)
 
                 trjs_candidateset.append(trjs_candidate)
 
@@ -1509,8 +1510,8 @@ if __name__ == "__main__":
                 trjs_candidate =[]
                 for gtrj in sp_gtrjs:
                         trjs_candidate.append(gtrj)
-                for ltrj in local_trjs:
-                        trjs_candidate.append(ltrj)
+                # for ltrj in local_trjs:
+                        # trjs_candidate.append(ltrj)
 
                 trjs_candidateset.append(trjs_candidate)
 

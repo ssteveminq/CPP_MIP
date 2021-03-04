@@ -496,8 +496,8 @@ class VerticalCellDecomposition:
 
             ax.fill(x_sets,y_sets, color=col,alpha=0.2)
 
-        ax.set_xlim([-12.5, 12.5])   # limit the plot space
-        ax.set_ylim([-12.5, 12.5])   # limit the plot space
+        ax.set_xlim([-15, 15])   # limit the plot space
+        ax.set_ylim([-15, 15])   # limit the plot space
 
         # ax.scatter(self.agent_pose[0], self.agent_pose[1], facecolor='black',edgecolor='black')      #initial point
         way_x=[]

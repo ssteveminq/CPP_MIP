@@ -489,7 +489,7 @@ def buildnewUnknownfrontier(start_cell, pmap, frontiermap, visited, param_map):
         # print("nbrs", nsets)
         # input("hmm")
         for n_idx in nhood8(s, pmap,  param_map):
-            if frt.size>500:
+            if frt.size>550:
                 # print("max size reached")
                 break
             elif isNewUnknown(n_idx,pmap, frontiermap, param_map) and visited[n_idx]==False:

@@ -216,7 +216,7 @@ if __name__ == "__main__":
     # print("entropy_t", entropy_t) 
     # input("check-entropy")
 
-    len_data=len_data-30
+    len_data=len_data-110
 
     agent_poses_x=np.zeros((num_agent,len_data))
     agent_poses_y=np.zeros((num_agent,len_data))
