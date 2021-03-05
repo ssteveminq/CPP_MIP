@@ -21,15 +21,20 @@ class Spline:
         self.y = y
 
         self.nx = len(x)  # dimension of x
+        # print("self.nx", self.nx)
         h = np.diff(x)
+      
+
 
         # calc coefficient c
         self.a = [iy for iy in y]
+        # print("self.a", self.a)
 
         # calc coefficient c
         A = self.__calc_A(h)
         B = self.__calc_B(h)
         self.c = np.linalg.solve(A, B)
+        # print("self.c", self.a)
         #  print(self.c1)
 
         # calc spline coefficient b and d
@@ -46,6 +51,8 @@ class Spline:
         if t is outside of the input x, return None
 
         """
+        # print("x0",  self.x[0])
+        # print("x-1",  self.x[-1])
 
         if t < self.x[0]:
             return None
@@ -53,7 +60,9 @@ class Spline:
             return None
 
         i = self.__search_index(t)
+        # print("i" , i)
         dx = t - self.x[i]
+        # print("dx" , dx)
         result = self.a[i] + self.b[i] * dx + \
             self.c[i] * dx ** 2.0 + self.d[i] * dx ** 3.0
 
@@ -144,14 +153,24 @@ class Spline2D:
                    for (idx, idy) in zip(dx, dy)]
         s = [0]
         s.extend(np.cumsum(self.ds))
+        # print("s", s)
+        # input("here")
         return s
 
     def calc_position(self, s):
         """
         calc position
         """
+        # print("s", s)
+        # print("sx[0]", self.sx.sx[0])
+        # print("sx[-1]", self.sx.sx[-1])
+        # print("sy", self.sx)
+        # print("sy[0]", self.sy[0])
+        # print("sy[-1]", self.sy[-1])
+        # input("here")
         x = self.sx.calc(s)
         y = self.sy.calc(s)
+        # print("x,y", x, y)
 
         return x, y
 

@@ -160,32 +160,70 @@ class Obstacle:
             axes.plot([self.x_min, self.x_min], [self.y_min, self.y_max], color='black')
             axes.plot([self.x_max, self.x_max], [self.y_max, self.y_min], color='black')
 
-    def generate_samples(self, reso=0.2):
-        obstacles =[]
+    def generate_samples(self, reso=0.25):
+        # obstacles =[]
+        ox=[]
+        oy=[]
         width= self.x_max - self.x_min
         height= self.y_max - self.y_min
-        num_x = int(width/reso)
-        num_y = int(height/reso)
+        num_x = math.floor(width/reso)
+        num_y = math.floor(height/reso)
 
         for i in range(num_x):
-            x_coord = self.x_min+i*reso
-            y_coord = self.y_min
-            obstacles.append([x_coord, y_coord])
+            for j in range(num_y):
+                x_coord = self.x_min+i*reso
+                y_coord = self.y_min+j*reso
+                ox.append(x_coord)
+                oy.append(y_coord)
 
-        for i in range(num_x):
-            x_coord = self.x_min+i*reso
-            y_coord = self.y_max
-            obstacles.append([x_coord, y_coord])
+        return ox, oy
+
+    def generate_samples_wall(self, reso=0.25):
+        # obstacles =[]
+        ox=[]
+        oy=[]
+        width= self.x_max - self.x_min
+        height= self.y_max - self.y_min
+        # input("wall check")
+        num_x = math.floor(width/reso)
+        num_y = math.floor(height/reso)
+
+        if num_y>num_x:
+            for j in range(num_y):
+                x_coord = self.x_min
+                y_coord = self.y_min+j*reso
+                # print("( ", x_coord,", ", y_coord )
+                ox.append(x_coord)
+                oy.append(y_coord)
+        elif num_x > num_y:
+            for i in range(num_x):
+                x_coord = self.x_min+i*reso
+                y_coord = self.y_min
+                # print("( ", x_coord,", ", y_coord )
+                ox.append(x_coord)
+                oy.append(y_coord)
+        # else:
+
+
+        return ox, oy
+
+
+            # obstacles.append([x_coord, y_coord])
+
+        # for i in range(num_x):
+            # x_coord = self.x_min+i*reso
+            # y_coord = self.y_max
+            # obstacles.append([x_coord, y_coord])
         
-        for i in range(num_x):
-            x_coord = self.x_min+i*reso
-            y_coord = self.y_min
-            obstacles.append([x_coord, y_coord])
+        # for i in range(num_x):
+            # x_coord = self.x_min+i*reso
+            # y_coord = self.y_min
+            # obstacles.append([x_coord, y_coord])
         
-        for i in range(num_x):
-            x_coord = self.x_min+i*reso
-            y_coord = self.y_min
-            obstacles.append([x_coord, y_coord])
+        # for i in range(num_x):
+            # x_coord = self.x_min+i*reso
+            # y_coord = self.y_min
+            # obstacles.append([x_coord, y_coord])
 
 
 
