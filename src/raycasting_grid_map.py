@@ -416,6 +416,7 @@ def generate_ray_casting_grid_map(obstacles,walls, params, agent_x=0.0, agent_y=
                     # obs_angle+=2*math.pi
         else:
             print("Error! - agent is in an obstacle region")
+            print("sensor_pose", sensor_pose)
             break
 
         ##print for debug ##

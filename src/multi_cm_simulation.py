@@ -88,10 +88,6 @@ class map_params:
         self.xmax=12.5
         self.ymin=-12.5
         self.ymax=12.5
-        # self.xmin=-12.5
-        # self.xmax=12.5
-        # self.ymin=-12.5
-        # self.ymax=12.5
         self.xw = int(round((self.xmax - self.xmin) / self.xyreso))
         self.yw = int(round((self.ymax - self.ymin) / self.xyreso))
         self.boundaries=[]
@@ -105,10 +101,6 @@ class map_params:
         self.xmax=boundaries[1]
         self.ymin=boundaries[2]
         self.ymax=boundaries[3]
-        # self.xmin=-12.5
-        # self.xmax=12.5
-        # self.ymin=-12.5
-        # self.ymax=12.5
         self.xw = int(round((self.xmax - self.xmin) / self.xyreso))
         self.yw = int(round((self.ymax - self.ymin) / self.xyreso))
         self.boundaries=[]
@@ -123,7 +115,6 @@ class Params:
         self.numiters = 4000
         self.dt = 0.2
         self.goal_tol = 0.75
-        # self.goal_tol = 3.0
         self.weight_entropy = 0.02
         self.weight_travel =1.6
         self.max_vel = 1.0 # m/s
@@ -143,7 +134,6 @@ class Params:
         self.to_goal_cost_gain = 1.0
         self.speed_cost_gain = 1.0
         self.robot_radius = 1.0  # [m]
-
 
 
 def make_ostacle_coords(obstacles, walls, reso=0.25):
@@ -203,13 +193,13 @@ def goal_sampling_VCD(waypoints, agent_x, agent_y, params_global):
 
     return goals
 
-def goal_sampling_uniform(waypoints, agent_x, agent_y, pmap_global, params_map):
+def goal_sampling_uniform(waypoints, agent_x, agent_y, pmap_global, params_map, small=False):
     #nums = the number of sample we need
     agent_pos = [agent_x, agent_y]
     goals = []
     nums = 6
     reso= (2*params_map.xmax)/(nums+1)
-    x = np.arange(0.9*params_map.xmin, 0.9*params_map.xmax, reso)
+    x = np.arange(0.95*params_map.xmin, 0.95*params_map.xmax, reso)
     sample_xy=[]
 
     # for waypoint in waypoints:
@@ -228,12 +218,28 @@ def goal_sampling_uniform(waypoints, agent_x, agent_y, pmap_global, params_map):
         frontierset=Unknown_search(temp_x,temp_y,pmap_global, params_map)
         # print("num of frontiers: ", len(frontierset))
         for frontier in frontierset:
-            if frontier.size>300:
-                sample_xy.append([frontier.centroid_x,frontier.centroid_y])
+            if small==False:
+                if frontier.size>300:
+                    sample_xy.append([frontier.centroid_x,frontier.centroid_y])
+            # else:
+                # if frontier.size>100:
+                    # sample_xy.append([frontier.centroid_x,frontier.centroid_y])
+
             # print("(centroid_x, centroid_y)", frontier.centroid_x,", ", frontier.centroid_y)
         # input()
 
     print("num of sample_goal length: ", len(sample_xy))
+    if len(sample_xy)<10:
+        for i in range(len(x)-1):
+            temp_x= random.uniform(x[i],x[i+1])
+            temp_y= random.uniform(0.9*params_map.ymin,0.9*params_map.ymax)
+            frontierset=Unknown_search(temp_x,temp_y,pmap_global, params_map)
+            for frontier in frontierset:
+                if frontier.size>100:
+                    sample_xy.append([frontier.centroid_x,frontier.centroid_y])
+
+
+
     # input("proceed")
     return sample_xy
 
@@ -312,9 +318,9 @@ def calc_connectivity_utility( trj_candidates, sample_goals, horizon=20):
 
 
 def calc_IG_trjs_hierarchy( trj_candidates, connect_counts, entropy_map, params_global, trjs, agentnum, horizon=20):
-    weight_entropy=0.5
+    weight_entropy=0.25
     weight_connectivity=10.0
-    weight_travel=10.0
+    weight_travel=20.0
     # print("weight_entropy", weight_entropy)
     # print("weight_travel", weight_travel)
     # print("connect_counts", connect_counts)
@@ -499,7 +505,7 @@ def get_expected_entropy_infov_trj(pos, entropy_map, leader_trj, params_searchma
         return entropy_sum
 
 
-def get_expected_entropy_infov_trjs(pos, entropy_map, other_trjs, params_searchmap, dist_th=6.5):
+def get_expected_entropy_infov_trjs(pos, entropy_map, other_trjs, params_searchmap, dist_th=8.0):
 
         center_x=pos[0]
         center_y=pos[1]
@@ -526,10 +532,13 @@ def get_expected_entropy_infov_trjs(pos, entropy_map, other_trjs, params_searchm
                     ix_global= math.floor((px-params_searchmap.xmin)/params_searchmap.xyreso)
                     iy_global= math.floor((py-params_searchmap.ymin)/params_searchmap.xyreso)
 
-
+                    min_dist2 = calc_min_distance_from_trjs(px,py,other_trjs)
                     #convert log-occ to probability
-                    # if search_idx not in impossible_idx and (min_dist>dist_th):
-                    if search_idx not in impossible_idx:
+                # if search_idx not in impossible_idx and (min_dist>dist_th):
+               
+                    #convert log-occ to probability
+                    # if search_idx not in impossible_idx:
+                    if search_idx not in impossible_idx and (min_dist2>(dist_th+1.5)):
                         #count unknown cells 
                         if entropy_map[ix_global][iy_global]==0.0:
                             cell_count=cell_count+1
@@ -1189,8 +1198,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-in",help="input file (default: input4.txt)",default="input4.txt")
     parser.add_argument("-load",help="load saved data? [y/n] (default: n)",default="n")
-    parser.add_argument("-animation",help="show animation? [y/n] (default: y)",default="y")
-    parser.add_argument("-num",help="agnet number ? [2/3] (default: 2)",default="2")
+    parser.add_argument("-animation",help="show animation? [y/n] (default: y)",default="n")
+    parser.add_argument("-num",help="agnet number ? [2/3] (default: 2)",default="3")
     args = vars(parser.parse_args())
     #set the num_agent
     num_agent =int(args['num'])
@@ -1199,20 +1208,20 @@ if __name__ == "__main__":
     states, init_poses, goal_poses,obstacles, walls, mapboundaries = read_inputfile(num_agent, args['in'])
     #make obstacles for using A* planner
     ox, oy= make_ostacle_coords(obstacles, walls)
+    a_star = AStarPlanner(ox, oy, 0.25, 0.25)
 
     #---------A* planner test-------------------
     sx=2.0
     sy=5
-    gx=5.15
-    gy=9.23
-    bidir_a_star = BidirectionalAStarPlanner(ox, oy, 0.25, 0.25)
-    a_star = AStarPlanner(ox, oy, 0.25, 0.25)
+    # gx=5.15
+    # gy=9.23
+    # bidir_a_star = BidirectionalAStarPlanner(ox, oy, 0.25, 0.25)
+    # a_star = AStarPlanner(ox, oy, 0.25, 0.25)
     # rx, ry = bidir_a_star.planning(sx, sy, gx, gy)
     # print("ox", ox)
     # print("oy", oy)
     # print("rx", rx)
     # print("ry", ry)
-    # input("check_paths")
 
 
 
@@ -1250,7 +1259,6 @@ if __name__ == "__main__":
     # states.append(np.array([init_poses[0][0],init_poses[0][1],0.0, 0.0,0.0]))
     # states.append(np.array([init_poses[1][0],init_poses[1][1],0.0, 0.0,0.0]))
     #temporary goal state
-    # goal_poses=[[2.5, -5.0],[5.5, 8.0], [-4, -4]]                 #temporary goal pose
     goal =goal_poses[0]                        #define goal from goal_pos(initial direction)
     goal2 =goal_poses[1]                        #define goal from goal_pos(initial direction)
     goal3 =goal_poses[2]                        #define goal from goal_pos(initial direction)
@@ -1482,31 +1490,33 @@ if __name__ == "__main__":
             # generate goal points from waypoints vcd
             # sample_goals = random_sampling(params,5)
             for i in range(num_agent):
-                gtrjs= generating_globaltrjs_Astar(states[i], a_star,sample_goalset,params_globalmap)
+                gtrjs= generating_globaltrjs_Astar(states[i], a_star,sample_goalset,params_globalmap) 
                 sp_gtrjs = trjs_to_sample(gtrjs)
-                # local_trjs = lane_state_sampling_test1(states[i],obstacles, params_globalmap)
                 trjs_candidate =[]
                 for gtrj in sp_gtrjs:
                     trjs_candidate.append(gtrj)
-                # for ltrj in local_trjs:
-                    # trjs_candidate.append(ltrj)
+                if len(trjs_candidate)<1:
+                    local_trjs = lane_state_sampling_test1(states[i],obstacles, params_globalmap)
+                    for ltrj in local_trjs:
+                        trjs_candidate.append(ltrj)
 
                 trjs_candidateset.append(trjs_candidate)
                 connect_count=calc_connectivity_utility(trjs_candidate, sample_goalset, horizon)
 
                 best_trj = calc_IG_trjs_hierarchy(trjs_candidateset[i], connect_count, pmap_global,  params_globalmap, best_trjs, i, horizon )
-                best_trjs.append(best_trj)
+                if best_trj!=None:
+                    best_trjs.append(best_trj)
+                    #Choose next goal point from trajectory
+                    goal = choose_goal_from_trj(best_trj, params_globalmap, horizon)
+                    goal_xs[i]=goal[0]
+                    goal_ys[i]=goal[1]
+                    goal_poses[i]=[goal[0],goal[1]]
+                else:
+                    goal_xs[i]=goal_poses[i][0]
+                    goal_ys[i]=goal_poses[i][1]
+                    # goal_poses[i]=[goal[0],goal[1]]
 
-            #Obtain best_trjaectory
-            # cx, cy, cyaw, ck, s = calc_spline_course_trj(best_trj, ds=0.2)
-            # last_idx = len(cx) - 1
-            # trj_target_idx, _ = calc_target_index(state, cx, cy)
 
-            #Choose next goal point from trajectory
-                goal = choose_goal_from_trj(best_trj, params_globalmap, horizon)
-                goal_xs[i]=goal[0]
-                goal_ys[i]=goal[1]
-                goal_poses[i]=[goal[0],goal[1]]
 
                 if show_animation:
                     plot_local_trjs(local_trjs, axes[1,0])
@@ -1643,7 +1653,7 @@ if __name__ == "__main__":
             horizon = 50
             params.weight_entropy=0.05
 
-        if curentropy < 0.1*initial_entropy and boolsaved==False:
+        if curentropy < 0.09*initial_entropy and boolsaved==False:
             # data=[times, pos_xs,pos_ys,yaws,velocities, pos_xs2, pos_ys2, entropys, goal_xs, goal_ys, goal_xs2, goal_ys2]
             # data=[times, entropys]
             # for i in range(num_agent):
@@ -1660,7 +1670,8 @@ if __name__ == "__main__":
             # pd.DataFrame(data, columns=['time', 'pos_x', 'pos_y', 'yaw', 'velocity', 'pos_xx', 'pos_yy', 'entropy', 'goal_x', 'goal_y', 'goal_xx', 'goal_yy']).to_csv(file_name,header=True)
             print("entropy file saved")
             boolsaved =True
-            input("done")
+            exit()
+            # input("done")
         if curentropy < 0.08*initial_entropy:
             data=np.array([times, entropys, poses_xset, poses_yset, goal_xset, goal_yset])
             columns=['time', 'entropy', 'pos_x', 'pos_y', 'goal_x', 'goal_y']
@@ -1669,6 +1680,7 @@ if __name__ == "__main__":
             # pd.DataFrame(data, columns=['time', 'pos_x', 'pos_y', 'yaw', 'velocity', 'pos_xx', 'pos_yy', 'entropy', 'goal_x', 'goal_y', 'goal_xx', 'goal_yy']).to_csv(file_name,header=True)
             print("entropy file2 saved")
             boolsaved =True
+            
             input("done")
 
         if params.numiters>2 and params.numiters%300==1:
@@ -1682,6 +1694,7 @@ if __name__ == "__main__":
         # print("cur entropy: ", curentropy)
         print("exploration rate: ", float(curentropy/initial_entropy))
 
+    
     plt.show()
     # plt.show(aspect='auto')
 

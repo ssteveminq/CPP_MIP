@@ -143,10 +143,10 @@ if __name__ == "__main__":
         if '[' in time_ele:
             # print("time_ele", time_ele)
             times_str[i]=time_ele.replace('[','')
-            print("time_ele", time_ele)
+            # print("time_ele", time_ele)
         if ']' in time_ele:
             times_str[i]=time_ele.replace(']','')
-            print("time_ele", times_str[i])
+            # print("time_ele", times_str[i])
         if ' ' in time_ele:
             times_str[i]=time_ele.replace(' ','')
 
@@ -167,10 +167,10 @@ if __name__ == "__main__":
         if '[' in ent_ele:
             # print("ent_ele", ent_ele)
             entropys_str[i]=ent_ele.replace('[','')
-            print("ent_ele", ent_ele)
+            # print("ent_ele", ent_ele)
         if ']' in ent_ele:
             entropys_str[i]=ent_ele.replace(']','')
-            print("ent_ele", ent_ele)
+            # print("ent_ele", ent_ele)
         if ' ' in ent_ele:
             entropys_str[i]=ent_ele.replace(' ','')
 
@@ -181,7 +181,7 @@ if __name__ == "__main__":
     #set num_agent
     pos_xs=pos_xs[1]
     pos_ys=pos_ys[1]
-    print("pos_xs", pos_xs)
+    # print("pos_xs", pos_xs)
     # print("pos_xs[0]", pos_xs[0])
     # print("pos_xs[1]", pos_xs[1])
 
@@ -216,7 +216,9 @@ if __name__ == "__main__":
     # print("entropy_t", entropy_t) 
     # input("check-entropy")
 
-    len_data=len_data-110
+    len_data=len_data-50
+    complete_time= times_t[len_data]
+    print("times", times_t[len_data])
 
     agent_poses_x=np.zeros((num_agent,len_data))
     agent_poses_y=np.zeros((num_agent,len_data))
@@ -370,7 +372,7 @@ if __name__ == "__main__":
     ax1 = fig.add_subplot(spec[1])
 
     ax1.plot(times_t,entropy_t, linewidth=3.0, color='k')
-    # ax1.text(times[-1], 500,str(times[-1]), color='b', fontsize = 12)
+    ax1.text(complete_time, 500,str(complete_time), color='b', fontsize = 12)
     plt.xlabel('time')
     plt.ylabel('entropy')
     plt.grid(True)
