@@ -32,6 +32,8 @@ import matplotlib as mpl
 from matplotlib.pyplot import cm
 import ast
 from pynput import keyboard 
+import yaml
+
 #probability
 l_occ=np.log(0.95/0.05)
 l_free=np.log(0.05/0.95)
@@ -135,6 +137,10 @@ class Params:
         self.speed_cost_gain = 1.0
         self.robot_radius = 1.0  # [m]
 
+class robot_param:
+    def __init__(self, max_speed, sensor_range):
+        self.max_vel = max_speed # m/s
+        self.sensor_range= sensor_range# m/s
 
 def make_ostacle_coords(obstacles, walls, reso=0.25):
     oxs=[]
@@ -151,12 +157,7 @@ def make_ostacle_coords(obstacles, walls, reso=0.25):
             oxs.append(ox[i])
             oys.append(oy[i])
 
-
     return oxs, oys
-
-
-
-
 
 
 
@@ -595,7 +596,7 @@ def generating_globaltrjs(cur_state, cspace, planner, obstacles,goals, params_gl
 
     return trjs
 
-def generating_globaltrjs_Astar(cur_state, AStarplanner, goals, params_global):
+def generating_globaltrjs_Astar(cur_state, AStarplanner, goals):
 
     trjs=[]
     for goal_pos in goals:
@@ -606,8 +607,6 @@ def generating_globaltrjs_Astar(cur_state, AStarplanner, goals, params_global):
         rx,ry, success=AStarplanner.planning(sx,sy,goal_pos[0],goal_pos[1])
         # frx=[float(i) for i in rx]
         # fry=[float(i) for i in ry]
-
-
         if success:
             # print("rx",frx)
             # print("ry",fry)
@@ -1193,7 +1192,7 @@ def read_inputfile(num_agent=2, FILE_NAME="input4.txt"):
 
 
 if __name__ == "__main__":
-
+    #load agent configs
     # dir_path = os.path.dirname(os.path.realpath(__file__))
     parser = argparse.ArgumentParser()
     parser.add_argument("-in",help="input file (default: input4.txt)",default="input4.txt")
@@ -1201,46 +1200,59 @@ if __name__ == "__main__":
     parser.add_argument("-animation",help="show animation? [y/n] (default: y)",default="n")
     parser.add_argument("-num",help="agnet number ? [2/3] (default: 2)",default="3")
     args = vars(parser.parse_args())
+
+
+    #load configs from yaml file ("config/test.yaml")
+    robot_params=[]
+    with open("config/test.yaml", 'r') as stream:
+        try:
+            yamldata=yaml.safe_load(stream)
+        except yaml.YAMLError as exc:
+            print(exc)
+    for i in range(yamldata['num_agents']):
+        temp_params= robot_param(yamldata['speeds'][i], yamldata['sensor_range'][i])
+        robot_params.append(temp_params)
+
+    print("robot_params", robot_params)
+    input("check-params")
     #set the num_agent
-    num_agent =int(args['num'])
+    show_animation =yamldata['animation']
+    # num_agent =yamldata['num_agents']   #set num_agent from argparser
+    num_agent =yamldata['num_agents']   #set num_agent from argparser
+    print("show_animation", show_animation )
+    print("num_agent", num_agent)
+    input("check yaml")
+    # num_agent =int(args['num'])   #set num_agent from argparser
     file_name =dir_path+"/results/entropy/entropy_" +timestamp+"_"+args['num']+".csv"
     #load starting pose and environment from text file
     states, init_poses, goal_poses,obstacles, walls, mapboundaries = read_inputfile(num_agent, args['in'])
     #make obstacles for using A* planner
     ox, oy= make_ostacle_coords(obstacles, walls)
     a_star = AStarPlanner(ox, oy, 0.25, 0.25)
-
     #---------A* planner test-------------------
-    sx=2.0
-    sy=5
-    # gx=5.15
-    # gy=9.23
-    # bidir_a_star = BidirectionalAStarPlanner(ox, oy, 0.25, 0.25)
+    # sx=2.0
+    # sy=5
     # a_star = AStarPlanner(ox, oy, 0.25, 0.25)
-    # rx, ry = bidir_a_star.planning(sx, sy, gx, gy)
-    # print("ox", ox)
-    # print("oy", oy)
-    # print("rx", rx)
-    # print("ry", ry)
+    #---------A* planner test-------------------
 
+    #############set from argument -start-#########################
+    # num_agent =yamldata['num_agents']   #set num_agent from argparser
+    # if args['animation']=="y":
+        # show_animation = True
+    # else:
+        # show_animation = False
 
-
-    if args['animation']=="y":
-        show_animation = True
-    else:
-        show_animation = False
-
-    print("Simulation Setting")
+    print("--------- Simulation Setting ----------")
     print("input file: ", args['in'])
     print("num of agents: ", num_agent)
-    print("show animation: ",args['animation'] )
-
+    print("show animation: ",show_animation)
+    print("----------------------------------",show_animation)
+    #############set from argument -end-#########################
     params = Params(mapboundaries[1])
     params_globalmap =  map_params()
     params_globalmap.set_boundaries(mapboundaries)
     params_local_map=map_params()
     params_local_map.set_boundaries(mapboundaries)
-    ##
     localgrids=[]
     for i in range(num_agent):
         params_local_map=map_params()
@@ -1254,7 +1266,6 @@ if __name__ == "__main__":
     #simulation settings
     # initial state = [x(m), y(m), yaw(rad), v(m/s), omega(rad/s)]
     # state = np.array([init_pos[0],init_pos[1],0.0, 0.0,0.0])
-
     # states=[]
     # states.append(np.array([init_poses[0][0],init_poses[0][1],0.0, 0.0,0.0]))
     # states.append(np.array([init_poses[1][0],init_poses[1][1],0.0, 0.0,0.0]))
@@ -1297,7 +1308,6 @@ if __name__ == "__main__":
     planner2.reset_cspace(cspace2)
     planner2.vertical_lines()
     planner2.region_disection(goal_poses[1])
-
     # planner.generate_waypoint(params_localmap)
     # planner.plot_regions()
     # cspace.plot_config_space()
@@ -1318,7 +1328,6 @@ if __name__ == "__main__":
     for point in waypoint_vcd:
         way_x.append(point[0])
         way_y.append(point[1])
-
     #plot figures 
     if show_animation:
         fig,axes=plt.subplots(nrows=2,ncols=2,figsize=(40,40))
@@ -1337,7 +1346,6 @@ if __name__ == "__main__":
         axes[0,0].set_xlim([-area_size, area_size])   # limit the plot space
         axes[0,0].set_ylim([-area_size, area_size])   # limit the plot space
         axes[0,0].grid(True)
-
     #simulation settings
     '''
     # initial state = [x(m), y(m), yaw(rad), v(m/s), omega(rad/s)]
@@ -1427,7 +1435,6 @@ if __name__ == "__main__":
     #########################################
     goal_dist = np.zeros(num_agent)
 
-
     for _ in range(params.numiters):
 
         poses_xs=np.zeros(num_agent, dtype=float)
@@ -1490,7 +1497,7 @@ if __name__ == "__main__":
             # generate goal points from waypoints vcd
             # sample_goals = random_sampling(params,5)
             for i in range(num_agent):
-                gtrjs= generating_globaltrjs_Astar(states[i], a_star,sample_goalset,params_globalmap) 
+                gtrjs= generating_globaltrjs_Astar(states[i], a_star,sample_goalset) 
                 sp_gtrjs = trjs_to_sample(gtrjs)
                 trjs_candidate =[]
                 for gtrj in sp_gtrjs:
