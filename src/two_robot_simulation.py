@@ -29,6 +29,7 @@ import matplotlib as mpl
 from matplotlib.pyplot import cm
 import ast
 from pynput import keyboard 
+import yaml
 #probability
 l_occ=np.log(0.95/0.05)
 l_free=np.log(0.05/0.95)
@@ -736,6 +737,16 @@ def read_inputfile(FILE_NAME="input4.txt"):
 
 
 if __name__ == "__main__":
+
+    with open("test.yaml", 'r') as stream:
+        try:
+            yamldata=yaml.safe_load(stream)
+        except yaml.YAMLError as exc:
+            print(exc)
+
+    print("yamldata", yamldata)
+    input("check yaml")
+
 
     # dir_path = os.path.dirname(os.path.realpath(__file__))
     parser = argparse.ArgumentParser()
