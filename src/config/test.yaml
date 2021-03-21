@@ -1,0 +1,14 @@
+# cpp.yaml file
+animation: False
+num_agents: 3
+speeds:
+    - 1.0
+    - 2.0
+    - 3.0
+sensor_range:
+    - 5.0
+    - 5.0
+    - 5.0
+
+
+
