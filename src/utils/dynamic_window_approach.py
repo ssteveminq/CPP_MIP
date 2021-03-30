@@ -60,7 +60,8 @@ def calc_dynamic_window(x, config):
     #  [vmin,vmax, yawrate min, yawrate max]
     dw = [max(Vs[0], Vd[0]), min(Vs[1], Vd[1]),
           max(Vs[2], Vd[2]), min(Vs[3], Vd[3])]
-    #  print(dw)
+    print(dw)
+    # input("dw")
 
     return dw
 
@@ -80,16 +81,18 @@ def calc_trajectory(xinit, v, y, config):
 
 
 def calc_final_input(x, u, dw, config, goal, ob):
+    # print("x", x)
+    # input("here)
 
     xinit = x[:]
     # print("xinit", xinit)
     min_cost = 10000.0
     min_u = u
     if x[0]<goal[0]:
-        min_u[0] = 0.05
+        min_u[0] = 0.1
     else:
-        min_u[0] = -0.05
-    min_u[1] = 0.05
+        min_u[0] = -0.1
+    min_u[1] = 0.1
     best_traj = np.array([x])
     boolsolution=False
 
@@ -129,13 +132,14 @@ def calc_final_input(x, u, dw, config, goal, ob):
         dy = goal[1] - x[1]
         dist_to_goal = (dx ** 2 + dy ** 2)**0.5
         # print("dist_to_goal", dist_to_goal )
-        input_v = 0.2 * dist_to_goal
+        input_v = 0.25 * dist_to_goal
 
         des_phi = math.atan2(goal[1] - x[1], goal[0] - x[0])
-        if des_phi<0.0:
+        # if des_phi<0.0:
+        if des_phi<-math.pi:
             des_phi += math.pi*2
         cur_yaw = x[2]
-        input_phi = 0.5*math.sin(des_phi-cur_yaw)
+        input_phi = 0.9*math.sin(des_phi-cur_yaw)
         min_u[0]=input_v
         min_u[1]=input_phi
  
@@ -166,8 +170,6 @@ def calc_obstacle_cost(traj, ob, config):
 
             if r <= config.robot_radius:
                 # print("collison!!")
-                # input()
-                # return float(10000.0)  # collisiton
                 return float("Inf")  # collisiton
 
             if minr >= r:

@@ -12,6 +12,7 @@ import pandas as pd
 import os
 import re
 import ast
+import yaml
 
 ColorSet=['blue','red','green','yellow','cyan','brown','navy','gray','orange','purple']
 
@@ -27,7 +28,7 @@ def read_inputfile(FILE_NAME="input4.txt"):
             line_ctr += 1
             if line_ctr == 1:
                 boundary = list(ast.literal_eval(l))
-            elif line_ctr in range(2,num_lines-1):
+            elif line_ctr in range(2,num_lines-2):
                 polygons.append(list(ast.literal_eval(l)))
             else:
                 temp = list(ast.literal_eval(l))
@@ -112,14 +113,26 @@ if __name__ == "__main__":
     timeindex = args['index']
     num_agent =int(args['num'])
 
+    with open("config/test.yaml", 'r') as stream:
+        try:
+            yamldata=yaml.safe_load(stream)
+        except yaml.YAMLError as exc:
+            print(exc)
+    # for i in range(yamldata['num_agents']):
+        # temp_params= robot_param(yamldata['speeds'][i], yamldata['sensor_range'][i])
+        # robot_params.append(temp_params)
+        # print("speed", temp_params.max_speed )
+    num_agent =yamldata['num_agents']   #set num_agent from argparser
+
+
+
     v_max=0.5
     dir_path = os.path.dirname(os.path.realpath(__file__))
     dir_path=dir_path[:-4]
-    # timeindex = "06111301"
     cm =plt.get_cmap('gist_rainbow')
 
-    file_name =dir_path+"/results/entropy/entropy_"+timeindex+"__"+args['num']+".csv"
-    imgfile_name =dir_path+"/results/entropy/entropy_"+timeindex+"_"+args['num']+".png"
+    file_name =dir_path+"/results/entropy/entropy_"+timeindex+"__"+str(num_agent)+".csv"
+    imgfile_name =dir_path+"/results/entropy/entropy_"+timeindex+"_"+str(num_agent)+".png"
     # df = pd.read_csv(file_name, delimiter=',', names = ['index','time','entropy', 'pos_x', 'pos_y', 'goal_x', 'goal_y']).T
     df = pd.read_csv(file_name, delimiter=',')
     # df = pd.read_csv(file_name, delimiter=',', names = ['time','pos_x', 'pos_y', 'yaw', 'velocity', 'pos_xx', 'pos_yy','entropy', 'goal_x', 'goal_y', 'goal_xx', 'goal_yy'])
@@ -155,11 +168,6 @@ if __name__ == "__main__":
     len_data = len(times_str)
     times_str[len_data-1]=times_str[len_data-1].replace(']','')
     entropys= entropy[1]
-    # entropys= entropy[0]
-    # len_data = len(times)-1
-    # len_data2 = len(entropys)-1
-    # print("len_data", len_data)
-    # print("len_data2", len_data2)
     entropys_str= re.split(",",entropys)
     print("len_data2", len(entropys_str))
     # len_data = len(entropys_str)
@@ -216,7 +224,7 @@ if __name__ == "__main__":
     # print("entropy_t", entropy_t) 
     # input("check-entropy")
 
-    len_data=len_data-50
+    len_data=len_data-250
     complete_time= times_t[len_data]
     print("times", times_t[len_data])
 
@@ -300,13 +308,11 @@ if __name__ == "__main__":
     fig =plt.figure(figsize=(9,6))
     spec = gridspec.GridSpec(ncols=2, nrows=1, width_ratios=[2,1])
     ax0=fig.add_subplot(spec[0])
-    # gs = gridspec.GridSpec(1,2, width_ratios=[2,1])
-    # fig1 = plt.subplot(1,2,1)
-    # ax0=plt.subplot(gs[0])
-    # fig,axes=plt.subplots(nrows=1,ncols=2,figsize=(20,40))
-    # ax = plt.axes()
     # ax0.scatter(agent_poses_x[0][0], agent_poses_y[0][0],s=200, marker="s", facecolor='blue',edgecolor='blue')      #initial point
     # ax0.scatter(agent_poses_x[1][0], agent_poses_y[1][0],s=200, marker="s", facecolor='red',edgecolor='red')      #initial point
+
+    # print("agent_poses_x[0]", agent_poses_x[0])
+    # print("agent_poses_y[0]", agent_poses_y[0])
 
     ax0.plot(agent_poses_x[0], agent_poses_y[0], 'o', markersize = 8, fillstyle='none',color='blue', alpha=0.5, label="robot trajectory")             #trajectory point
     ax0.plot(agent_poses_x[1], agent_poses_y[1], 'o', markersize = 8, fillstyle='none',color='red', alpha=0.5, label="robot trajectory")             #trajectory point

@@ -306,7 +306,7 @@ def isNewFrontier(idx, pmap, frontier_map, param_map):
     return False
 
 def Unknown_search(px,py, pmap,  param_map):
-    print("before-unknown search with px, py", px, ", " , py)
+    # print("before-unknown search with px, py", px, ", " , py)
     # input("check frontier")
     min_frontier_size_=10
     #find the closest free cell to start search
@@ -320,10 +320,10 @@ def Unknown_search(px,py, pmap,  param_map):
     pos_idx =Coord2CellIdx_global(px,py, param_map)
     cell_idx= nearestCellIdx(pos_idx, 0.0, pmap, param_map) #looking for unknown cell
     cellx,celly=Idx2Pose(cell_idx, param_map)
-    print("px: ", px, ", py: ", py)
+    # print("px: ", px, ", py: ", py)
     # print("pos_idx", pos_idx)
-    print("cell_idx", cell_idx)
-    print("cellx: ", cellx, ", celly: ", celly)
+    # print("cell_idx", cell_idx)
+    # print("cellx: ", cellx, ", celly: ", celly)
    
     if cell_idx==False:
         print("Could not find the nearest start idx")
@@ -357,15 +357,15 @@ def Unknown_search(px,py, pmap,  param_map):
 
                 if new_frontier.size > min_frontier_size_:
                     frontier_list.append(new_frontier)
-                    print("size is satisfied")
-                else:
-                    print("size is not satisfied")
+                    # print("size is satisfied")
+                # else:
+                    # print("size is not satisfied")
             if visited[n_idx] == False:
                 queue.append(n_idx)
                 visited[n_idx] = True
 
         
-    print("frontier_list", frontier_list)
+    # print("frontier_list", frontier_list)
 
     return frontier_list
 

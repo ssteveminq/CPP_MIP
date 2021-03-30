@@ -115,8 +115,8 @@ class map_params:
 class Params:
     def __init__(self, xmax):
         self.numiters = 4000
-        self.dt = 0.2
-        self.goal_tol = 0.75
+        self.dt = 0.1
+        self.goal_tol = 1.0
         self.weight_entropy = 0.02
         self.weight_travel =1.6
         self.max_vel = 1.0 # m/s
@@ -140,7 +140,22 @@ class Params:
 class robot_param:
     def __init__(self, max_speed, sensor_range):
         self.max_vel = max_speed # m/s
-        self.sensor_range= sensor_range# m/s
+        self.max_speed = max_speed # m/s
+        self.sensor_range= sensor_range# m
+        self.percept = max_speed*sensor_range
+        self.max_yawrate = 90.0 * math.pi / 180.0  # [rad/s]
+        self.max_accel = 1.25 # [m/ss]
+        self.max_dyawrate = self.max_yawrate
+        # self.max_dyawrate = 45.0 * math.pi / 180.0  # [rad/ss]
+        self.v_reso = 0.075  # [m/s]
+        self.yawrate_reso = 0.25 * math.pi / 180.0  # [rad/s]
+        self.min_speed = 0.0  # [m/s]
+        self.predict_time = 3.0  # [s]
+        self.to_goal_cost_gain = 1.0
+        self.speed_cost_gain = 1.25
+        self.robot_radius = 1.25  # [m]
+        self.dt = 0.1
+
 
 def make_ostacle_coords(obstacles, walls, reso=0.25):
     oxs=[]
@@ -198,9 +213,9 @@ def goal_sampling_uniform(waypoints, agent_x, agent_y, pmap_global, params_map, 
     #nums = the number of sample we need
     agent_pos = [agent_x, agent_y]
     goals = []
-    nums = 6
+    nums = 7
     reso= (2*params_map.xmax)/(nums+1)
-    x = np.arange(0.95*params_map.xmin, 0.95*params_map.xmax, reso)
+    x = np.arange(0.9*params_map.xmin, 0.9*params_map.xmax, reso)
     sample_xy=[]
 
     # for waypoint in waypoints:
@@ -215,7 +230,7 @@ def goal_sampling_uniform(waypoints, agent_x, agent_y, pmap_global, params_map, 
     for i in range(len(x)-1):
         # print("i", i)
         temp_x= random.uniform(x[i],x[i+1])
-        temp_y= random.uniform(0.9*params_map.ymin,0.9*params_map.ymax)
+        temp_y= random.uniform(0.85*params_map.ymin,0.85*params_map.ymax)
         frontierset=Unknown_search(temp_x,temp_y,pmap_global, params_map)
         # print("num of frontiers: ", len(frontierset))
         for frontier in frontierset:
@@ -229,7 +244,7 @@ def goal_sampling_uniform(waypoints, agent_x, agent_y, pmap_global, params_map, 
             # print("(centroid_x, centroid_y)", frontier.centroid_x,", ", frontier.centroid_y)
         # input()
 
-    print("num of sample_goal length: ", len(sample_xy))
+    # print("num of sample_goal length: ", len(sample_xy))
     if len(sample_xy)<10:
         for i in range(len(x)-1):
             temp_x= random.uniform(x[i],x[i+1])
@@ -238,7 +253,6 @@ def goal_sampling_uniform(waypoints, agent_x, agent_y, pmap_global, params_map, 
             for frontier in frontierset:
                 if frontier.size>100:
                     sample_xy.append([frontier.centroid_x,frontier.centroid_y])
-
 
 
     # input("proceed")
@@ -318,14 +332,13 @@ def calc_connectivity_utility( trj_candidates, sample_goals, horizon=20):
 
 
 
-def calc_IG_trjs_hierarchy( trj_candidates, connect_counts, entropy_map, params_global, trjs, agentnum, horizon=20):
-    weight_entropy=0.25
+def calc_IG_trjs_hierarchy( trj_candidates, connect_counts, entropy_map, params_global, trjs, agentnum, robot_param,  horizon=20):
+    weight_entropy=0.45
     weight_connectivity=10.0
-    weight_travel=20.0
+    weight_travel=25.0
     # print("weight_entropy", weight_entropy)
     # print("weight_travel", weight_travel)
     # print("connect_counts", connect_counts)
-
     if len(trj_candidates)>0:
         igs=[]
         considered_trjs=[]
@@ -343,19 +356,18 @@ def calc_IG_trjs_hierarchy( trj_candidates, connect_counts, entropy_map, params_
             ref_x = trj[0][0]
             ref_y = trj[1][0]
 
-            
             for i in range(len(trj[0])):
                 if i%10==0 or i==len(trj[0])-1:
                     if horizon>0:
                         if i<=horizon:
-                            ig+= get_expected_entropy_infov_trjs([trj[0][i],trj[1][i]],entropy_map,considered_trjs, params_global)
+                            ig+= get_expected_entropy_infov_trjs([trj[0][i],trj[1][i]],entropy_map,considered_trjs, params_global, robot_param)
                             dx = trj[0][i]-ref_x
                             dy = trj[1][i]-ref_y
                             travel+=(dx**2+dy**2)**0.5 
                             ref_x=trj[0][i]
                             ref_y=trj[1][i]
                     else:                     #the infinite horizon case
-                        ig+= get_expected_entropy_infov_trjs([trj[0][i],trj[1][i]],entropy_map, considered_trjs, params_global)
+                        ig+= get_expected_entropy_infov_trjs([trj[0][i],trj[1][i]],entropy_map, considered_trjs, params_global, robot_param)
                         dx=trj[0][i]-ref_x
                         dy=trj[1][i]-ref_y
                         travel+=(dx**2+dy**2)**0.5
@@ -365,7 +377,6 @@ def calc_IG_trjs_hierarchy( trj_candidates, connect_counts, entropy_map, params_
             # print("ig", ig)
             # print("travel", travel)
             # print("count_connects", connect_counts[j])
-
             cost = weight_entropy*ig+weight_connectivity*connect_counts[j]-weight_travel*travel
             igs.append(cost)
 
@@ -472,12 +483,12 @@ def get_impossible_indices(pos, global_map, params_searchmap):
     return impossible_idx
 
 
-def get_expected_entropy_infov_trj(pos, entropy_map, leader_trj, params_searchmap, dist_th=6.0):
+def get_expected_entropy_infov_trj(pos, entropy_map, leader_trj, params_searchmap, robot_param, dist_th=6.0):
 
         center_x=pos[0]
         center_y=pos[1]
         minx, miny, maxx, maxy, xw, yw = calc_grid_map_config(params_searchmap.xyreso
-                                                                                , center_x,center_y, params_searchmap.sensor_range)
+                                                                                , center_x,center_y, robot_param.sensor_range)
 
         impossible_idx= self.get_impossible_indices(pos,entropy_map, params_searchmap)
         #iteration for calculating entropy_map
@@ -506,12 +517,11 @@ def get_expected_entropy_infov_trj(pos, entropy_map, leader_trj, params_searchma
         return entropy_sum
 
 
-def get_expected_entropy_infov_trjs(pos, entropy_map, other_trjs, params_searchmap, dist_th=8.0):
+def get_expected_entropy_infov_trjs(pos, entropy_map, other_trjs, params_searchmap, robot_param, dist_th=6.5):
 
         center_x=pos[0]
         center_y=pos[1]
-        minx, miny, maxx, maxy, xw, yw = calc_grid_map_config(params_searchmap.xyreso
-                , center_x,center_y, params_searchmap.sensor_range)
+        minx, miny, maxx, maxy, xw, yw = calc_grid_map_config(params_searchmap.xyreso, center_x,center_y, robot_param.sensor_range)
 
         impossible_idx= get_impossible_indices(pos,entropy_map, params_searchmap)
         #iteration for calculating entropy_map
@@ -532,6 +542,10 @@ def get_expected_entropy_infov_trjs(pos, entropy_map, other_trjs, params_searchm
                     search_idx = Coord2CellIdx_global(px,py, params_searchmap)
                     ix_global= math.floor((px-params_searchmap.xmin)/params_searchmap.xyreso)
                     iy_global= math.floor((py-params_searchmap.ymin)/params_searchmap.xyreso)
+                    if ix_global>xw:
+                        ix_global=xw-1
+                    if iy_global>yw:
+                        iy_global=yw-1
 
                     min_dist2 = calc_min_distance_from_trjs(px,py,other_trjs)
                     #convert log-occ to probability
@@ -636,12 +650,19 @@ def generating_globaltrjs_Astar(cur_state, AStarplanner, goals):
 
 
 
-
-def trjs_to_sample(trjs, num_points=60, showplot=True):
+#How we can sample points based on the speed?  faster speed can have more trajectory # speed range  # time step
+#sample points from the trajectory
+def trjs_to_sample(trjs,robot_param, num_points=25,horizon=20, showplot=True):
     spline_trjs=[]
     for i, sp in enumerate(trjs):
         ds = 0.5                            # [m] distance of each intepolated points
-        s = np.arange(0.0, sp.s[-1], ds)
+        trj_length = num_points*robot_param.max_vel+robot_param.sensor_range
+        if trj_length <sp.s[-1]:
+            s_length = trj_length 
+        else:
+            s_length = sp.s[-1]
+
+        s = np.arange(0.0, s_length, ds)
         # print("s", s)
         rx, ry, ryaw, rk = [], [], [], []
         s_iter=0
@@ -1068,6 +1089,8 @@ def motion_dwa(state, inputs, goal, obpoints, walls, params):
 
     # print("after-state", state)
     # print("after-input", u)
+    # print("params.dt", params.dt)
+    # print("params.max_speed", params.max_speed)
     return state, u
 
 
@@ -1123,14 +1146,20 @@ def read_inputfile(num_agent=2, FILE_NAME="input4.txt"):
                 start_states =[]
                 init_poses=[]
                 for i in range(num_agent):
+                        #set pre-defined initial position
                         init_poses.append([temp[i][0], temp[i][1]])
                         start_states.append(np.array([init_poses[i][0],init_poses[i][1],0.0, 0.0,0.0]))
+                        #set random initial positions
+                        temp_x = random.uniform(-0.85*abs(boundary[0][0]), 0.85*abs(boundary[0][0]))
+                        temp_y = random.uniform(-0.85*abs(boundary[0][0]), 0.85*abs(boundary[0][0]))
+                        start_states.append(np.array([temp_x, temp_y,0.0, 0.0,0.0]))
                 # start_states = [temp[0],temp[1], temp[2], temp[3]]
                 # init_poses = [[temp[0][0],temp[0][1]],[temp[1][0],temp[1][1]]]
                 # print(init_poses )
                 # goal_state = temp[1]
 
                 print("init_poses", init_poses)
+                # print("start_poses", start_states)
             else:
                 temp = list(ast.literal_eval(l))
                 num_agent = len(temp)
@@ -1212,23 +1241,23 @@ if __name__ == "__main__":
     for i in range(yamldata['num_agents']):
         temp_params= robot_param(yamldata['speeds'][i], yamldata['sensor_range'][i])
         robot_params.append(temp_params)
+        # print("speed", temp_params.max_speed )
 
-    print("robot_params", robot_params)
-    input("check-params")
+
     #set the num_agent
     show_animation =yamldata['animation']
     # num_agent =yamldata['num_agents']   #set num_agent from argparser
     num_agent =yamldata['num_agents']   #set num_agent from argparser
     print("show_animation", show_animation )
     print("num_agent", num_agent)
-    input("check yaml")
     # num_agent =int(args['num'])   #set num_agent from argparser
-    file_name =dir_path+"/results/entropy/entropy_" +timestamp+"_"+args['num']+".csv"
+    # file_name =dir_path+"/results/entropy/entropy_" +timestamp+"_"+args['num']+".csv"
+    file_name =dir_path+"/results/entropy/entropy_" +timestamp+"_"+str(num_agent)+".csv"
     #load starting pose and environment from text file
     states, init_poses, goal_poses,obstacles, walls, mapboundaries = read_inputfile(num_agent, args['in'])
     #make obstacles for using A* planner
-    ox, oy= make_ostacle_coords(obstacles, walls)
-    a_star = AStarPlanner(ox, oy, 0.25, 0.25)
+    ox, oy= make_ostacle_coords(obstacles, walls,0.5 )
+    a_star = AStarPlanner(ox, oy, 0.5, 0.5)
     #---------A* planner test-------------------
     # sx=2.0
     # sy=5
@@ -1440,11 +1469,9 @@ if __name__ == "__main__":
         poses_xs=np.zeros(num_agent, dtype=float)
         poses_ys=np.zeros(num_agent, dtype=float)
         for i in range(num_agent):
-            states[i], inputs[i] = motion_dwa(states[i], inputs[i], goal_poses[i], obpoints, walls, params)
+            states[i], inputs[i] = motion_dwa(states[i], inputs[i], goal_poses[i], obpoints, walls, robot_params[i])
             goal_dist[i]=distance(goal_poses[i],states[i]) 
-            print("goal_dist for ",i, "-agent: "  , goal_dist[i])  
-            # print("states[", i,"]", states[i])  
-
+            # print("goal_dist for ",i, "-agent: "  , goal_dist[i])  
             poses_xs[i]=states[i][0]
             poses_ys[i]=states[i][1]
             yaws[i]=states[i][2]
@@ -1498,7 +1525,7 @@ if __name__ == "__main__":
             # sample_goals = random_sampling(params,5)
             for i in range(num_agent):
                 gtrjs= generating_globaltrjs_Astar(states[i], a_star,sample_goalset) 
-                sp_gtrjs = trjs_to_sample(gtrjs)
+                sp_gtrjs = trjs_to_sample(gtrjs,robot_params[i])
                 trjs_candidate =[]
                 for gtrj in sp_gtrjs:
                     trjs_candidate.append(gtrj)
@@ -1510,7 +1537,7 @@ if __name__ == "__main__":
                 trjs_candidateset.append(trjs_candidate)
                 connect_count=calc_connectivity_utility(trjs_candidate, sample_goalset, horizon)
 
-                best_trj = calc_IG_trjs_hierarchy(trjs_candidateset[i], connect_count, pmap_global,  params_globalmap, best_trjs, i, horizon )
+                best_trj = calc_IG_trjs_hierarchy(trjs_candidateset[i], connect_count, pmap_global,  params_globalmap, best_trjs, i, robot_params[i], horizon )
                 if best_trj!=None:
                     best_trjs.append(best_trj)
                     #Choose next goal point from trajectory
@@ -1618,25 +1645,22 @@ if __name__ == "__main__":
                     axes[1,0].set_title('global & Local motion primitives')
                     planner.plot_regions(axes[1,0])
 
-
             best_trjs=[]        
             sample_goalset=goal_sampling_VCD(waypoint_vcd, states[0][0],states[0][1], params_globalmap)
             for i in range(num_agent):
                 # gtrjs= generating_globaltrjs(states[i], cspace,planner, obstacles,sample_goalset[i],params_globalmap)
-
-                gtrjs= generating_globaltrjs_Astar(states[i], a_star,sample_goalset,params_globalmap)
-                sp_gtrjs = trjs_to_sample(gtrjs)
+                gtrjs= generating_globaltrjs_Astar(states[i], a_star,sample_goalset)
+                sp_gtrjs = trjs_to_sample(gtrjs, robot_params[i])
                 local_trjs = lane_state_sampling_test1(states[i],obstacles, params_globalmap)
                 trjs_candidate =[]
                 for gtrj in sp_gtrjs:
                         trjs_candidate.append(gtrj)
                 # for ltrj in local_trjs:
                         # trjs_candidate.append(ltrj)
-
                 trjs_candidateset.append(trjs_candidate)
 
                 connect_count=calc_connectivity_utility(trjs_candidateset[i], sample_goalset, horizon)
-                best_trj = calc_IG_trjs_hierarchy(trjs_candidateset[i], connect_count, pmap_global,  params_globalmap, best_trjs, i, horizon )
+                best_trj = calc_IG_trjs_hierarchy(trjs_candidateset[i], connect_count, pmap_global,  params_globalmap, best_trjs, i, robot_params[i], horizon )
                 goal = choose_goal_from_trj(best_trj, params_globalmap, horizon)
                 # goals.append(goal)
                 goal_xs[i]=goal[0]
@@ -1660,7 +1684,7 @@ if __name__ == "__main__":
             horizon = 50
             params.weight_entropy=0.05
 
-        if curentropy < 0.09*initial_entropy and boolsaved==False:
+        if curentropy < 0.1*initial_entropy and boolsaved==False:
             # data=[times, pos_xs,pos_ys,yaws,velocities, pos_xs2, pos_ys2, entropys, goal_xs, goal_ys, goal_xs2, goal_ys2]
             # data=[times, entropys]
             # for i in range(num_agent):
@@ -1679,7 +1703,7 @@ if __name__ == "__main__":
             boolsaved =True
             exit()
             # input("done")
-        if curentropy < 0.08*initial_entropy:
+        if curentropy < 0.09*initial_entropy:
             data=np.array([times, entropys, poses_xset, poses_yset, goal_xset, goal_yset])
             columns=['time', 'entropy', 'pos_x', 'pos_y', 'goal_x', 'goal_y']
             file_name=file_name+"_2"
