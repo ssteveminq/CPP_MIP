@@ -108,10 +108,12 @@ if __name__ == "__main__":
     parser.add_argument("-load",help="load saved data? [y/n] (default: n)",default="n")
     parser.add_argument("-index",help="time index? [06111301] (default: 06111301)",default="07150017")
     parser.add_argument("-num",help="number of agent? [1-10] (default: 2)",default="2")
+    parser.add_argument("-cut",help="cut last data [1-300] (default: 100)",default="100")
     args = vars(parser.parse_args())
     start_state, init_pos, obstacles, walls, mapboundaries = read_inputfile(args['in'])
     timeindex = args['index']
     num_agent =int(args['num'])
+    cut_length=int(args['cut'])
 
     with open("config/test.yaml", 'r') as stream:
         try:
@@ -164,7 +166,7 @@ if __name__ == "__main__":
             times_str[i]=time_ele.replace(' ','')
 
     # times_str2= re.split("[",times_str)
-    print("times", times_str)
+    # print("times", times_str)
     len_data = len(times_str)
     times_str[len_data-1]=times_str[len_data-1].replace(']','')
     entropys= entropy[1]
@@ -189,17 +191,13 @@ if __name__ == "__main__":
     #set num_agent
     pos_xs=pos_xs[1]
     pos_ys=pos_ys[1]
-    # print("pos_xs", pos_xs)
-    # print("pos_xs[0]", pos_xs[0])
-    # print("pos_xs[1]", pos_xs[1])
+    goal_xs=goal_xs[1]
+    goal_ys=goal_ys[1]
 
     pos_xs=re.findall(r"[-+]?\d*\.\d+|\d+", pos_xs)
     pos_ys=re.findall(r"[-+]?\d*\.\d+|\d+", pos_ys)
-    # print("pos_xs2", pos_xs)
-    # input("hi")
-    # num_agent =  int(len(pos_xs[5])/11) 
-    # num_agent = 2
-    # print("Num", num_agent)
+    goal_xs=re.findall(r"[-+]?\d*\.\d+|\d+", goal_xs)
+    goal_ys=re.findall(r"[-+]?\d*\.\d+|\d+", goal_ys)
     index_set=[1,12]
 
     # print("pos_xs", pos_xs[1])
@@ -224,7 +222,7 @@ if __name__ == "__main__":
     # print("entropy_t", entropy_t) 
     # input("check-entropy")
 
-    len_data=len_data-250
+    len_data=len_data-cut_length
     complete_time= times_t[len_data]
     print("times", times_t[len_data])
 
@@ -232,6 +230,9 @@ if __name__ == "__main__":
     agent_poses_y=np.zeros((num_agent,len_data))
     goal_poses_x=np.zeros((num_agent,len_data))
     goal_poses_y=np.zeros((num_agent,len_data))
+    # print("goal_poses_x", goal_xs)
+    # print("------------------------")
+    # print("goal_poses_x", goal_poses_x)
 
 
 
@@ -245,66 +246,11 @@ if __name__ == "__main__":
             if i<len_data:
                 agent_poses_x[j,i]=float(pos_xs[idx])
                 agent_poses_y[j,i]=float(pos_ys[idx])
-            # agent_poses_y[j,i-1]=temp4
-    ''' 
-    for i, pose in enumerate(pos_xs):
-        if i>0:
-            for j in range(num_agent):
-                temp3 = float()
-                temp4 = float()
-                if j==0:
-                    idx = 1
-                    idxy= 1
-                    print("idx", idx)
-                    print("idxy", idxy)
+                goal_poses_x[j,i]=float(goal_xs[idx])
+                goal_poses_y[j,i]=float(goal_ys[idx])
 
-                else:
-                    idx = pos_xs[i][2:].find(' ')+3
-                    idxy = pos_ys[i][2:].find(' ')+3
-                    print("idx", idx)
-                    print("idxy", idxy)
-                    
-                # print("idx", idx)
-                # print("idxy", idxy)
-                
-                input("here-stop")
+    ####################Plot####################
 
-                print("pos_xs[i]", pos_xs[i])
-                print("pos_ys[i]", pos_ys[i])
-                input("here")
-                if i==1:
-                    temp3= float(pos_xs[i][idx:idx+3])
-                    temp4 = float(pos_ys[i][idxy:idxy+3])
-                else:
-                    temp3= float(pos_xs[i][idx:idx+6])
-                    temp4 = float(pos_ys[i][idxy:idxy+6])
-
-                # print("temp", temp)
-                    print("j", j)
-                    print("temp4", temp4)
-                agent_poses_x[j,i-1]=temp3
-                agent_poses_y[j,i-1]=temp4
-    '''
-    # print("agent_poses_x", agent_poses_x)
-    # print("agent_poses_y", agent_poses_y)
-    # input("_")
-    # print("goal_xs[1]", goal_xs[1])
-    # temp = float(goal_xs[1][1:3])
-    # print("temp", temp)
-    # temp2 = float(goal_xs[1][5:8])
-    # print("temp2", temp2)
-    # for i, pose in enumerate(goal_xs):
-        # if i>0:
-            # for j in range(num_agent):
-                # idx = 5*(j-1)+1
-                # temp = float(goal_xs[i][idx:idx+3])
-                # temp2 = float(goal_ys[i][idx:idx+3])
-                # goal_poses_x[j,i-1]=temp
-                # goal_poses_y[j,i-1]=temp2
-    # print("goal_poses_x", goal_poses_x)
-    # print("goal_poses_y", goal_poses_y)
-    # input("wow")
-                
     fig =plt.figure(figsize=(9,6))
     spec = gridspec.GridSpec(ncols=2, nrows=1, width_ratios=[2,1])
     ax0=fig.add_subplot(spec[0])
@@ -318,7 +264,8 @@ if __name__ == "__main__":
     ax0.plot(agent_poses_x[1], agent_poses_y[1], 'o', markersize = 8, fillstyle='none',color='red', alpha=0.5, label="robot trajectory")             #trajectory point
 
     if num_agent==3:
-        ax0.scatter(agent_poses_x[2][0], agent_poses_y[2][0],s=200, marker="s", facecolor='green',edgecolor='green')      #initial point
+        # for k in range(len(goal_poses_x)):
+            # ax0.scatter(goal_poses_x[2][k], goal_poses_y[2][k],s=200, marker="v", facecolor='green',edgecolor='green')      #initial point
         ax0.plot(agent_poses_x[2], agent_poses_y[2], 'o', markersize = 8, fillstyle='none',color='green', alpha=0.5, label="robot trajectory")             #trajectory point
 
     elif num_agent==4:
