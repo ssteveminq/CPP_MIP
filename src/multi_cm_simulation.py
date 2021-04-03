@@ -115,8 +115,8 @@ class map_params:
 class Params:
     def __init__(self, xmax):
         self.numiters = 4000
-        self.dt = 0.1
-        self.goal_tol = 1.0
+        self.dt = 0.2
+        self.goal_tol = 1.25
         self.weight_entropy = 0.02
         self.weight_travel =1.6
         self.max_vel = 1.0 # m/s
@@ -144,7 +144,7 @@ class robot_param:
         self.sensor_range= sensor_range# m
         self.percept = max_speed*sensor_range
         self.max_yawrate = 90.0 * math.pi / 180.0  # [rad/s]
-        self.max_accel = 1.25 # [m/ss]
+        self.max_accel = 1.5 # [m/ss]
         self.max_dyawrate = self.max_yawrate
         # self.max_dyawrate = 45.0 * math.pi / 180.0  # [rad/ss]
         self.v_reso = 0.075  # [m/s]
@@ -152,9 +152,9 @@ class robot_param:
         self.min_speed = 0.0  # [m/s]
         self.predict_time = 3.0  # [s]
         self.to_goal_cost_gain = 1.0
-        self.speed_cost_gain = 1.25
+        self.speed_cost_gain = 1.35
         self.robot_radius = 1.25  # [m]
-        self.dt = 0.1
+        self.dt = 0.2
 
 
 def make_ostacle_coords(obstacles, walls, reso=0.25):
@@ -333,9 +333,9 @@ def calc_connectivity_utility( trj_candidates, sample_goals, horizon=20):
 
 
 def calc_IG_trjs_hierarchy( trj_candidates, connect_counts, entropy_map, params_global, trjs, agentnum, robot_param,  horizon=20):
-    weight_entropy=0.45
-    weight_connectivity=10.0
-    weight_travel=25.0
+    weight_entropy=0.85
+    weight_connectivity=40.0
+    weight_travel=20.0
     # print("weight_entropy", weight_entropy)
     # print("weight_travel", weight_travel)
     # print("connect_counts", connect_counts)
@@ -517,7 +517,7 @@ def get_expected_entropy_infov_trj(pos, entropy_map, leader_trj, params_searchma
         return entropy_sum
 
 
-def get_expected_entropy_infov_trjs(pos, entropy_map, other_trjs, params_searchmap, robot_param, dist_th=6.5):
+def get_expected_entropy_infov_trjs(pos, entropy_map, other_trjs, params_searchmap, robot_param, dist_th=8.0):
 
         center_x=pos[0]
         center_y=pos[1]
@@ -1489,6 +1489,8 @@ if __name__ == "__main__":
         velocities.append(velocity)
 
         if iter>0:
+            goal_xs=np.zeros(num_agent, dtype=float)
+            goal_xs=np.zeros(num_agent, dtype=float)
             for i in range(num_agent):
                 goal_xs[i]=goal_poses[i][0]
                 goal_ys[i]=goal_poses[i][1]

@@ -60,7 +60,7 @@ def calc_dynamic_window(x, config):
     #  [vmin,vmax, yawrate min, yawrate max]
     dw = [max(Vs[0], Vd[0]), min(Vs[1], Vd[1]),
           max(Vs[2], Vd[2]), min(Vs[3], Vd[3])]
-    print(dw)
+    # print(dw)
     # input("dw")
 
     return dw
@@ -89,9 +89,9 @@ def calc_final_input(x, u, dw, config, goal, ob):
     min_cost = 10000.0
     min_u = u
     if x[0]<goal[0]:
-        min_u[0] = 0.1
+        min_u[0] = 0.15
     else:
-        min_u[0] = -0.1
+        min_u[0] = -0.15
     min_u[1] = 0.1
     best_traj = np.array([x])
     boolsolution=False

@@ -108,7 +108,7 @@ if __name__ == "__main__":
     parser.add_argument("-load",help="load saved data? [y/n] (default: n)",default="n")
     parser.add_argument("-index",help="time index? [06111301] (default: 06111301)",default="07150017")
     parser.add_argument("-num",help="number of agent? [1-10] (default: 2)",default="2")
-    parser.add_argument("-cut",help="cut last data [1-300] (default: 100)",default="100")
+    parser.add_argument("-cut",help="cut last data [1-300] (default: 100)",default="50")
     args = vars(parser.parse_args())
     start_state, init_pos, obstacles, walls, mapboundaries = read_inputfile(args['in'])
     timeindex = args['index']
@@ -218,11 +218,15 @@ if __name__ == "__main__":
             # print("entropys[", i,"] ", entropys_str[i])
             times_t[i-1]=float(times_str[i])
             entropy_t[i-1]=float(entropys_str[i])
+            if entropy_t[i-1]<4900:
+                len_data=i-1
+                break;
+
     # print("times_t", times_t) 
     # print("entropy_t", entropy_t) 
     # input("check-entropy")
 
-    len_data=len_data-cut_length
+    # len_data=len_data-cut_length
     complete_time= times_t[len_data]
     print("times", times_t[len_data])
 
@@ -249,23 +253,31 @@ if __name__ == "__main__":
                 goal_poses_x[j,i]=float(goal_xs[idx])
                 goal_poses_y[j,i]=float(goal_ys[idx])
 
+    # print("goal_x", goal_poses_x)
+    # print("goal_y", goal_poses_y)
+    # print("len(goal_x)", goal_poses_y.shape[1])
+    len_goal=goal_poses_y.shape[1]
+
     ####################Plot####################
 
     fig =plt.figure(figsize=(9,6))
     spec = gridspec.GridSpec(ncols=2, nrows=1, width_ratios=[2,1])
     ax0=fig.add_subplot(spec[0])
-    # ax0.scatter(agent_poses_x[0][0], agent_poses_y[0][0],s=200, marker="s", facecolor='blue',edgecolor='blue')      #initial point
-    # ax0.scatter(agent_poses_x[1][0], agent_poses_y[1][0],s=200, marker="s", facecolor='red',edgecolor='red')      #initial point
-
-    # print("agent_poses_x[0]", agent_poses_x[0])
-    # print("agent_poses_y[0]", agent_poses_y[0])
+    # for k in range(len_goal):
+        # if k%15==0:
+            # ax0.scatter(goal_poses_x[0][k], goal_poses_y[0][k],s=200, marker="v", facecolor='blue',edgecolor='blue')      #initial point
+            # ax0.scatter(goal_poses_x[1][k], goal_poses_y[1][k],s=200, marker="v", facecolor='red',edgecolor='red')      #initial point
+    ax0.scatter(agent_poses_x[0][0], agent_poses_y[0][0],s=200, marker="v", facecolor='blue',edgecolor='blue')      #initial point
+    ax0.scatter(agent_poses_x[1][0], agent_poses_y[1][0],s=200, marker="v", facecolor='red',edgecolor='red')      #initial point
 
     ax0.plot(agent_poses_x[0], agent_poses_y[0], 'o', markersize = 8, fillstyle='none',color='blue', alpha=0.5, label="robot trajectory")             #trajectory point
     ax0.plot(agent_poses_x[1], agent_poses_y[1], 'o', markersize = 8, fillstyle='none',color='red', alpha=0.5, label="robot trajectory")             #trajectory point
 
     if num_agent==3:
-        # for k in range(len(goal_poses_x)):
-            # ax0.scatter(goal_poses_x[2][k], goal_poses_y[2][k],s=200, marker="v", facecolor='green',edgecolor='green')      #initial point
+        ax0.scatter(agent_poses_x[2][0], agent_poses_y[2][0],s=200, marker="v", facecolor='green',edgecolor='green')      #initial point
+        # for k in range(len_goal):
+            # if k%15==0:
+                # ax0.scatter(goal_poses_x[2][k], goal_poses_y[2][k],s=200, marker="v", facecolor=ColorSet[2],edgecolor=ColorSet[2])      #initial point
         ax0.plot(agent_poses_x[2], agent_poses_y[2], 'o', markersize = 8, fillstyle='none',color='green', alpha=0.5, label="robot trajectory")             #trajectory point
 
     elif num_agent==4:
@@ -324,7 +336,7 @@ if __name__ == "__main__":
     # ax1=plt.subplot(gs[1])
     ax1 = fig.add_subplot(spec[1])
 
-    ax1.plot(times_t,entropy_t, linewidth=3.0, color='k')
+    ax1.plot(times_t[1:len_data],entropy_t[1:len_data], linewidth=3.0, color='k')
     ax1.text(complete_time, 500,str(complete_time), color='b', fontsize = 12)
     plt.xlabel('time')
     plt.ylabel('entropy')
@@ -336,8 +348,57 @@ if __name__ == "__main__":
 
 
 
+    # plt.show()
+    agent_vel_x =  np.zeros((num_agent,len_data-1))
+    agent_vel_y =  np.zeros((num_agent,len_data-1))
+    agent_vels =  np.zeros((num_agent,len_data-1))
+    agent_dist=  np.zeros((num_agent,1))
+    dt=0.2
 
+    for i in range(len_data):
+        if i>0:
+            for j in range(num_agent):
+                if i<len_data:
+                    agent_dist[j]=agent_dist[j]+sqrt((agent_poses_x[j,i]-agent_poses_x[j,i-1])**2+
+                                               (agent_poses_y[j,i]-agent_poses_y[j,i-1])**2)
+                    agent_vel_x[j,i-1]=(agent_poses_x[j,i]-agent_poses_x[j,i-1])/dt
+                    agent_vel_y[j,i-1]=(agent_poses_y[j,i]-agent_poses_y[j,i-1])/dt
+                    agent_vels[j,i-1]=sqrt(agent_vel_x[j,i-1]**2+agent_vel_y[j,i-1]**2)
+                    if abs(agent_vels[j,i-1]-agent_vels[j,i-2])>2:
+                        agent_vels[j,i-1]=agent_vels[j,i-2]
+                        agent_vel_x[j,i-1]= agent_vel_x[j,i-2]
+                        agent_vel_y[j,i-1]= agent_vel_y[j,i-2]
+                        # print("i", i)
+                        # print("vel_x: ", agent_vel_x[j,i-1])
+                        # print("vel_y: ", agent_vel_y[j,i-1])
+                        # print("pos_x-2: ", agent_poses_x[j,i-3])
+                        # print("pos_x-1: ", agent_poses_x[j,i-2])
+                        # print("pos_x: ", agent_poses_x[j,i-1])
+                        # print("pos_x2: ", agent_poses_x[j,i])
+                        # print("pos_x3: ", agent_poses_x[j,i+1])
+                        # print("pos_x4: ", agent_poses_x[j,i+2])
+                        # print("pos_x4: ", agent_poses_x[j,i+2])
+                        # print("pos_y-1: ", agent_poses_y[j,i-2])
+                        # print("pos_y: ", agent_poses_y[j,i-1])
+                        # print("pos_y2: ", agent_poses_y[j,i])
+                        # print("pos_y3: ", agent_poses_y[j,i+1])
+                        # input()
+
+    print("dist",agent_dist )
+
+
+#figure 2: Plot velocity and force
+    # plt.figure()
+    # for j in range(num_agent):
+        # plt.plot(times_t[1:len_data-1],agent_vel_x[j][1:len_data-1], linewidth=2.0, color=ColorSet[j])
+        # plt.plot(times_t[1:len_data-1],agent_vel_y[j][1:len_data-1], linewidth=2.0, color=ColorSet[j])
+    # plt.xlabel('time')
+    # plt.ylabel('velocities')
+    # plt.grid(True)
     plt.show()
+
+
+
 
 
 #waypoint
