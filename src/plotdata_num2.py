@@ -13,6 +13,7 @@ import os
 import re
 import ast
 import yaml
+from colour import Color
 
 ColorSet=['blue','red','green','yellow','cyan','brown','navy','gray','orange','purple']
 
@@ -141,25 +142,28 @@ if __name__ == "__main__":
 
     # print("df", df)
     timess = np.asarray(df.head(1))
-    # print("timess", timess)
-    # times =df.head(1)
     entropy= np.asarray(df.loc[1])
+    print("entropy", entropy)
     # pos_xs= np.asarray(df.loc[2])
-    pos_xs= df.loc[2]
+    pos_xs= np.asarray(df.loc[2])
     pos_ys= np.asarray(df.loc[3])
     goal_xs= np.asarray(df.loc[4])
     goal_ys= np.asarray(df.loc[5])
+    print("pos_xs", pos_xs)
     # print("times", times[0])
     # print("lentimes", len(times[0]))
 
-    times= timess[0][1]
-    # print("times", timess[0][1])
+    # times_str= times
+    times_str= timess[0]
+    entropys_str=entropy
+    # print("times", times)
     # if len(timess[0][1])>1:
         # times= timess[0][1]
     # else:
         # times=timess[0]
 
     # print("times", times)
+    '''
     times_str= re.split(",",times)
     for i, time_ele in enumerate(times_str):
         if '[' in time_ele:
@@ -171,15 +175,19 @@ if __name__ == "__main__":
             # print("time_ele", times_str[i])
         if ' ' in time_ele:
             times_str[i]=time_ele.replace(' ','')
+    '''
 
     # times_str2= re.split("[",times_str)
     # print("times", times_str)
     len_data = len(times_str)
-    times_str[len_data-1]=times_str[len_data-1].replace(']','')
-    entropys= entropy[1]
-    entropys_str= re.split(",",entropys)
+    # times_str[len_data-1]=times_str[len_data-1].replace(']','')
+    # entropys= entropy[0]
+    # print("entropys", entropys)
+    # entropys_str=entropys
+    # entropys_str= re.split(",",entropys)
     print("len_data2", len(entropys_str))
     # len_data = len(entropys_str)
+    '''
     for i, ent_ele in enumerate(entropys_str):
         if '[' in ent_ele:
             # print("ent_ele", ent_ele)
@@ -191,22 +199,29 @@ if __name__ == "__main__":
         if ' ' in ent_ele:
             entropys_str[i]=ent_ele.replace(' ','')
 
+    '''
+
     len_data = len(entropys_str)
     print("len_data", len_data)
-    input("")
-    entropys_str[len_data-1]=entropys_str[len_data-1].replace(']','')
+    # input("")
+    # entropys_str[len_data-1]=entropys_str[len_data-1].replace(']','')
 
 
     #set num_agent
-    pos_xs=pos_xs[1]
-    pos_ys=pos_ys[1]
-    goal_xs=goal_xs[1]
-    goal_ys=goal_ys[1]
+    # pos_xs=pos_xs[2]
+    # pos_ys=pos_ys[1]
+    # goal_xs=goal_xs[1]
+    # goal_ys=goal_ys[1]
+    # print("pos_xs", pos_xs)
+    # input("--")
+    # print("pos_xs[0]", pos_xs[0])
 
-    pos_xs=re.findall(r"[-+]?\d*\.\d+|\d+", pos_xs)
-    pos_ys=re.findall(r"[-+]?\d*\.\d+|\d+", pos_ys)
-    goal_xs=re.findall(r"[-+]?\d*\.\d+|\d+", goal_xs)
-    goal_ys=re.findall(r"[-+]?\d*\.\d+|\d+", goal_ys)
+    pos_xs=re.findall(r"[-+]?\d*\.\d+|\d+", str(pos_xs))
+    pos_ys=re.findall(r"[-+]?\d*\.\d+|\d+", str(pos_ys))
+    # pos_ys=re.findall(r"[-+]?\d*\.\d+|\d+", pos_ys)
+    goal_xs=re.findall(r"[-+]?\d*\.\d+|\d+", str(goal_xs))
+    goal_ys=re.findall(r"[-+]?\d*\.\d+|\d+", str(goal_ys))
+    # print("pos_xs", pos_xs)
     index_set=[1,12]
 
     # print("pos_xs", pos_xs[1])
@@ -219,35 +234,36 @@ if __name__ == "__main__":
     # temp2 = float(pos_xs[1][7:12])
     # print("temp2", temp2)
 
-    times_t=np.zeros(len_data-1)
-    entropy_t=np.zeros(len_data-1)
+    len_data=len_data-1
+    times_t=np.zeros(len_data)
+    entropy_t=np.zeros(len_data)
     for i in range(len(entropys_str)):
         if i>0:
             # print("times[", i,"] ", times_str[i])
             # print("entropys[", i,"] ", entropys_str[i])
             times_t[i-1]=float(times_str[i])
             entropy_t[i-1]=float(entropys_str[i])
-            if entropy_t[i-1]<4900:
-                len_data=i-1
-                break;
+            # if entropy_t[i-1]<4900:
+                # len_data=i-1
+                # break;
 
     # print("times_t", times_t) 
     # print("entropy_t", entropy_t) 
     # input("check-entropy")
 
     len_data=len_data-cut_length
-    complete_time= times_t[len_data]
-    print("times", times_t[len_data])
+    complete_time= times_t[len_data-1]
+    # print("times", times_t[len_data-1])
 
-    agent_poses_x=np.zeros((num_agent,len_data))
-    agent_poses_y=np.zeros((num_agent,len_data))
-    goal_poses_x=np.zeros((num_agent,len_data))
-    goal_poses_y=np.zeros((num_agent,len_data))
+    agent_poses_x=np.zeros((num_agent,len_data-1))
+    agent_poses_y=np.zeros((num_agent,len_data-1))
+    goal_poses_x=np.zeros((num_agent,len_data-1))
+    goal_poses_y=np.zeros((num_agent,len_data-1))
     # print("goal_poses_x", goal_xs)
     # print("------------------------")
     # print("goal_poses_x", goal_poses_x)
 
-
+# cmap = clr.LinearSegmentedColormap.from_list("", ["darkblue", "blue", "violet", "yellow", "orange", "red"])
 
     for i, pose in enumerate(pos_xs):
         for j in range(num_agent):
@@ -256,11 +272,12 @@ if __name__ == "__main__":
             # print("idx", idx)
             # input("debug--")
             # print("pos_xs[ " ,idx, " ] ", pos_xs[idx])
-            if i<len_data:
+            if i<len_data-1:
                 agent_poses_x[j,i]=float(pos_xs[idx])
                 agent_poses_y[j,i]=float(pos_ys[idx])
                 goal_poses_x[j,i]=float(goal_xs[idx])
                 goal_poses_y[j,i]=float(goal_ys[idx])
+                print("i", i)
 
     # print("goal_x", goal_poses_x)
     # print("goal_y", goal_poses_y)
@@ -272,21 +289,27 @@ if __name__ == "__main__":
     fig =plt.figure(figsize=(9,6))
     spec = gridspec.GridSpec(ncols=2, nrows=1, width_ratios=[2,1])
     ax0=fig.add_subplot(spec[0])
-    # for k in range(len_goal):
-        # if k%15==0:
-            # ax0.scatter(goal_poses_x[0][k], goal_poses_y[0][k],s=200, marker="v", facecolor='blue',edgecolor='blue')      #initial point
-            # ax0.scatter(goal_poses_x[1][k], goal_poses_y[1][k],s=200, marker="v", facecolor='red',edgecolor='red')      #initial point
+    for k in range(len_goal):
+        if k%30==0:
+            ax0.scatter(goal_poses_x[0][k], goal_poses_y[0][k],s=200, marker="v", facecolor=(0, 0, (k)/(2.5*256)),edgecolor=(0, 0, (k)/(2.5*256)))      #initial point
+            ax0.scatter(goal_poses_x[1][k], goal_poses_y[1][k],s=200, marker="v", facecolor=((k)/(2.5*256),0,0),edgecolor=((k)/(2.5*256),0,0))      #initial point
     ax0.scatter(agent_poses_x[0][0], agent_poses_y[0][0],s=200, marker="v", facecolor='blue',edgecolor='blue')      #initial point
     ax0.scatter(agent_poses_x[1][0], agent_poses_y[1][0],s=200, marker="v", facecolor='red',edgecolor='red')      #initial point
 
+
+    def uniqueish_color(n):
+        return plt.cm.gist_ncar(np.linspace(0,1,len_data-1))
+
+
     ax0.plot(agent_poses_x[0], agent_poses_y[0], 'o', markersize = 8, fillstyle='none',color='blue', alpha=0.5, label="robot trajectory")             #trajectory point
     ax0.plot(agent_poses_x[1], agent_poses_y[1], 'o', markersize = 8, fillstyle='none',color='red', alpha=0.5, label="robot trajectory")             #trajectory point
+    # ax0.set_prop_cycle('color', cm(np.linspace(0,1,len_data-1)))
 
     if num_agent==3:
-        ax0.scatter(agent_poses_x[2][0], agent_poses_y[2][0],s=200, marker="v", facecolor='green',edgecolor='green')      #initial point
-        # for k in range(len_goal):
-            # if k%15==0:
-                # ax0.scatter(goal_poses_x[2][k], goal_poses_y[2][k],s=200, marker="v", facecolor=ColorSet[2],edgecolor=ColorSet[2])      #initial point
+        # ax0.scatter(agent_poses_x[2][0], agent_poses_y[2][0],s=200, marker="v", facecolor='green',edgecolor='green')      #initial point
+        for k in range(len_goal):
+            if k%30==0:
+                ax0.scatter(goal_poses_x[2][k], goal_poses_y[2][k],s=200, marker="v", facecolor=ColorSet[2],edgecolor=ColorSet[2])      #initial point
         ax0.plot(agent_poses_x[2], agent_poses_y[2], 'o', markersize = 8, fillstyle='none',color='green', alpha=0.5, label="robot trajectory")             #trajectory point
 
     elif num_agent==4:
@@ -364,7 +387,7 @@ if __name__ == "__main__":
     agent_dist=  np.zeros((num_agent,1))
     dt=0.2
 
-    for i in range(len_data):
+    for i in range(len_data-1):
         if i>0:
             for j in range(num_agent):
                 if i<len_data:

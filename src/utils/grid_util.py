@@ -377,17 +377,16 @@ def Unknown_search(px,py, pmap,  param_map):
 def isNewUnknown(idx, pmap, frontier_map, param_map):
     #check that cell is unknown and not already marked as frontier
     ix = (int) (idx % param_map.xw)
-    iy = (int) (idx / param_map.xw)
+    iy = (int) (idx / param_map.yw)
     # print("idx: ", idx, ", ix: ", ix, ", iy:", iy)
 
     if pmap[ix][iy] != 0.0 or frontier_map[idx]==True:
         return False
     
     #Unknown cells should have at all cell in 4-connected neighbourhood that is unknown
-
     for n_idx in nhood4(idx, pmap,  param_map):
         ix = math.floor(n_idx % param_map.xw)
-        iy = math.floor(n_idx / param_map.xw)
+        iy = math.floor(n_idx / param_map.yw)
         # check all nhood is unknown
     
         if pmap[ix][iy]!=l_unknown:
@@ -489,7 +488,7 @@ def buildnewUnknownfrontier(start_cell, pmap, frontiermap, visited, param_map):
         # print("nbrs", nsets)
         # input("hmm")
         for n_idx in nhood8(s, pmap,  param_map):
-            if frt.size>550:
+            if frt.size>500:
                 # print("max size reached")
                 break
             elif isNewUnknown(n_idx,pmap, frontiermap, param_map) and visited[n_idx]==False:

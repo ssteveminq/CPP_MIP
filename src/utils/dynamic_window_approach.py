@@ -132,7 +132,7 @@ def calc_final_input(x, u, dw, config, goal, ob):
         dy = goal[1] - x[1]
         dist_to_goal = (dx ** 2 + dy ** 2)**0.5
         # print("dist_to_goal", dist_to_goal )
-        input_v = 0.25 * dist_to_goal
+        input_v = 0.35 * dist_to_goal
 
         des_phi = math.atan2(goal[1] - x[1], goal[0] - x[0])
         # if des_phi<0.0:

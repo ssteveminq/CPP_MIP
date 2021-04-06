@@ -39,7 +39,7 @@ l_occ=np.log(0.95/0.05)
 l_free=np.log(0.05/0.95)
 l_same = np.log(0.9/0.1)
 l_diff= np.log(0.01/0.99)
-horizon=20
+horizon=25
 shorthorizon=10
 boolsaved = False
 weight_entropy = 0.15
@@ -116,7 +116,7 @@ class Params:
     def __init__(self, xmax):
         self.numiters = 4000
         self.dt = 0.2
-        self.goal_tol = 1.25
+        self.goal_tol = 1.0
         self.weight_entropy = 0.02
         self.weight_travel =1.6
         self.max_vel = 1.0 # m/s
@@ -284,7 +284,7 @@ def goal_sampling_uniform(waypoints, agent_x, agent_y, pmap_global, params_map, 
 
 
 
-def choose_goal_from_trj(best_trj, params_globalmap, horizon=20):
+def choose_goal_from_trj(best_trj, params_globalmap, horizon=25):
     goal =[0,0]
 
     if len(best_trj[0])>horizon and horizon>0:
@@ -305,7 +305,7 @@ def choose_goal_from_trj(best_trj, params_globalmap, horizon=20):
 
 
 #check how much samples are in near 10m within the boundary
-def calc_connectivity_utility( trj_candidates, sample_goals, horizon=20):
+def calc_connectivity_utility( trj_candidates, sample_goals, horizon=30):
     connect_counts=[]
     for j, trj in enumerate(trj_candidates):
         if horizon<0: 
@@ -332,7 +332,7 @@ def calc_connectivity_utility( trj_candidates, sample_goals, horizon=20):
 
 
 
-def calc_IG_trjs_hierarchy( trj_candidates, connect_counts, entropy_map, params_global, trjs, agentnum, robot_param,  horizon=20):
+def calc_IG_trjs_hierarchy( trj_candidates, connect_counts, entropy_map, params_global, trjs, agentnum, robot_param,  horizon=30):
     weight_entropy=0.85
     weight_connectivity=40.0
     weight_travel=20.0
@@ -517,7 +517,7 @@ def get_expected_entropy_infov_trj(pos, entropy_map, leader_trj, params_searchma
         return entropy_sum
 
 
-def get_expected_entropy_infov_trjs(pos, entropy_map, other_trjs, params_searchmap, robot_param, dist_th=8.0):
+def get_expected_entropy_infov_trjs(pos, entropy_map, other_trjs, params_searchmap, robot_param, dist_th=10.0):
 
         center_x=pos[0]
         center_y=pos[1]
@@ -591,6 +591,38 @@ def get_entropy_infov(state,entropy_map,params_local,params_global):
     # print("entropy_sum", entropy_sum)
     return entropy_sum
 
+
+def filtering_goals(goals, selectedgoals,agent_num, dist_th=10.0):
+    new_goals=[]
+    whileiter=0
+    while len(new_goals)<1:
+
+        if whileiter>0:
+            dist_th=dist_th-2.5
+
+        for goal_pos in goals:
+            IsClose=False
+            for j, select_goal_pos in enumerate(selectedgoals):
+                if j<agent_num:
+                    tempdist = sqrt((goal_pos[0]-select_goal_pos[0])**2+(goal_pos[1]-select_goal_pos[1])**2) #distance to gaol
+                    if tempdist < dist_th:
+                        IsClose=True
+                        break
+
+            if IsClose==False:
+                new_goals.append(goal_pos)
+
+        whileiter= whileiter+1
+
+
+    return new_goals
+
+
+
+
+    return 
+
+
 def generating_globaltrjs(cur_state, cspace, planner, obstacles,goals, params_global):
 
     trjs=[]
@@ -652,7 +684,7 @@ def generating_globaltrjs_Astar(cur_state, AStarplanner, goals):
 
 #How we can sample points based on the speed?  faster speed can have more trajectory # speed range  # time step
 #sample points from the trajectory
-def trjs_to_sample(trjs,robot_param, num_points=25,horizon=20, showplot=True):
+def trjs_to_sample(trjs,robot_param, num_points=15,horizon=20, showplot=True):
     spline_trjs=[]
     for i, sp in enumerate(trjs):
         ds = 0.5                            # [m] distance of each intepolated points
@@ -1490,7 +1522,7 @@ if __name__ == "__main__":
 
         if iter>0:
             goal_xs=np.zeros(num_agent, dtype=float)
-            goal_xs=np.zeros(num_agent, dtype=float)
+            goal_ys=np.zeros(num_agent, dtype=float)
             for i in range(num_agent):
                 goal_xs[i]=goal_poses[i][0]
                 goal_ys[i]=goal_poses[i][1]
@@ -1526,6 +1558,9 @@ if __name__ == "__main__":
             # generate goal points from waypoints vcd
             # sample_goals = random_sampling(params,5)
             for i in range(num_agent):
+                print("0000sample_goalset: ", len(sample_goalset))
+                sample_goalset =filtering_goals(sample_goalset, goal_poses, i)
+                print("----sample_goalset: ", len(sample_goalset))
                 gtrjs= generating_globaltrjs_Astar(states[i], a_star,sample_goalset) 
                 sp_gtrjs = trjs_to_sample(gtrjs,robot_params[i])
                 trjs_candidate =[]
@@ -1561,8 +1596,8 @@ if __name__ == "__main__":
                     plot_best_trj(best_trj, -1,axes[1,0])
                     # plot_sample_goals(sample_goalset[i], ColorSet[i], axes[1,0])
 
-            goal_xset.append(goal_xs)
-            goal_yset.append(goal_ys)
+            # goal_xset.append(goal_xs)
+            # goal_yset.append(goal_ys)
             # goal2 = choose_goal_from_trj(best_trj2, params_globalmap, horizon)
 
             # if show_animation:
