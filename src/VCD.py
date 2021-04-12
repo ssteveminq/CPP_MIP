@@ -474,7 +474,7 @@ class VerticalCellDecomposition:
             y = [line[0][1],line[1][1]]
             plt.plot(x,y,'b')
 
-    def plot_regions(self, ax=None):
+    def plot_regions(self, params, ax=None):
 
         num_colors = len(self.regions)
         if ax==None:
@@ -496,8 +496,8 @@ class VerticalCellDecomposition:
 
             ax.fill(x_sets,y_sets, color=col,alpha=0.2)
 
-        ax.set_xlim([-15, 15])   # limit the plot space
-        ax.set_ylim([-15, 15])   # limit the plot space
+        ax.set_xlim([params.xmin-1, params.xmax+1])   # limit the plot space
+        ax.set_ylim([params.ymin-1, params.ymax+1])   # limit the plot space
 
         # ax.scatter(self.agent_pose[0], self.agent_pose[1], facecolor='black',edgecolor='black')      #initial point
         way_x=[]
@@ -509,7 +509,7 @@ class VerticalCellDecomposition:
             way_x.append(point[0])
             way_y.append(point[1])
         
-        ax.plot(way_x, way_y, '*', markersize= 5, fillstyle='none',color='green')             #trajectory point
+        # ax.plot(way_x, way_y, '*', markersize= 5, fillstyle='none',color='green')             #trajectory point
         # for i in range(len(way_x)):
             # ax.text(way_x[i]+0.5, way_y[i]-0.5,AlphabetSet[i], color='g')
 

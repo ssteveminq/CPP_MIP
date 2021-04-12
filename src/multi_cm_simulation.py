@@ -116,7 +116,7 @@ class Params:
     def __init__(self, xmax):
         self.numiters = 4000
         self.dt = 0.2
-        self.goal_tol = 1.0
+        self.goal_tol = 3.5
         self.weight_entropy = 0.02
         self.weight_travel =1.6
         self.max_vel = 1.0 # m/s
@@ -213,10 +213,14 @@ def goal_sampling_uniform(waypoints, agent_x, agent_y, pmap_global, params_map, 
     #nums = the number of sample we need
     agent_pos = [agent_x, agent_y]
     goals = []
-    nums = 7
+    nums = 10
     reso= (2*params_map.xmax)/(nums+1)
     x = np.arange(0.9*params_map.xmin, 0.9*params_map.xmax, reso)
     sample_xy=[]
+
+    # map_size=params_map.xw * params_map.yw
+    # visited = [False] * (map_size)
+    visited= initialize_global_visited_map(params_map)
 
     # for waypoint in waypoints:
         # temppos=[0,0]
@@ -231,11 +235,12 @@ def goal_sampling_uniform(waypoints, agent_x, agent_y, pmap_global, params_map, 
         # print("i", i)
         temp_x= random.uniform(x[i],x[i+1])
         temp_y= random.uniform(0.85*params_map.ymin,0.85*params_map.ymax)
-        frontierset=Unknown_search(temp_x,temp_y,pmap_global, params_map)
+        print("temp_x: ", temp_x ,"temp_y: ",  temp_y)
+        frontierset, visited =Unknown_search(temp_x,temp_y,pmap_global, params_map, visited )
         # print("num of frontiers: ", len(frontierset))
         for frontier in frontierset:
             if small==False:
-                if frontier.size>300:
+                if frontier.size>400:
                     sample_xy.append([frontier.centroid_x,frontier.centroid_y])
             # else:
                 # if frontier.size>100:
@@ -244,19 +249,28 @@ def goal_sampling_uniform(waypoints, agent_x, agent_y, pmap_global, params_map, 
             # print("(centroid_x, centroid_y)", frontier.centroid_x,", ", frontier.centroid_y)
         # input()
 
+    vcount=0
+    for k in range(len(visited)):
+        if visited[k]==False:
+            vcount=vcount+1
+        
+    # print("vcount: ", vcount)
+    # input("000----000")
+
+
     # print("num of sample_goal length: ", len(sample_xy))
     if len(sample_xy)<10:
         for i in range(len(x)-1):
             temp_x= random.uniform(x[i],x[i+1])
             temp_y= random.uniform(0.9*params_map.ymin,0.9*params_map.ymax)
-            frontierset=Unknown_search(temp_x,temp_y,pmap_global, params_map)
+            frontierset, visited =Unknown_search(temp_x,temp_y,pmap_global, params_map, visited )
             for frontier in frontierset:
-                if frontier.size>100:
+                if frontier.size>250:
                     sample_xy.append([frontier.centroid_x,frontier.centroid_y])
 
 
     # input("proceed")
-    return sample_xy
+    return sample_xy,visited
 
 
 		#frontiers
@@ -281,6 +295,21 @@ def goal_sampling_uniform(waypoints, agent_x, agent_y, pmap_global, params_map, 
 
 
 		# iterate with pmap_global
+
+
+
+def goal_sampling_uniform_v2(pmap_global, params_map, small=False):
+    # agent_pos = [agent_x, agent_y]
+    sample_xy=[]
+    visited= initialize_global_visited_map(params_map)
+    frontierset, visited =Unknown_decomposition(pmap_global, params_map, visited )
+
+    for frontier in frontierset:
+        sample_xy.append([frontier.centroid_x,frontier.centroid_y])
+
+    return sample_xy,visited
+
+
 
 
 
@@ -322,7 +351,7 @@ def calc_connectivity_utility( trj_candidates, sample_goals, horizon=30):
         count=0
         for k, goal in enumerate(sample_goals):
             dist = distance([last_x, last_y], goal) 
-            if dist<6.0:
+            if dist<10.0:
                 count=count+1;
             connect_counts.append(count)
 
@@ -334,7 +363,7 @@ def calc_connectivity_utility( trj_candidates, sample_goals, horizon=30):
 
 def calc_IG_trjs_hierarchy( trj_candidates, connect_counts, entropy_map, params_global, trjs, agentnum, robot_param,  horizon=30):
     weight_entropy=0.85
-    weight_connectivity=40.0
+    weight_connectivity=20.0
     weight_travel=20.0
     # print("weight_entropy", weight_entropy)
     # print("weight_travel", weight_travel)
@@ -456,7 +485,6 @@ def get_impossible_indices(pos, global_map, params_searchmap):
                     continue
 
             #check if there exists static obstacle
-
             ix_global= math.floor((px-params_searchmap.xmin)/params_searchmap.xyreso)
             iy_global= math.floor((py-params_searchmap.ymin)/params_searchmap.xyreso)
             # searchmap_info= map_info(center_x,center_y)
@@ -592,7 +620,7 @@ def get_entropy_infov(state,entropy_map,params_local,params_global):
     return entropy_sum
 
 
-def filtering_goals(goals, selectedgoals,agent_num, dist_th=10.0):
+def filtering_goals(goals, selectedgoals,agent_num, dist_th=12.5):
     new_goals=[]
     whileiter=0
     while len(new_goals)<1:
@@ -772,6 +800,31 @@ def plot_best_trj(trj, horizon,ax=None):
 
 
 
+def draw_visitedmap(data, params_map, ax):
+    if data==None:
+        return
+    minx=params_map.xmin
+    miny=params_map.ymin
+    maxx=params_map.xmax
+    maxy=params_map.ymax
+    xyreso = params_map.xyreso
+    data = data*1
+    # data = 1-1./(1.0+np.exp(data))
+
+    x, y = np.mgrid[slice(minx - xyreso / 2.0, maxx + xyreso / 2.0, xyreso),
+                                    slice(miny - xyreso / 2.0, maxy + xyreso / 2.0, xyreso)]
+    ax.pcolor(x, y, data, vmax=1.0, cmap=plt.cm.Blues)
+    ax.set_xlim([1.1*minx, 1.1*maxx])   # limit the plot space
+    ax.set_ylim([1.1*miny, 1.1*maxy])   # limit the plot space
+
+
+
+    ax.pcolor(x, y, data, vmax=1.0, cmap=plt.cm.Blues)
+    ax.set_xlim([1.1*minx, 1.1*maxx])   # limit the plot space
+    ax.set_ylim([1.1*miny, 1.1*maxy])   # limit the plot space
+
+
+
 def draw_occmap(data, params_map,params_global, agent_x, agent_y, ax):
 
     minx=params_map.xmin
@@ -791,7 +844,7 @@ def draw_occmap(data, params_map,params_global, agent_x, agent_y, ax):
 
     # ax.pcolor(x+agent_x, y+agent_y, data, vmax=1.0, cmap=plt.cm.Blues)
     # print("data", data)
-    ax.pcolormesh(x[:40,:40], y[:40,:40], data, vmax=1.0, cmap=plt.cm.Blues)
+    # ax.pcolormesh(x[:40,:40], y[:40,:40], data, vmax=1.0, cmap=plt.cm.Blues)
     # ax.pcolor(x, y, data, vmax=1.0, cmap=plt.cm.Blues)
     # ax.set_xlim([-params_map.sensor_range+agent_x, agent_x+params_map.sensor_range])   # limit the plot space
     # ax.set_ylim([agent_y-params_map.sensor_range, agent_y+params_map.sensor_range])   # limit the plot space
@@ -952,6 +1005,14 @@ def initialize_global_occ_grid_map(params_map):
     # pmap_global = [[l_free for i in range(params_map.yw)] for i in range(params_map.xw)]
     return pmap_global
 
+def initialize_global_visited_map(params_map):
+
+    visited_map= [[False for i in range(params_map.yw)] for i in range(params_map.xw)]
+    # pmap_global = [[l_free for i in range(params_map.yw)] for i in range(params_map.xw)]
+    return visited_map
+
+
+
 def initialize_global_occ_grid_map_odds(params_map):
 
     pmap_global = [[0.0 for i in range(params_map.yw)] for i in range(params_map.xw)]
@@ -962,9 +1023,12 @@ def plot_robot(poses, params):
     num_poses = len(poses)
     cm =plt.get_cmap('gist_rainbow')
     
+    # for i, pose in enumerate(poses):
+    # print("len(poses)", len(poses))
     for i, pose in enumerate(poses):
+    
         col = cm(1.*i/num_poses )
-        r = params.sensor_range_m
+        r = params.sensor_range
         # ax = plt.gca()
         axes[0,0].plot([pose[0]-r*np.cos(pose[2]), pose[0]+r*np.cos(pose[2])],
                 [pose[1]-r*np.sin(pose[2]), pose[1]+r*np.sin(pose[2])], '--', color=col)
@@ -1034,11 +1098,11 @@ def plot_obstacles(obstacles, walls):
 def visualize(trajs, pose, obstacles, walls, params):
     # ax = plt.gca()
     # plt.plot(traj[:,0], traj[:,1], 'g')
-    plot_robot(pose, params)
+    plot_robot(pose, params )
     plot_obstacles(obstacles,walls)
 
-    axes[0,0].set_xlim([-(params.area_size+1), (params.area_size+1)])   # limit the plot space
-    axes[0,0].set_ylim([-(params.area_size+1), (params.area_size+1)])   # limit the plot space
+    axes[0,0].set_xlim([(params.xmin-1), (params.xmax+1)])   # limit the plot space
+    axes[0,0].set_ylim([(params.ymin-1), (params.ymax+1)])   # limit the plot space
     axes[0,0].plot(trajs[0][:,0], trajs[0][:,1], 'r')
     axes[0,0].plot(trajs[1][:,0], trajs[1][:,1], 'g')
     # plt.legend()
@@ -1180,17 +1244,21 @@ def read_inputfile(num_agent=2, FILE_NAME="input4.txt"):
                 for i in range(num_agent):
                         #set pre-defined initial position
                         init_poses.append([temp[i][0], temp[i][1]])
-                        start_states.append(np.array([init_poses[i][0],init_poses[i][1],0.0, 0.0,0.0]))
+                        # start_states.append(np.array([init_poses[i][0],init_poses[i][1],0.0, 0.0,0.0]))
                         #set random initial positions
                         temp_x = random.uniform(-0.85*abs(boundary[0][0]), 0.85*abs(boundary[0][0]))
                         temp_y = random.uniform(-0.85*abs(boundary[0][0]), 0.85*abs(boundary[0][0]))
                         start_states.append(np.array([temp_x, temp_y,0.0, 0.0,0.0]))
+                        # print("i", i)
+                        # print("start_poses", start_states)
+                        # input("-")
                 # start_states = [temp[0],temp[1], temp[2], temp[3]]
                 # init_poses = [[temp[0][0],temp[0][1]],[temp[1][0],temp[1][1]]]
                 # print(init_poses )
                 # goal_state = temp[1]
 
-                print("init_poses", init_poses)
+                # print("num_agents", num_agent)
+                # print("init_poses", init_poses)
                 # print("start_poses", start_states)
             else:
                 temp = list(ast.literal_eval(l))
@@ -1392,7 +1460,7 @@ if __name__ == "__main__":
     #plot figures 
     if show_animation:
         fig,axes=plt.subplots(nrows=2,ncols=2,figsize=(40,40))
-        planner.plot_regions(axes[1,0])
+        planner.plot_regions(params_globalmap,axes[1,0])
 
         for init_pos in init_poses:
             axes[0,0].scatter(init_pos[0], init_pos[1], facecolor='blue',edgecolor='blue')      #initial point
@@ -1456,6 +1524,8 @@ if __name__ == "__main__":
     # print("goal : ",goal)
     t_prev_goal = time.time()
     pmap_global = initialize_global_occ_grid_map(params_globalmap)
+    viistedmap= initialize_global_visited_map(params_globalmap)
+
     # pmap_global_test = initialize_global_occ_grid_map(params_globalmap)
     # initial_entropy = get_map_entropy(pmap_global,params_globalmap)
     initial_entropy = get_map_entropy2(pmap_global,params_globalmap)
@@ -1547,14 +1617,22 @@ if __name__ == "__main__":
             print('Time from the previous reached goal:', t_current - t_prev_goal)
             t_prev_goal = time.time()
             best_trjs=[]
-            sample_goalset=goal_sampling_uniform(waypoint_vcd, states[i][0],states[i][1], pmap_global, params_globalmap)
+            # sample_goalset, visited=goal_sampling_uniform(waypoint_vcd, states[i][0],states[i][1], pmap_global, params_globalmap )
+            sample_goalset, visited=goal_sampling_uniform_v2( pmap_global, params_globalmap )
 
             #setting paths--> start finding best trajectories
             if show_animation:
                 axes[1,0].cla()
                 axes[1,0].set_title('global & Local motion primitives')
-                planner.plot_regions(axes[1,0])
+                planner.plot_regions( params_globalmap, axes[1,0])
                 plot_sample_goals(sample_goalset, 'g', axes[1,0])
+
+                axes[0,1].cla()
+                axes[0,1].set_title('visited map')
+                draw_visitedmap(visited, params_globalmap, axes[0,1])
+
+
+
             # generate goal points from waypoints vcd
             # sample_goals = random_sampling(params,5)
             for i in range(num_agent):
@@ -1574,7 +1652,7 @@ if __name__ == "__main__":
                 trjs_candidateset.append(trjs_candidate)
                 connect_count=calc_connectivity_utility(trjs_candidate, sample_goalset, horizon)
 
-                best_trj = calc_IG_trjs_hierarchy(trjs_candidateset[i], connect_count, pmap_global,  params_globalmap, best_trjs, i, robot_params[i], horizon )
+                best_trj = calc_IG_trjs_hierarchy(trjs_candidate, connect_count, pmap_global,  params_globalmap, best_trjs, i, robot_params[i], horizon )
                 if best_trj!=None:
                     best_trjs.append(best_trj)
                     #Choose next goal point from trajectory
@@ -1643,14 +1721,16 @@ if __name__ == "__main__":
             traj = np.vstack([traj, states[0][:2]])
 
             traj2 = np.vstack([traj2, states[1][:2]])
-            visualize([traj, traj2], states, obstacles, walls, params)
+            visualize([traj, traj2], states, obstacles, walls, params_globalmap)
 
             #figure2- local sensor window
-            axes[0,1].cla()
-            axes[0,1].set_title('local sesnor grid')
+            # axes[0,1].cla()
+            # axes[0,1].set_title('local sesnor grid')
             # pmap_local, updated_grids, intersect_dic, obs_verticeid, closest_vertexid, params_localmap.xmin, params_localmap.xmax, params_localmap.ymin, params_localmap.ymax, params_localmap.xyreso, params_localmap.xw, params_localmap.yw= generate_ray_casting_grid_map(obstacles, walls, params_localmap, state[0],state[1], state[2])
-            draw_occmap(pmap_local, params_localmap, params_globalmap, states[0][0],states[0][1], axes[0,1])
-            # draw_occmap(pmap_local2, params_localmap, params_globalmap, states[1][0],states[1][1], axes[0,1])
+
+            # draw_visitedmap(visited, params_globalmap, axes[0,1])
+            #draw_occmap(pmap_local, params_localmap, params_globalmap, states[0][0],states[0][1], axes[0,1]) #temporaliy commented
+
 
             # axes[0,1].cla()
             # axes[0,1].set_title('local sesnor grid')
@@ -1680,7 +1760,7 @@ if __name__ == "__main__":
             if show_animation:
                     axes[1,0].cla()
                     axes[1,0].set_title('global & Local motion primitives')
-                    planner.plot_regions(axes[1,0])
+                    planner.plot_regions(params_globalmap, axes[1,0])
 
             best_trjs=[]        
             sample_goalset=goal_sampling_VCD(waypoint_vcd, states[0][0],states[0][1], params_globalmap)

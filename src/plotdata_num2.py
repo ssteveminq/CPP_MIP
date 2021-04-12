@@ -113,7 +113,6 @@ if __name__ == "__main__":
     args = vars(parser.parse_args())
     start_state, init_pos, obstacles, walls, mapboundaries = read_inputfile(args['in'])
     timeindex = args['index']
-    num_agent =int(args['num'])
     cut_length=int(args['cut'])
 
     with open("config/test.yaml", 'r') as stream:
@@ -128,6 +127,7 @@ if __name__ == "__main__":
     num_agent =yamldata['num_agents']   #set num_agent from argparser
 
 
+    # num_agent =int(args['num'])
 
     v_max=0.5
     dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -208,7 +208,7 @@ if __name__ == "__main__":
 
 
     #set num_agent
-    # pos_xs=pos_xs[2]
+    # pos_xs=pos_xs[1]
     # pos_ys=pos_ys[1]
     # goal_xs=goal_xs[1]
     # goal_ys=goal_ys[1]
@@ -218,10 +218,9 @@ if __name__ == "__main__":
 
     pos_xs=re.findall(r"[-+]?\d*\.\d+|\d+", str(pos_xs))
     pos_ys=re.findall(r"[-+]?\d*\.\d+|\d+", str(pos_ys))
-    # pos_ys=re.findall(r"[-+]?\d*\.\d+|\d+", pos_ys)
     goal_xs=re.findall(r"[-+]?\d*\.\d+|\d+", str(goal_xs))
     goal_ys=re.findall(r"[-+]?\d*\.\d+|\d+", str(goal_ys))
-    # print("pos_xs", pos_xs)
+    print("pos_xs", pos_xs)
     index_set=[1,12]
 
     # print("pos_xs", pos_xs[1])
@@ -291,8 +290,8 @@ if __name__ == "__main__":
     ax0=fig.add_subplot(spec[0])
     for k in range(len_goal):
         if k%30==0:
-            ax0.scatter(goal_poses_x[0][k], goal_poses_y[0][k],s=200, marker="v", facecolor=(0, 0, (k)/(2.5*256)),edgecolor=(0, 0, (k)/(2.5*256)))      #initial point
-            ax0.scatter(goal_poses_x[1][k], goal_poses_y[1][k],s=200, marker="v", facecolor=((k)/(2.5*256),0,0),edgecolor=((k)/(2.5*256),0,0))      #initial point
+            ax0.scatter(goal_poses_x[0][k], goal_poses_y[0][k],s=200, marker="v", facecolor=(0, 0, (k)/(2.5*360)),edgecolor=(0, 0, (k)/(2.5*360)))      #initial point
+            ax0.scatter(goal_poses_x[1][k], goal_poses_y[1][k],s=200, marker="v", facecolor=((k)/(2.5*360),0,0),edgecolor=((k)/(2.5*360),0,0))      #initial point
     ax0.scatter(agent_poses_x[0][0], agent_poses_y[0][0],s=200, marker="v", facecolor='blue',edgecolor='blue')      #initial point
     ax0.scatter(agent_poses_x[1][0], agent_poses_y[1][0],s=200, marker="v", facecolor='red',edgecolor='red')      #initial point
 
