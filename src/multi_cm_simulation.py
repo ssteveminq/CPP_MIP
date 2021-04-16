@@ -20,6 +20,7 @@ from utils.dynamic_window_approach import *
 from utils.grid_util import *
 from utils.bidirectional_a_star import *
 from utils.a_star import *
+from utils.kmeans_clustering import *
 from  VCD import VerticalCellDecomposition
 import pandas as pd
 import os
@@ -300,14 +301,20 @@ def goal_sampling_uniform(waypoints, agent_x, agent_y, pmap_global, params_map, 
 
 def goal_sampling_uniform_v2(pmap_global, params_map, small=False):
     # agent_pos = [agent_x, agent_y]
+    sample_x=[]
+    sample_y=[]
     sample_xy=[]
     visited= initialize_global_visited_map(params_map)
     frontierset, visited =Unknown_decomposition(pmap_global, params_map, visited )
 
     for frontier in frontierset:
         sample_xy.append([frontier.centroid_x,frontier.centroid_y])
+        sample_x.append(frontier.centroid_x)
+        sample_y.append(frontier.centroid_y)
 
-    return sample_xy,visited
+    clusters = kmeans_clustering(sample_x, sample_y, 4)
+
+    return sample_xy,visited, clusters
 
 
 
@@ -1618,7 +1625,7 @@ if __name__ == "__main__":
             t_prev_goal = time.time()
             best_trjs=[]
             # sample_goalset, visited=goal_sampling_uniform(waypoint_vcd, states[i][0],states[i][1], pmap_global, params_globalmap )
-            sample_goalset, visited=goal_sampling_uniform_v2( pmap_global, params_globalmap )
+            sample_goalset, visited, clusters=goal_sampling_uniform_v2( pmap_global, params_globalmap )
 
             #setting paths--> start finding best trajectories
             if show_animation:
@@ -1630,6 +1637,7 @@ if __name__ == "__main__":
                 axes[0,1].cla()
                 axes[0,1].set_title('visited map')
                 draw_visitedmap(visited, params_globalmap, axes[0,1])
+                clusters.plot_cluster(axes[0,1])
 
 
 

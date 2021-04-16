@@ -452,8 +452,7 @@ def Unknown_decomposition(pmap,  param_map, visited ):
                     visited[nbx][nby] = True
                     # visited[n_idx] = True
 
-            
-        # print("frontier_list", frontier_list)
+    # print("frontier_list", frontier_list)
 
     return frontier_list, visited
 
