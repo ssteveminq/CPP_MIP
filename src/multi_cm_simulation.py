@@ -21,6 +21,7 @@ from utils.grid_util import *
 from utils.bidirectional_a_star import *
 from utils.a_star import *
 from utils.kmeans_clustering import *
+from utils.mtsp import *
 from  VCD import VerticalCellDecomposition
 import pandas as pd
 import os
@@ -117,7 +118,7 @@ class Params:
     def __init__(self, xmax):
         self.numiters = 4000
         self.dt = 0.2
-        self.goal_tol = 3.5
+        self.goal_tol = 5.5
         self.weight_entropy = 0.02
         self.weight_travel =1.6
         self.max_vel = 1.0 # m/s
@@ -156,6 +157,33 @@ class robot_param:
         self.speed_cost_gain = 1.35
         self.robot_radius = 1.25  # [m]
         self.dt = 0.2
+
+# class mtsp_param:
+    # def __init__(self, max_speed, sensor_range):
+        # self.atms_number = 20         # ATM quantity
+        # self.service_centers = 2     # service centers quantity
+        # self.velocity = 100             # 100 / hour
+        # self.repair_time = 0         # 0.5 hour
+        # self.max_engi = 3              # maximum number of engineers in one service center
+
+
+        # self.max_vel = max_speed # m/s
+        # self.max_speed = max_speed # m/s
+        # self.sensor_range= sensor_range# m
+        # self.percept = max_speed*sensor_range
+        # self.max_yawrate = 90.0 * math.pi / 180.0  # [rad/s]
+        # self.max_accel = 1.5 # [m/ss]
+        # self.max_dyawrate = self.max_yawrate
+        # self.max_dyawrate = 45.0 * math.pi / 180.0  # [rad/ss]
+        # self.v_reso = 0.075  # [m/s]
+        # self.yawrate_reso = 0.25 * math.pi / 180.0  # [rad/s]
+        # self.min_speed = 0.0  # [m/s]
+        # self.predict_time = 3.0  # [s]
+        # self.to_goal_cost_gain = 1.0
+        # self.speed_cost_gain = 1.35
+        # self.robot_radius = 1.25  # [m]
+        # self.dt = 0.2
+
 
 
 def make_ostacle_coords(obstacles, walls, reso=0.25):
@@ -1337,6 +1365,27 @@ if __name__ == "__main__":
     parser.add_argument("-num",help="agnet number ? [2/3] (default: 2)",default="3")
     args = vars(parser.parse_args())
 
+    goal_test=[]
+    goal_test.append([2, 17])
+    goal_test.append([22, -25])
+    goal_test.append([7, -15])
+    goal_test.append([-1, -10])
+    goal_test.append([19, 15])
+    goal_test.append([2, -15])
+    goal_test.append([21, -15])
+    goal_test.append([-21, 0])
+    instates=[]
+    instates.append(np.array([2.0, 0,0.0, 0.0,0.0]))
+    instates.append(np.array([-12.0, -6,0.0, 0.0,0.0]))
+    tspmanager = tsp_manager(2,goal_test,instates)
+    mtsp_path=tspmanager.get_path()
+    # for i in range(2):
+        # print("path", goal_test[mtsp_path[i][0]])
+    # print("mtsp-path", mtsp_path)
+
+    tspmanager.plot_paths(mtsp_path)
+    input("mtsp-finalize")
+
 
     #load configs from yaml file ("config/test.yaml")
     robot_params=[]
@@ -1626,7 +1675,9 @@ if __name__ == "__main__":
             best_trjs=[]
             # sample_goalset, visited=goal_sampling_uniform(waypoint_vcd, states[i][0],states[i][1], pmap_global, params_globalmap )
             sample_goalset, visited, clusters=goal_sampling_uniform_v2( pmap_global, params_globalmap )
-
+            tspmanager = tsp_manager(num_agent, sample_goalset, states)
+            best_tsppath = tspmanager.get_path()
+            tspmanager.plot_paths(best_tsppath, axes[0,1]) 
             #setting paths--> start finding best trajectories
             if show_animation:
                 axes[1,0].cla()
@@ -1634,9 +1685,9 @@ if __name__ == "__main__":
                 planner.plot_regions( params_globalmap, axes[1,0])
                 plot_sample_goals(sample_goalset, 'g', axes[1,0])
 
-                axes[0,1].cla()
-                axes[0,1].set_title('visited map')
-                draw_visitedmap(visited, params_globalmap, axes[0,1])
+                # axes[0,1].cla()
+                # axes[0,1].set_title('visited map')
+                # draw_visitedmap(visited, params_globalmap, axes[0,1])
                 clusters.plot_cluster(axes[0,1])
 
 
@@ -1644,7 +1695,7 @@ if __name__ == "__main__":
             # generate goal points from waypoints vcd
             # sample_goals = random_sampling(params,5)
             for i in range(num_agent):
-                print("0000sample_goalset: ", len(sample_goalset))
+                # print("0000sample_goalset: ", len(sample_goalset))
                 sample_goalset =filtering_goals(sample_goalset, goal_poses, i)
                 print("----sample_goalset: ", len(sample_goalset))
                 gtrjs= generating_globaltrjs_Astar(states[i], a_star,sample_goalset) 

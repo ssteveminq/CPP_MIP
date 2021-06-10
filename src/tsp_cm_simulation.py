@@ -46,7 +46,7 @@ shorthorizon=10
 boolsaved = False
 weight_entropy = 0.15
 weight_travel = 1.5
-entropy_difference=0.175
+entropy_difference=0.25
 
 #pp control 
 #test
@@ -59,7 +59,7 @@ dt = 0.2  # [s]
 L = 1.0  # [m] wheel base of vehicle
 AlphabetSet=['a','b','c','d','e','f','g','h','i','j','k','l','m', 
 				'n','o','p','q','r']
-ColorSet=['green', 'red', 'blue','yellow', 'black', 'cyan' ]
+ColorSet=['red', 'green', 'blue','yellow', 'black', 'cyan' ]
 Region_Boundary =12.5
 t = time.localtime()
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -119,7 +119,7 @@ class Params:
     def __init__(self, xmax):
         self.numiters = 4000
         self.dt = 0.2
-        self.goal_tol = 3.0
+        self.goal_tol = 1.0
         self.weight_entropy = 0.02
         self.weight_travel =1.6
         self.max_vel = 1.0 # m/s
@@ -243,7 +243,7 @@ def goal_sampling_uniform(waypoints, agent_x, agent_y, pmap_global, params_map, 
         # print("num of frontiers: ", len(frontierset))
         for frontier in frontierset:
             if small==False:
-                if frontier.size>400:
+                if frontier.size>380:
                     sample_xy.append([frontier.centroid_x,frontier.centroid_y])
             # else:
                 # if frontier.size>100:
@@ -301,7 +301,7 @@ def goal_sampling_uniform(waypoints, agent_x, agent_y, pmap_global, params_map, 
 
 
 
-def goal_sampling_uniform_v2(states, pmap_global, params_map, small=False):
+def goal_sampling_uniform_v2(states, pmap_global, params_map, num_agents,robot_params, small=False):
     # agent_pos = [agent_x, agent_y]
     sample_x=[]
     sample_y=[]
@@ -314,8 +314,12 @@ def goal_sampling_uniform_v2(states, pmap_global, params_map, small=False):
         sample_x.append(frontier.centroid_x)
         sample_y.append(frontier.centroid_y)
 
-    clusters = Guided_kmeans_clustering(sample_x, sample_y, 2, states)
-    print("cluster", clusters)
+    cluster_weights=[]
+    for i in range(num_agents):
+        cluster_weights.append(robot_params[i].max_speed)
+
+    clusters = Guided_kmeans_clustering(sample_x, sample_y, num_agents, states, cluster_weights)
+    # print("cluster", clusters)
 
     return sample_xy,visited, clusters
 
@@ -362,7 +366,7 @@ def set_sequential_goal_tsp2(cluster_goals, tsp_path, best_idx):
             for j in range(len(tsp_path)-2,-1,  -1):
                 goal_tsp.append(cluster_goals[tsp_path[j]])
 
-        print("goal_tsp-sequential", goal_tsp)
+        # print("goal_tsp-sequential", goal_tsp)
 
         return goal_tsp
 
@@ -392,6 +396,12 @@ def choose_goal_from_trj(best_trj, params_globalmap, horizon=25):
 
 #check how much samples are in near 10m within the boundary
 def calc_connectivity_utility( trj_candidates, sample_goals, horizon=30):
+
+    # connect_counts=[]
+    # count=0
+    # for j, trj in enumerate(trj_candidates):
+        # connect_counts.append(count)
+
     connect_counts=[]
     for j, trj in enumerate(trj_candidates):
         if horizon<0: 
@@ -448,6 +458,20 @@ def calc_IG_Point(cur_pos, goalcandidates, entropy_map, params_global, robot_par
     else:
         print("no trajectory candidates")
         return None
+
+def Is_IG_Point_goal(cur_pos, goal, entropy_map, params_global, robot_param):
+    ig=0
+    ref_x = cur_pos[0]
+    ref_y = cur_pos[1]
+    ig=get_expected_entropy_point(goal, entropy_map, params_global, robot_param)
+    if ig>0:
+        return True
+    else:
+        return False
+
+
+
+
 
 
 
@@ -760,7 +784,7 @@ def filtering_goals(goals, selectedgoals,agent_num, dist_th=12.5):
             IsClosetoOther=False
             # IsClosetoAgent=False
             for j, select_goal_pos in enumerate(selectedgoals):
-                if j<agent_num:
+                if j!=agent_num:
                     tempdist = sqrt((goal_pos[0]-select_goal_pos[0])**2+(goal_pos[1]-select_goal_pos[1])**2) #distance to gaol
                     if tempdist < dist_th:
                         IsClosetoOther=True
@@ -773,6 +797,22 @@ def filtering_goals(goals, selectedgoals,agent_num, dist_th=12.5):
         whileiter= whileiter+1
 
 
+    return new_goals
+
+def filtering_for_neargoals(agent_pos, goals,dist_th=7.5):
+    new_goals=[]
+    whileiter=0
+    while len(new_goals)<1:
+        for goal_pos in goals:
+            IsClose=False
+            tempdist = sqrt((goal_pos[0]-agent_pos[0])**2+(goal_pos[1]-agent_pos[1])**2) #distance to gaol
+            if tempdist < dist_th:
+                IsClose=True
+                new_goals.append(goal_pos)
+                # break
+
+        whileiter= whileiter+1
+        dist_th=dist_th+2.5
 
 
     return new_goals
@@ -780,7 +820,6 @@ def filtering_goals(goals, selectedgoals,agent_num, dist_th=12.5):
 
 
 
-    return 
 
 
 def generating_globaltrjs(cur_state, cspace, planner, obstacles,goals, params_global):
@@ -841,29 +880,32 @@ def generating_globaltrj_Astar(cur_state, AStarplanner, goal):
 #sample points from the trajectory
 def trjs_to_sample(trjs,robot_param, num_points=15,horizon=20, showplot=True):
     spline_trjs=[]
-    for i, sp in enumerate(trjs):
-        ds = 0.5                            # [m] distance of each intepolated points
-        trj_length = num_points*robot_param.max_vel+robot_param.sensor_range
-        if trj_length <sp.s[-1]:
-            s_length = trj_length 
-        else:
-            s_length = sp.s[-1]
+    if len(trjs)>0:
+        for i, sp in enumerate(trjs):
+            # print("sp", sp)
+            ds = 0.5                            # [m] distance of each intepolated points
+            trj_length = num_points*robot_param.max_vel+robot_param.sensor_range
+            if trj_length <sp.s[-1]:
+                s_length = trj_length 
+            else:
+                s_length = sp.s[-1]
 
-        s = np.arange(0.0, s_length, ds)
-        # print("s", s)
-        rx, ry, ryaw, rk = [], [], [], []
-        s_iter=0
-        for i_s in s:
-            ix, iy = sp.calc_position(i_s)
-            # print("i_s", i_s, ", (x,y): ", "(", ix, ", ", iy, ")")
-            rx.append(ix)
-            ry.append(iy)
-        # print("rx",rx)
-        # print("ry",ry)
+            s = np.arange(0.0, s_length, ds)
+            # print("s", s)
+            rx, ry, ryaw, rk = [], [], [], []
+            s_iter=0
+            for i_s in s:
+                ix, iy = sp.calc_position(i_s)
+                # print("i_s", i_s, ", (x,y): ", "(", ix, ", ", iy, ")")
+                rx.append(ix)
+                ry.append(iy)
+            # print("rx",rx)
+            # print("ry",ry)
 
-        spline_trjs.append([rx, ry])
+            spline_trjs.append([rx, ry])
 
     return spline_trjs
+    # return None
 
 
 def plot_local_trjs(trjs, ax=None):
@@ -1223,6 +1265,7 @@ def plot_obstacles(obstacles, walls):
 
 
 def visualize(trajs, pose, obstacles, walls, params):
+    # print("trajs", trajs)
     # ax = plt.gca()
     # plt.plot(traj[:,0], traj[:,1], 'g')
     plot_robot(pose, params )
@@ -1230,8 +1273,12 @@ def visualize(trajs, pose, obstacles, walls, params):
 
     axes[0,0].set_xlim([(params.xmin-1), (params.xmax+1)])   # limit the plot space
     axes[0,0].set_ylim([(params.ymin-1), (params.ymax+1)])   # limit the plot space
+
+    # for i in range(len(trajs)):
+    # axes[0,0].plot(trajs[0][:,0], trajs[0][:,1], 'g'ColorSet[i])
     axes[0,0].plot(trajs[0][:,0], trajs[0][:,1], 'r')
     axes[0,0].plot(trajs[1][:,0], trajs[1][:,1], 'g')
+    # axes[0,0].plot(trajs[2][:,0], trajs[2][:,1], 'b')
     # plt.legend()
 
 
@@ -1368,14 +1415,19 @@ def read_inputfile(num_agent=2, FILE_NAME="input4.txt"):
                 # print("gent num:", len(temp))
                 start_states =[]
                 init_poses=[]
+                goal_poses=[]
                 for i in range(num_agent):
                         #set pre-defined initial position
-                        init_poses.append([temp[i][0], temp[i][1]])
+                        # init_poses.append([temp[i][0], temp[i][1]])
                         # start_states.append(np.array([init_poses[i][0],init_poses[i][1],0.0, 0.0,0.0]))
                         #set random initial positions
-                        temp_x = random.uniform(-0.85*abs(boundary[0][0]), 0.85*abs(boundary[0][0]))
-                        temp_y = random.uniform(-0.85*abs(boundary[0][0]), 0.85*abs(boundary[0][0]))
+                        temp_x = random.uniform(-0.8*abs(boundary[0][0]), 0.85*abs(boundary[0][0]))
+                        temp_y = random.uniform(-0.8*abs(boundary[0][0]), 0.85*abs(boundary[0][0]))
                         start_states.append(np.array([temp_x, temp_y,0.0, 0.0,0.0]))
+                        init_poses.append([temp_x, temp_y])
+                        goal_x = temp_x+random.uniform(-1,1)
+                        goal_y = temp_y+random.uniform(-1,1)
+                        goal_poses.append([goal_x, goal_y])
                         # print("i", i)
                         # print("start_poses", start_states)
                         # input("-")
@@ -1387,13 +1439,14 @@ def read_inputfile(num_agent=2, FILE_NAME="input4.txt"):
                 # print("num_agents", num_agent)
                 # print("init_poses", init_poses)
                 # print("start_poses", start_states)
+                # print("goal_poses", goal_poses)
             else:
                 temp = list(ast.literal_eval(l))
                 num_agent = len(temp)
-                goal_poses=[]
-                for i in range(num_agent):
-                    goal_poses.append([temp[i][0], temp[i][1]])
-                print("goal_poses", goal_poses)
+                # goal_poses=[]
+                # for i in range(num_agent):
+                    # goal_poses.append([temp[i][0], temp[i][1]])
+                # print("goal_poses", goal_poses)
 
     #Create wall objects
     walls=[]
@@ -1549,15 +1602,19 @@ if __name__ == "__main__":
     #temporary goal state
     goal =goal_poses[0]                        #define goal from goal_pos(initial direction)
     goal2 =goal_poses[1]                        #define goal from goal_pos(initial direction)
-    goal3 =goal_poses[2]                        #define goal from goal_pos(initial direction)
+    if num_agent==3:
+        goal3 =goal_poses[2]                        #define goal from goal_pos(initial direction)
     # state = np.array(start_state)
     traj = states[0][:2]
     traj2 = states[1][:2]
+    if num_agent==3:
+        traj3 = states[2][:2]
     iter=0
     simtime=0.0
     spline_explored = False
 
     # create obpoints
+    traj2 = states[1][:2]
     obpoints=[]
     xyressol = 0.5
     for obs in obstacles:
@@ -1677,6 +1734,7 @@ if __name__ == "__main__":
     # pmap_global_test = initialize_global_occ_grid_map(params_globalmap)
     # initial_entropy = get_map_entropy(pmap_global,params_globalmap)
     initial_entropy = get_map_entropy2(pmap_global,params_globalmap)
+    curentropy = get_map_entropy2(pmap_global, params_globalmap)
     prev_entropy=0.9*initial_entropy
     print("initial entropy: ", initial_entropy )
     # input("stop here")
@@ -1744,6 +1802,58 @@ if __name__ == "__main__":
                     agentgoal_curpathidx[i]=agentgoal_curpathidx[i]+1
                     #get current index
                     cur_path_idx =agentgoal_curpathidx[i]
+                    #check if 
+                    IGzero=False
+                    k=cur_path_idx
+                    while k<len(goal_tsps[i])-2:
+                       tempgoal=goal_tsps[i][k]
+                       tempgoal2=goal_tsps[i][k+1]
+                       print("tempgoal", tempgoal)
+                       if Is_IG_Point_goal(states[i], tempgoal, pmap_global, params_globalmap, robot_params[i])==True:
+                           if Is_IG_Point_goal(states[i], tempgoal2, pmap_global, params_globalmap, robot_params[i])==True:
+                               dist = distance(states[i], tempgoal)
+                               dist2 = distance(states[i], tempgoal2)
+                               if(dist<dist2):
+                                   cur_path_idx=k
+                               else:
+                                   cur_path_idx=k+1
+
+                               IGzero=True
+                               print("--break")
+                               break;
+                           else:
+                               k=k+1
+                               print("k", k)
+
+                       else:
+                           k=k+1
+                           print("k", k)
+
+                    print("after--break")
+                    if IGzero==True:
+                        agentgoal_curpathidx[i]=cur_path_idx
+                        print("cur_path_idx", cur_path_idx)
+                        if cur_path_idx==len(goal_tsps[i]):
+                            goal_poses[i]=goal_tsps[i][agentgoal_curpathidx[i]-1]
+                        else:
+                            goal_poses[i]=goal_tsps[i][agentgoal_curpathidx[i]]
+                    else:
+                        print("no informative region")
+                        if curentropy > 0.35*initial_entropy:
+                            Istsp_path=False
+                            print("prev_entropy: ",prev_entropy  )
+                            print("curentropy: ",curentropy)
+                            prev_entropy=curentropy
+                        else:
+                            sample_goalset, visited, clusters=goal_sampling_uniform_v2(states, pmap_global, params_globalmap, num_agent, robot_params )
+                            sample_goalset =filtering_goals(sample_goalset, goal_poses, i)
+                            close_goals=filtering_for_neargoals(states[i], sample_goalset)
+                            goal_poses[i]=close_goals[0]
+
+
+
+
+                    '''
                     #get current index, check if the near idx is better than cur_path
                     tempgoals=[]
                     tidx=0
@@ -1766,6 +1876,7 @@ if __name__ == "__main__":
                         goal_poses[i]=goal_tsps[i][agentgoal_curpathidx[i]-1]
                     else:
                         goal_poses[i]=goal_tsps[i][agentgoal_curpathidx[i]]
+                    '''
 
                     print(i, "-agent goal is updated to ", goal_poses[i] )
                     # if goal is reached, start cacluating new positions
@@ -1797,16 +1908,29 @@ if __name__ == "__main__":
             t_prev_goal = time.time()
             # best_trjs=[]
             # sample_goalset, visited=goal_sampling_uniform(waypoint_vcd, states[i][0],states[i][1], pmap_global, params_globalmap )
-            sample_goalset, visited, clusters=goal_sampling_uniform_v2(states, pmap_global, params_globalmap )
+            sample_goalset, visited, clusters=goal_sampling_uniform_v2(states, pmap_global, params_globalmap, num_agent, robot_params )
 
             cluster_goals=[]
-            for label in set(clusters.labels):
+            nogoal_agents=[]
+            for k, label in enumerate(set(clusters.labels)):
                 cgoals=[]
                 cx, cy = clusters._get_labeled_x_y(label)
                 for k in range(len(cx)):
                     cgoals.append([cx[k], cy[k]])
 
                 cluster_goals.append(cgoals)
+                if len(cx)<1:
+                    print(k, "-th agent has no goal")
+                    nogoal_agents.append(k)
+
+
+            if len(cluster_goals)!=num_agent:
+                print("clustering is failed")
+                for num_agent_ in nogoal_agents:
+                    close_goals=filtering_for_neargoals(states[num_agent_], sample_goalset)
+                    cluster_goals.append(close_goals)
+
+
 
             # print("x: ", cx , "y: ", cy)
             # cluster_centers= clusters.get_centers();
@@ -1822,13 +1946,26 @@ if __name__ == "__main__":
                 clusters.plot_cluster(axes[0,1])
 
             tsp_paths=[]
+            Notsp_path= [False] * (num_agent)
+            
+            #here we can only update agent who need a new tsp path
             for i in range(num_agent):
-                tspmanager = tsp_manager(1, cluster_goals[i], states[i])
-                best_tsppath = tspmanager.get_path()
-                tsp_paths.append(best_tsppath)
-                print("best_tsppath", best_tsppath)
-                if show_animation:
-                    tspmanager.plot_paths(best_tsppath , axes[0,1]) 
+                if len(cluster_goals[i])>2:
+                    tspmanager = tsp_manager(1, cluster_goals[i], states[i])
+                    best_tsppath = tspmanager.get_path()
+                    tsp_paths.append(best_tsppath)
+                    print("best_tsppath", best_tsppath)
+                    if show_animation:
+                        tspmanager.plot_paths(best_tsppath , axes[0,1]) 
+                elif len(cluster_goals[i])>0:
+                    temps_path=[]
+                    for j in range(len(cluster_goals[i])):
+                        temps_path.append(j)
+                    tsp_paths.append([temps_path])
+                else:
+                    Notsp_path[i]=True
+
+
             Istsp_path= True
             agentgoal_curpathidx= [0 for i in range(num_agent)]
             goal_reached=False
@@ -1845,69 +1982,158 @@ if __name__ == "__main__":
             for i in range(num_agent):
                 goal_tsp=[]
                 #check the first point and the last point
-                sample_goalset=[]
-                sample_goalset.append(cluster_goals[i][tsp_paths[i][0][0]])
-                sample_goalset.append(cluster_goals[i][tsp_paths[i][0][1]])
-                # sample_goalset.append(cluster_goals[i][tsp_paths[i][0][2]])
-                # sample_goalset.append(cluster_goals[i][tsp_paths[i][0][-3]])
-                sample_goalset.append(cluster_goals[i][tsp_paths[i][0][-2]])
-                sample_goalset.append(cluster_goals[i][tsp_paths[i][0][-1]])
+                if len(cluster_goals[i])>3:
+                    goalset=[]
+                    goalset.append(cluster_goals[i][tsp_paths[i][0][0]])
+                    goalset.append(cluster_goals[i][tsp_paths[i][0][1]])
+                    # goalset.append(cluster_goals[i][tsp_paths[i][0][2]])
+                    # goalset.append(cluster_goals[i][tsp_paths[i][0][-3]])
+                    goalset.append(cluster_goals[i][tsp_paths[i][0][-2]])
+                    goalset.append(cluster_goals[i][tsp_paths[i][0][-1]])
 
-                # gtrjs= generating_globaltrjs_Astar(states[i], a_star,sample_goalset) 
-                gtrjs=[]
-                ctrj= generating_globaltrj_Astar(sample_goalset[0], a_star,sample_goalset[1]) 
-                ctrj2= generating_globaltrj_Astar(sample_goalset[3], a_star,sample_goalset[2]) 
-                if ctrj==None:
-                    ctrj= generating_globaltrj_Astar(states[i], a_star, sample_goalset[0]) 
+                    # gtrjs= generating_globaltrjs_Astar(states[i], a_star,goalset) 
+                    gtrjs=[]
+                    #decide where to loop the mtsp path 
+                    ctrj= generating_globaltrj_Astar(goalset[0], a_star,goalset[1]) 
+                    ctrj2= generating_globaltrj_Astar(goalset[3], a_star,goalset[2]) 
+                    print("ctrj", ctrj)
+                    print("ctrj2", ctrj2)
+                    found_path=False
                     if ctrj==None:
+                        print("cannot find path-another try")
+                        ctrj= generating_globaltrj_Astar(states[i], a_star, goalset[0]) 
+                        if ctrj==None:
+                            print("cannot find the path again!")
+                            ctrj= generating_globaltrj_Astar(states[i], a_star, goalset[1]) 
+                            if ctrj==None:
+                                print("cannot find the path again!")
+
+                                # gtrjs.append(ctrj)
+                            else:
+                                gtrjs.append(ctrj)
+                                found_path=True
+
+                        else:
+                            print("cannot find path")
+                    else:
                         gtrjs.append(ctrj)
-                    else:
-                        print("cannot find path")
-                else:
-                    gtrjs.append(ctrj)
+                        found_path=True
 
-                if ctrj2==None:
-                    ctrj2= generating_globaltrj_Astar(states[i], a_star, sample_goalset[3]) 
                     if ctrj2==None:
-                        gtrjs.append(ctrj2)
+                        ctrj2= generating_globaltrj_Astar(states[i], a_star, goalset[2]) 
+                        if ctrj2==None:
+                            print("cannot find the path again---1---!")
+                            ctrj2= generating_globaltrj_Astar(states[i], a_star, goalset[3]) 
+                            if ctrj2==None:
+                                print("cannot find the path again--2--!")
+                                found_path=False
+                            else:
+                                gtrjs.append(ctrj2)
+                                found_path=True
+
+                        else:
+                            print("cannot find path")
                     else:
-                        print("cannot find path")
-                else:
-                    gtrjs.append(ctrj2)
-                    
-                
-                sp_gtrjs = trjs_to_sample(gtrjs,robot_params[i])
-                trjs_candidate =[]
-                for gtrj in sp_gtrjs:
-                    trjs_candidate.append(gtrj)
+                        gtrjs.append(ctrj2)
 
-                trjs_candidateset.append(trjs_candidate)
-                connect_count=calc_connectivity_utility(trjs_candidateset[i], sample_goalset, horizon)
-                best_trj, best_idx = calc_IG_trjs_hierarchy(trjs_candidate, connect_count, pmap_global,  params_globalmap, best_trjs, i, robot_params[i], horizon )
+                    if len(gtrjs)>0 and found_path:
+                        sp_gtrjs = trjs_to_sample(gtrjs,robot_params[i])
+                        trjs_candidate =[]
+                        for gtrj in sp_gtrjs:
+                            trjs_candidate.append(gtrj)
 
-                if best_trj!=None:
-                    if best_idx==0:
-                        goal = sample_goalset[0]
-                    else: 
-                        goal = sample_goalset[-1]
+                        print("len_of_trjcandidate", len(trjs_candidate))
+                        print("len_of_trjs_candidateset", len(trjs_candidateset))
+                        if len(trjs_candidate)>0:
+                            trjs_candidateset.append(trjs_candidate)
+                            # print("len_of_trjs_candidateset[i]", len(trjs_candidateset[i]))
+                            print("len_of_goalset", len(goalset))
+                            print("i: ", i)
+                            connect_count=calc_connectivity_utility(trjs_candidate, goalset, horizon)
+                            best_trj, best_idx = calc_IG_trjs_hierarchy(trjs_candidate, connect_count, pmap_global,  params_globalmap, best_trjs, i, robot_params[i], horizon )
 
+                            if best_trj!=None:
+                                if best_idx==0:
+                                    goal = goalset[0]
+                                else: 
+                                    goal = goalset[-1]
+
+                                goal_xs[i]=goal[0]
+                                goal_ys[i]=goal[1]
+                                goal_poses[i]=[goal[0],goal[1]]
+                                goal_tsp= set_sequential_goal_tsp2(cluster_goals[i], tsp_paths[i][0], best_idx)
+                                goal_tsps.append(goal_tsp)
+                            # if best_trj!=None:
+                                # best_trjs.append(best_trj)   # Choose next goal point from trajectory
+                                # goal = choose_goal_from_trj(best_trj, params_globalmap, horizon)
+                                # goal_xs[i]=goal[0]
+                                # goal_ys[i]=goal[1]
+                                # goal_poses[i]=[goal[0],goal[1]]
+                            else:
+                                goal=cluster_goals[i][tsp_paths[i][0][0]]
+                                goal_xs[i]=goal[0]
+                                goal_ys[i]=goal[1]
+                                # goal_xs[i]=goal_poses[i][0]
+                                # goal_ys[i]=goal_poses[i][1]
+                                # goal_poses[i]=[goal[0],goal[1]]
+                        else:
+                            print("elelse-0.1")
+                            goal=cluster_goals[i][tsp_paths[i][0][0]]
+                            goal_xs[i]=goal[0]
+                            goal_ys[i]=goal[1]
+                        
+                            for j in range(len(tsp_paths[i][0])):
+                                goal_tsp.append(cluster_goals[i][tsp_paths[i][0][j]])
+                            goal_tsps.append(goal_tsp)
+
+                    else:
+                        goal=cluster_goals[i][tsp_paths[i][0][0]]
+                        goal_xs[i]=goal[0]
+                        goal_ys[i]=goal[1]
+
+                        for j in range(len(tsp_paths[i][0])):
+                            goal_tsp.append(cluster_goals[i][tsp_paths[i][0][j]])
+                        goal_tsps.append(goal_tsp)
+                elif len(cluster_goals[i])>0:
+                    goal=cluster_goals[i][tsp_paths[i][0][0]]
                     goal_xs[i]=goal[0]
                     goal_ys[i]=goal[1]
-                    goal_poses[i]=[goal[0],goal[1]]
-                # if best_trj!=None:
-                    # best_trjs.append(best_trj)   # Choose next goal point from trajectory
-                    # goal = choose_goal_from_trj(best_trj, params_globalmap, horizon)
-                    # goal_xs[i]=goal[0]
-                    # goal_ys[i]=goal[1]
-                    # goal_poses[i]=[goal[0],goal[1]]
-                else:
-                    goal=cluster_goals[i][tsp_paths[i][0][0]]
-                    goal_xs[i]=goal_poses[i][0]
-                    goal_ys[i]=goal_poses[i][1]
-                    # goal_poses[i]=[goal[0],goal[1]]
 
-                goal_tsp= set_sequential_goal_tsp2(cluster_goals[i], tsp_paths[i][0], best_idx)
-                goal_tsps.append(goal_tsp)
+                    for j in range(len(tsp_paths[i][0])):
+                        goal_tsp.append(cluster_goals[i][tsp_paths[i][0][j]])
+                    goal_tsps.append(goal_tsp)
+                else:
+                    print("else-1.5")
+                    sample_goalset =filtering_goals(sample_goalset, goal_poses, i)
+                    gtrjs= generating_globaltrjs_Astar(states[i], a_star,sample_goalset) 
+                    sp_gtrjs = trjs_to_sample(gtrjs,robot_params[i])
+                    trjs_candidate =[]
+                    for gtrj in sp_gtrjs:
+                        trjs_candidate.append(gtrj)
+
+                    trjs_candidateset.append(trjs_candidate)
+                    connect_count=calc_connectivity_utility(trjs_candidateset[i], sample_goalset, horizon)
+                    best_trj = calc_IG_trjs_hierarchy(trjs_candidate, connect_count, pmap_global,  params_globalmap, best_trjs, i, robot_params[i], horizon )
+                    if best_trj!=None:
+                        best_trjs.append(best_trj)
+                        # Choose next goal point from trajectory
+                        goal = choose_goal_from_trj(best_trj, params_globalmap, horizon)
+                        goal_xs[i]=goal[0]
+                        goal_ys[i]=goal[1]
+                        goal_poses[i]=[goal[0],goal[1]]
+                    else:
+                        goal=sample_goalset[0]
+                        goal_xs[i]=goal[0]
+                        goal_ys[i]=goal[1]
+                        goal_poses[i]=[goal[0],goal[1]]
+
+
+
+
+
+
+                # goal_tsp= set_sequential_goal_tsp2(cluster_goals[i], tsp_paths[i][0], best_idx)
+                # goal_tsps.append(goal_tsp)
 
                 #put path
                 # for j in range(len(tsp_paths[i][0])):
@@ -2002,6 +2228,7 @@ if __name__ == "__main__":
         # print("states[0][0]", states[0][0])
         # print("states[0][2]", states[0][2])
         #sensing part
+        # print("sensing")
         for i in range(num_agent):
             pmap_local, updated_grids, intersect_dic, obs_verticeid, closest_vertexid, localmap= generate_ray_casting_grid_map(obstacles, walls, params_localmap, states[i][0],states[i][1], states[i][2])
             pmap_global = update_occ_grid_map(states[i], pmap_local, localmap, pmap_global,params_globalmap)
@@ -2023,9 +2250,16 @@ if __name__ == "__main__":
                 # axes[0,0].scatter(goal[0], goal[1], facecolor='red',edgecolor='red')
             # axes[0,0].scatter(goal2[0], goal2[1], facecolor='green',edgecolor='green')
             traj = np.vstack([traj, states[0][:2]])
+            if num_agent==2:
+                traj2 = np.vstack([traj2, states[1][:2]])
+                visualize([traj, traj2], states, obstacles, walls, params_globalmap)
+            elif num_agent==3:
+                traj2 = np.vstack([traj2, states[1][:2]])
+                traj3 = np.vstack([traj3, states[2][:2]])
+                visualize([traj, traj2, traj3], states, obstacles, walls, params_globalmap)
+            else:
+                visualize([traj], states, obstacles, walls, params_globalmap)
 
-            traj2 = np.vstack([traj2, states[1][:2]])
-            visualize([traj, traj2], states, obstacles, walls, params_globalmap)
 
             #figure2- local sensor window
             # axes[0,1].cla()
@@ -2070,7 +2304,8 @@ if __name__ == "__main__":
             sample_goalset=goal_sampling_VCD(waypoint_vcd, states[0][0],states[0][1], params_globalmap)
             for i in range(num_agent):
                 # gtrjs= generating_globaltrjs(states[i], cspace,planner, obstacles,sample_goalset[i],params_globalmap)
-                sample_goalset =filtering_goals(sample_goalset, goal_poses, i)
+                close_goals=filtering_for_neargoals(states[i], sample_goalset)
+                sample_goalset =filtering_goals(close_goals, goal_poses, i)
                 gtrjs= generating_globaltrjs_Astar(states[i], a_star,sample_goalset)
                 sp_gtrjs = trjs_to_sample(gtrjs, robot_params[i])
                 local_trjs = lane_state_sampling_test1(states[i],obstacles, params_globalmap)
@@ -2123,6 +2358,7 @@ if __name__ == "__main__":
             # pd.DataFrame(data, columns=['time', 'pos_x', 'pos_y', 'yaw', 'velocity', 'pos_xx', 'pos_yy', 'entropy', 'goal_x', 'goal_y', 'goal_xx', 'goal_yy']).to_csv(file_name,header=True)
             print("entropy file saved")
             boolsaved =True
+            exit()
             # input("done")
         if curentropy < 0.05*initial_entropy:
             data=np.array([times, entropys, poses_xset, poses_yset, goal_xset, goal_yset])
@@ -2132,7 +2368,7 @@ if __name__ == "__main__":
             # pd.DataFrame(data, columns=['time', 'pos_x', 'pos_y', 'yaw', 'velocity', 'pos_xx', 'pos_yy', 'entropy', 'goal_x', 'goal_y', 'goal_xx', 'goal_yy']).to_csv(file_name,header=True)
             print("entropy file2 saved")
             boolsaved =True
-            exit()
+            # exit()
             
             input("done")
 
@@ -2148,7 +2384,8 @@ if __name__ == "__main__":
         print("exploration rate: ", float(curentropy/initial_entropy))
 
     
-    plt.show()
+    if show_animation:
+        plt.show()
     # plt.show(aspect='auto')
 
 

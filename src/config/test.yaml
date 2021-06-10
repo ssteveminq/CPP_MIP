@@ -2,11 +2,17 @@
 animation: True
 num_agents: 2
 speeds:
-    - 2
-    - 2
+    - 1
+    - 1
+    - 2.0
+    - 2.0
+    - 2.0
 sensor_range:
     - 5
-    - 10
+    - 5
+    - 5
+    - 5
+    - 5
 
 
 

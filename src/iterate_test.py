@@ -2,9 +2,9 @@
 import os
 
 i = 0
-while i < 15:
+while i < 20:
     os.system("pause")
-    os.system("python /home/mk/project/cpp/src/multi_cm_simulation.py")
+    os.system("python /home/mk/project/cpp/src/tsp_cm_simulation.py")
     i += 1
 
 

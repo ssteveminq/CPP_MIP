@@ -97,7 +97,6 @@ def nearestCellIdx(start, val, gridmap, map_info):
         # queue and print it
         s = queue.pop(0)
         # print (s, end = " ")
-
         # Get all adjacent vertices of the
         # dequeued vertex s. If a adjacent
         # has not been visited, then mark it
@@ -106,14 +105,17 @@ def nearestCellIdx(start, val, gridmap, map_info):
         iy = (int) (s / size_y_)
         # print("ix: ", ix, "iy: ", iy)
 
-        if gridmap[ix][iy]==val:
-            result = s
-            return s
-
         for n_idx in nhood4(s,gridmap,map_info):
             if visited[n_idx] == False:
                 queue.append(n_idx)
                 visited[n_idx] = True
+
+        #--sequence chane ---
+        if gridmap[ix][iy]==val:
+            result = s
+            return s
+
+
 
     return False
 
@@ -275,11 +277,11 @@ def frontier_search(px,py, pmap,  param_map):
 
                 if new_frontier.size > min_frontier_size_:
                     frontier_list.append(new_frontier)
-                    print("size is satisfied")
+                    # print("size is satisfied")
                 else:
                     print("size is not satisfied")
         
-    print("frontier_list", frontier_list)
+    # print("frontier_list", frontier_list)
 
     return frontier_list
 
@@ -370,7 +372,7 @@ def Unknown_search(px,py, pmap,  param_map, visited ):
 
                 if new_frontier.size > min_frontier_size_:
                     frontier_list.append(new_frontier)
-                    print("size is satisfied")
+                    # print("size is satisfied")
                 # else:
                     # print("size is not satisfied")
             if visited[nbx][nby]==False:
@@ -397,7 +399,7 @@ def count_unvisted(visited, param_map):
 # 
 def Unknown_decomposition(pmap,  param_map, visited ):
     # print("before-unknown search with px, py", px, ", " , py)
-    min_frontier_size_=250
+    min_frontier_size_=385
     #find the closest free cell to start search
     # visited = [False] * (map_size)
     size_x_=param_map.xw
@@ -443,7 +445,7 @@ def Unknown_decomposition(pmap,  param_map, visited ):
 
                     if new_frontier.size > min_frontier_size_:
                         frontier_list.append(new_frontier)
-                        print("size is satisfied")
+                        # print("size is satisfied")
                     # else:
                         # print("size is not satisfied")
                 if visited[nbx][nby]==False:
@@ -542,7 +544,7 @@ def buildnewfrontier(start_cell, pmap, frontiermap, param_map):
                 queue.append(n_idx)
 
 
-    print("found frontiers: ", frt.size)
+    # print("found frontiers: ", frt.size)
     frt.centroid_x /= frt.size;
     frt.centroid_y /= frt.size;
 
@@ -587,7 +589,7 @@ def buildnewUnknownfrontier(start_cell, pmap, visited, param_map ):
                 # print("max size reached")
                 frt.centroid_x /= frt.size;
                 frt.centroid_y /= frt.size;
-                print("frt.avx: ", frt.centroid_x , ", frt.avy: ", frt.centroid_y)
+                # print("frt.avx: ", frt.centroid_x , ", frt.avy: ", frt.centroid_y)
                 return frt, visited, n_idx
 
             # elif isNewUnknown(n_idx,pmap, frontiermap, param_map) and visited[n_idx]==False:

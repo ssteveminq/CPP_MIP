@@ -11,8 +11,8 @@ import matplotlib.pyplot as plt
 import random
 
 # k means parameters
-MAX_LOOP = 10
-DCOST_TH = 0.1
+MAX_LOOP = 20
+DCOST_TH = 0.05
 show_animation = True
 
 
@@ -33,6 +33,27 @@ def kmeans_clustering(rx, ry, nc):
 
     return clusters
 
+def Guided_kmeans_clustering(rx, ry, nc, centers, weights=None):
+
+    clusters = Clusters(rx, ry, nc)
+    clusters.set_centers(centers)
+    if weights!=None:
+        clusters.set_weightcenters(weights)
+        print("weightedcenters")
+        
+
+    pre_cost = float("inf")
+    for loop in range(MAX_LOOP):
+        cost = clusters.update_weightedclusters()
+
+        d_cost = abs(cost - pre_cost)
+        if d_cost < DCOST_TH:
+            break
+        pre_cost = cost
+
+    return clusters
+
+
 
 class Clusters:
 
@@ -45,6 +66,7 @@ class Clusters:
                        for _ in range(self.n_data)]
         self.center_x = [0.0 for _ in range(n_label)]
         self.center_y = [0.0 for _ in range(n_label)]
+        self.center_weights=[1.0 for _ in range(n_label)]
 
     def plot_cluster(self, ax=None):
         for label in set(self.labels):
@@ -54,6 +76,36 @@ class Clusters:
             else:
                 ax.plot(x,y,"o")
 
+    def calc_num_labels(self):
+        for label in set(self.labels):
+            x, y = self._get_labeled_x_y(label)
+            print(label , ": ", len(x))
+
+
+    def get_centers(self):
+        centers=[]
+        for i in range(self.n_label):
+            centers.append([self.center_x[i], self.center_y[i]])
+
+        return centers
+
+    def set_centers(self, centers):
+        # centers=[]
+        for i in range(self.n_label):
+            self.center_x[i]=centers[i][0]
+            self.center_y[i]=centers[i][1]
+
+    def set_weightcenters(self, weights):
+        # centers=[]
+        if len(weights)==self.n_label:
+            for i in range(self.n_label):
+                self.center_weights[i]=(1.0/weights[i])
+
+            print("set weights for center")
+        else:
+            print("input dimension is wrong")
+
+
 
     def calc_centroid(self):
         for label in set(self.labels):
@@ -61,6 +113,34 @@ class Clusters:
             n_data = len(x)
             self.center_x[label] = sum(x) / n_data
             self.center_y[label] = sum(y) / n_data
+
+    def update_weightedclusters(self):
+        cost = 0.0
+
+        for ip in range(self.n_data):
+            px = self.x[ip]
+            py = self.y[ip]
+
+            dx = [icx - px for icx in self.center_x]
+            dy = [icy - py for icy in self.center_y]
+
+            # dx = [(icx - px) for icx, iw in zip(self.center_x, self.center_weights)]
+            # dy = [(icy - py) for icy, iw in zip(self.center_y, self.center_weights)]
+
+            dist_list = [math.hypot(idx, idy) for (idx, idy) in zip(dx, dy)]
+            for dist, iw in zip(dist_list, self.center_weights):
+                dist = dist*iw
+
+            # print("dist_list", dist_list)
+            # input("00--00")
+            min_dist = min(dist_list)
+            min_id = dist_list.index(min_dist)
+            self.labels[ip] = min_id
+            cost += min_dist
+
+        return cost
+
+
 
     def update_clusters(self):
         cost = 0.0

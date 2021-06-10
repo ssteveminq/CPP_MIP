@@ -203,7 +203,6 @@ if __name__ == "__main__":
 
     len_data = len(entropys_str)
     print("len_data", len_data)
-    input("")
     # entropys_str[len_data-1]=entropys_str[len_data-1].replace(']','')
 
 
@@ -216,12 +215,47 @@ if __name__ == "__main__":
     # input("--")
     # print("pos_xs[0]", pos_xs[0])
 
-    pos_xs=re.findall(r"[-+]?\d*\.\d+|\d+", str(pos_xs))
-    pos_ys=re.findall(r"[-+]?\d*\.\d+|\d+", str(pos_ys))
-    goal_xs=re.findall(r"[-+]?\d*\.\d+|\d+", str(goal_xs))
-    goal_ys=re.findall(r"[-+]?\d*\.\d+|\d+", str(goal_ys))
-    print("---pos_xs----", pos_xs)
-    input("---")
+    # print("len_pos_xs", len(pos_xs))
+    # input("---")
+    agent_poses_x=np.zeros((num_agent,len_data-1))
+    agent_poses_y=np.zeros((num_agent,len_data-1))
+    goal_poses_x=np.zeros((num_agent,len_data-1))
+    goal_poses_y=np.zeros((num_agent,len_data-1))
+
+
+    
+    for k in range(1, len(pos_xs)-1):
+        pos_xs_=re.findall(r"[-+]?\d*\.\d+|\d+", str(pos_xs[k]))
+        pos_ys_=re.findall(r"[-+]?\d*\.\d+|\d+", str(pos_ys[k]))
+        # goal_xs=re.findall(r"[-+]?\d*\.\d+|\d+", str(goal_xs[k]))
+        # goal_ys=re.findall(r"[-+]?\d*\.\d+|\d+", str(goal_ys[k]))
+        for pos_x in pos_xs_:
+            if pos_x=='01':
+                pos_xs_.remove(pos_x)
+            elif pos_x=='00':
+                pos_xs_.remove(pos_x)
+            elif pos_x=='02':
+                pos_xs_.remove(pos_x)
+        for pos_y in pos_ys_:
+            if pos_y=='01':
+                pos_ys_.remove(pos_y)
+            elif pos_y=='00':
+                pos_ys_.remove(pos_y)
+            elif pos_y=='02':
+                pos_ys_.remove(pos_y)
+
+        for j in range(num_agent):
+            # print("pos_xs[ " ,idx, " ] ", pos_xs[idx])
+                agent_poses_x[j,k]=float(pos_xs_[j])
+                agent_poses_y[j,k]=float(pos_ys_[j])
+                # goal_poses_x[k,i]=float(goal_xs[idx])
+                # goal_poses_y[k,i]=float(goal_ys[idx])
+                # print("i", i)
+
+  
+
+
+
     index_set=[1,12]
 
     # print("pos_xs", pos_xs[1])
@@ -234,7 +268,7 @@ if __name__ == "__main__":
     # temp2 = float(pos_xs[1][7:12])
     # print("temp2", temp2)
 
-    len_data=len_data-1
+    len_data=len_data
     times_t=np.zeros(len_data)
     entropy_t=np.zeros(len_data)
     for i in range(len(entropys_str)):
@@ -252,40 +286,16 @@ if __name__ == "__main__":
     # input("check-entropy")
 
     # len_data=len_data-cut_length
-    len_data=len_data
+    # len_data=len_data
     # print("len_data", len_data)
     complete_time= times_t[len_data-1]
     # print("times", times_t[len_data-1])
 
-    agent_poses_x=np.zeros((num_agent,len_data-1))
-    agent_poses_y=np.zeros((num_agent,len_data-1))
-    goal_poses_x=np.zeros((num_agent,len_data-1))
-    goal_poses_y=np.zeros((num_agent,len_data-1))
-    # print("goal_poses_x", goal_xs)
+        # print("goal_poses_x", goal_xs)
     # print("------------------------")
     # print("goal_poses_x", goal_poses_x)
 
 # cmap = clr.LinearSegmentedColormap.from_list("", ["darkblue", "blue", "violet", "yellow", "orange", "red"])
-
-    print("len(pos_xs", len(pos_xs))
-    print("pos_xs", pos_xs)
-    input("---")
-    # for i, pose in enumerate(pos_xs):
-        # print("len(pos_xs", len(pos_xs))
-    for i, pose in enumerate(pos_xs):
-        for j in range(num_agent):
-            idx=num_agent*(i)+j
-            # print("j: ", j," i: ", i)
-            print("idx", idx)
-            # input("debug--")
-            # print("pos_xs[ " ,idx, " ] ", pos_xs[idx])
-            # if i<len_data-1 and idx < len(pos_xs)-1:
-            if i<len_data-1:
-                agent_poses_x[j,i]=float(pos_xs[idx])
-                agent_poses_y[j,i]=float(pos_ys[idx])
-                goal_poses_x[j,i]=float(goal_xs[idx])
-                goal_poses_y[j,i]=float(goal_ys[idx])
-                print("i", i)
 
     # print("goal_x", goal_poses_x)
     # print("goal_y", goal_poses_y)
