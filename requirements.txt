@@ -18,7 +18,7 @@ matplotlib==3.0.2
 mccabe==0.6.1
 mkl-fft==1.0.6
 mkl-random==1.0.1
-numpy==1.15.4
+numpy==1.22.0
 protobuf==3.6.1
 pylint==2.2.2
 pyparsing==2.3.1
